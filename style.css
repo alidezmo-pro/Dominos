@@ -1,28 +1,25 @@
 /* =========================================================
-   1. الإعدادات الأساسية للصفحة (منع التحديد والتمرير العشوائي)
+   1. الإعدادات الأساسية للصفحة
    ========================================================= */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    user-select: none; /* منع تحديد النصوص عن طريق الخطأ أثناء اللعب */
+    user-select: none; /* منع تحديد النصوص أثناء اللعب */
 }
 
 body {
-    background-color: #0b0f19; /* لون خلفية داكن جداً خارج الطاولة */
+    background-color: #0b0f19; /* لون الخلفية الداكن */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     height: 100vh;
     width: 100vw;
-    overflow: hidden; /* منع ظهور أشرطة التمرير (السكرول) */
+    overflow: hidden; /* منع التمرير في الشاشة */
     display: flex;
     justify-content: center;
     align-items: center;
     direction: rtl; /* اتجاه الصفحة من اليمين لليسار */
 }
 
-/* =========================================================
-   2. الشاشة الرئيسية وتصميم الطاولة البيضاوية
-   ========================================================= */
 .main-screen {
     width: 100%;
     height: 100%;
@@ -32,76 +29,51 @@ body {
     padding: 10px;
 }
 
+/* =========================================================
+   2. تصميم الطاولة البيضاوية (تم رفعها للأعلى)
+   ========================================================= */
 .poker-table {
     width: 96%;
-    height: 92vh;
-    background: radial-gradient(circle, #1a2a4a 0%, #0d1527 100%); /* تدرج لوني أزرق ملكي */
-    border: 10px solid #4a2e1b; /* إطار بني يشبه الخشب */
-    border-radius: 120px; /* جعل الحواف دائرية لتبدو كطاولة بيضاوية */
+    height: 88vh; /* تقليل الارتفاع لتوفير مساحة في الشاشات الصغيرة */
+    background: radial-gradient(circle, #1a2a4a 0%, #0d1527 100%);
+    border: 8px solid #4a2e1b;
+    border-radius: 120px; 
     box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(0, 0, 0, 0.6);
     position: relative;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    margin-top: -20px; /* تعديل: رفع الطاولة للأعلى قليلاً لتوازن الشاشة */
 }
 
 /* =========================================================
-   3. النوافذ المنبثقة (اختيار اللعب ونافذة السحب)
+   3. أزرار الواجهة (تم تعديل مكان زر لعبة جديدة)
    ========================================================= */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8); /* خلفية سوداء شفافة */
-    backdrop-filter: blur(5px); /* تأثير ضبابي للخلفية */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000; /* لضمان ظهور النافذة فوق كل شيء */
-}
-
-.modal-card, .draw-card {
-    background: rgba(15, 23, 42, 0.95);
-    border: 2px solid #f59e0b; /* إطار ذهبي */
-    border-radius: 16px;
-    padding: 20px 30px;
-    text-align: center;
+.restart-btn {
+    position: absolute;
+    bottom: 25px; /* تعديل: نقل الزر للأسفل */
+    right: 35px;  /* تعديل: نقل الزر لليمين بعيداً عن أفتار الكمبيوتر */
+    background: rgba(245, 158, 11, 0.2); 
+    border: 1px solid #f59e0b;
     color: #fff;
-    box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
-    max-width: 380px;
-}
-
-.draw-icon {
-    font-size: 40px;
-    margin-bottom: 8px;
-}
-
-.draw-card h3 { color: #f59e0b; margin-bottom: 6px; }
-.draw-card p { font-size: 13px; opacity: 0.8; margin-bottom: 16px; }
-
-/* أزرار النوافذ */
-.btn-primary, .btn-secondary, .btn-draw {
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: bold;
+    padding: 6px 14px;
     border-radius: 8px;
-    border: none;
+    font-size: 12px;
+    font-weight: bold;
     cursor: pointer;
-    width: 100%;
-    margin-top: 8px;
-    transition: transform 0.1s;
+    z-index: 100;
+    transition: 0.2s;
 }
 
-.btn-primary, .btn-draw { background: #f59e0b; color: #000; }
-.btn-secondary { background: #3b82f6; color: #fff; }
-.btn-primary:active, .btn-draw:active { transform: scale(0.96); } /* تأثير ضغطة الزر */
-
-.hidden { display: none !important; } /* كلاس لإخفاء العناصر */
+.restart-btn:active {
+    transform: scale(0.95);
+    background: #f59e0b;
+    color: #000;
+}
 
 /* =========================================================
-   4. شارة اللاعبين (الصور الشخصية والعدادات)
+   4. شارة اللاعبين 
    ========================================================= */
 .avatar-badge {
     position: absolute;
@@ -116,9 +88,10 @@ body {
     z-index: 10;
 }
 
-.top-left { top: 15px; left: 25px; }
-.top-right { top: 15px; right: 25px; }
-.bottom-left { bottom: 20px; left: 25px; }
+/* تثبيت أماكن الأفتار بوضوح في الزوايا */
+.top-left { top: 20px; left: 30px; }
+.top-right { top: 20px; right: 30px; }
+.bottom-left { bottom: 25px; left: 30px; }
 
 .avatar-circle {
     width: 36px;
@@ -132,7 +105,7 @@ body {
     border: 1px solid #f59e0b;
 }
 
-.user-avatar { border-color: #10b981; } /* لون مختلف للاعب الحقيقي */
+.user-avatar { border-color: #10b981; }
 
 .badge-info {
     display: flex;
@@ -157,7 +130,7 @@ body {
 }
 
 /* =========================================================
-   5. أيقونة السوق وشريط حالة الدور
+   5. أيقونة السوق وشريط الدور
    ========================================================= */
 .market-icon-box {
     position: absolute;
@@ -179,7 +152,7 @@ body {
 
 .turn-status {
     position: absolute;
-    top: 15px;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0,0,0,0.6);
@@ -191,54 +164,44 @@ body {
     border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
-.restart-btn {
-    position: absolute;
-    top: 15px;
-    right: 25px;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    cursor: pointer;
-}
-
 /* =========================================================
-   6. السلسلة على الطاولة الوسطى وأحجار اللاعب بالأسفل
+   6. السلسلة على الطاولة (تم تقليل المسافة)
    ========================================================= */
 .domino-chain {
     display: flex;
     align-items: center;
-    justify-content: center; /* توسيط الأحجار */
-    gap: 4px;
-    width: 75%;
-    height: 50%;
-    overflow-x: auto; /* السماح بالتمرير الأفقي إذا كثرت الأحجار */
+    justify-content: center;
+    gap: 1px; /* تعديل: تقليل المسافة لتصبح الأحجار متقاربة جداً */
+    width: 85%;
+    height: 45%;
+    overflow-x: auto;
     padding: 10px;
+    margin-top: -20px; /* تعديل: رفع السلسلة للأعلى قليلاً لتوازن الطاولة */
 }
 
 .empty-msg { color: rgba(255, 255, 255, 0.5); font-size: 13px; }
 
-/* حاوية أحجار اللاعب المخصصة لمنع التداخل */
+/* =========================================================
+   7. أحجار اللاعب (تم رفعها للأعلى)
+   ========================================================= */
 .player-hand-container {
     position: absolute;
-    bottom: 10px; /* تثبيت في أسفل الشاشة */
+    bottom: 35px; /* تعديل: زيادة المسافة من الأسفل لرفع الأحجار وظهورها بوضوح */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    flex-wrap: wrap; /* السماح بنزول الأحجار لسطر جديد إذا زادت */
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 5px;
+    gap: 6px;
     z-index: 100;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.35);
     padding: 10px 15px;
     border-radius: 12px;
-    max-width: 90%;
+    max-width: 80%;
 }
 
 /* =========================================================
-   7. تصميم حجر الدومينو والنقاط الداخلية
+   8. تصميم حجر الدومينو الداخلي والنقاط
    ========================================================= */
 .domino-piece {
     width: 32px;
@@ -257,7 +220,6 @@ body {
     transition: transform 0.15s;
 }
 
-/* الأحجار الأفقية (التي توضع على الطاولة) */
 .domino-piece.horizontal {
     width: 64px;
     height: 32px;
@@ -265,18 +227,15 @@ body {
     padding: 0 2px;
 }
 
-/* إضاءة الحجر القابل للعب في يدك */
 .domino-piece.playable {
     border: 2px solid #f59e0b;
     box-shadow: 0 0 12px #f59e0b;
-    transform: translateY(-8px); /* رفع الحجر قليلاً لأعلى */
+    transform: translateY(-8px);
 }
 
-/* الخط الفاصل في منتصف الحجر */
 .divider { width: 100%; height: 1.5px; background: #111; }
 .domino-piece.horizontal .divider { width: 1.5px; height: 100%; }
 
-/* تقسيم الحجر ونقاطه */
 .domino-half {
     width: 100%;
     height: 28px;
@@ -298,10 +257,59 @@ body {
     align-self: center;
 }
 
-/* توزيع النقاط بناءً على الرقم */
 .p-1 .dot-1 { grid-area: 2 / 2; }
 .p-2 .dot-1 { grid-area: 1 / 1; } .p-2 .dot-2 { grid-area: 3 / 3; }
 .p-3 .dot-1 { grid-area: 1 / 1; } .p-3 .dot-2 { grid-area: 2 / 2; } .p-3 .dot-3 { grid-area: 3 / 3; }
 .p-4 .dot-1 { grid-area: 1 / 1; } .p-4 .dot-2 { grid-area: 1 / 3; } .p-4 .dot-3 { grid-area: 3 / 1; } .p-4 .dot-4 { grid-area: 3 / 3; }
 .p-5 .dot-1 { grid-area: 1 / 1; } .p-5 .dot-2 { grid-area: 1 / 3; } .p-5 .dot-3 { grid-area: 2 / 2; } .p-5 .dot-4 { grid-area: 3 / 1; } .p-5 .dot-5 { grid-area: 3 / 3; }
 .p-6 .dot-1 { grid-area: 1 / 1; } .p-6 .dot-2 { grid-area: 1 / 3; } .p-6 .dot-3 { grid-area: 2 / 1; } .p-6 .dot-4 { grid-area: 2 / 3; } .p-6 .dot-5 { grid-area: 3 / 1; } .p-6 .dot-6 { grid-area: 3 / 3; }
+
+/* =========================================================
+   9. النوافذ المنبثقة الشفافة
+   ========================================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-card, .draw-card {
+    background: rgba(15, 23, 42, 0.95);
+    border: 2px solid #f59e0b;
+    border-radius: 16px;
+    padding: 20px 30px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.3);
+    max-width: 380px;
+}
+
+.draw-icon { font-size: 40px; margin-bottom: 8px; }
+.draw-card h3 { color: #f59e0b; margin-bottom: 6px; }
+.draw-card p { font-size: 13px; opacity: 0.8; margin-bottom: 16px; }
+
+.btn-primary, .btn-secondary, .btn-draw {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: transform 0.1s;
+}
+
+.btn-primary, .btn-draw { background: #f59e0b; color: #000; }
+.btn-secondary { background: #3b82f6; color: #fff; }
+.btn-primary:active, .btn-draw:active { transform: scale(0.96); }
+
+.hidden { display: none !important; }
