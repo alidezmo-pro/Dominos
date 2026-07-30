@@ -4,7 +4,7 @@ body {
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
-    padding: 10px;
+    padding: 8px;
     margin: 0;
 }
 
@@ -13,76 +13,86 @@ body {
     background-color: #ffc107;
     color: #000;
     border: none;
-    padding: 12px 24px;
-    font-size: 18px;
+    padding: 10px 20px;
+    font-size: 16px;
     font-weight: bold;
-    border-radius: 25px;
+    border-radius: 20px;
     cursor: pointer;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 #start-btn:active {
-    transform: scale(0.98);
+    transform: scale(0.95);
 }
 
 /* عناوين الأقسام */
 .section-title {
-    font-size: 16px;
-    margin: 10px 0 5px 0;
+    font-size: 14px;
+    margin: 8px 0 4px 0;
     font-weight: bold;
 }
 
-/* حاوية الأحجار في يد اللاعب والمنافس */
+/* حاوية الأحجار في يد اللاعب والمنافس (تصفييف في خط واحد) */
 .hand-container {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    min-height: 110px;
+    align-items: center;
+    flex-wrap: nowrap; /* إجبار جميع الأحجار على البقاء في سطر واحد */
+    gap: 4px;          /* مسافة صغيرة بين الأحجار لكي تتسع الشاشة */
+    min-height: 85px;
     background-color: rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    border-radius: 10px;
+    padding: 6px;
+    border-radius: 8px;
+    overflow-x: auto;  /* إضافة شريط تمرير أفقي ممتاز في حال الشاشات الصغيرة جداً */
 }
 
 /* منطقة السوق */
 .boneyard-box {
     background-color: #1b4d27;
     display: inline-block;
-    padding: 6px 16px;
-    border-radius: 15px;
-    font-size: 14px;
-    margin: 10px 0;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin: 6px 0;
     border: 1px solid #ffc107;
 }
 
-/* منطقة الطاولة */
+/* منطقة طاولة اللعب الوسطى */
 .board-container {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
-    min-height: 120px;
+    gap: 6px;
+    min-height: 95px;
     background-color: rgba(0, 0, 0, 0.3);
     border: 2px dashed rgba(255,255,255,0.3);
     border-radius: 10px;
-    padding: 10px;
+    padding: 8px;
 }
 
-/* تصميم حجر الدومينو */
+/* تصميم حجر الدومينو المصغر (38px × 76px) */
 .domino-piece {
-    width: 50px;
-    height: 100px;
+    width: 38px;
+    height: 76px;
     background-color: #fffff0;
-    border: 2px solid #000;
-    border-radius: 6px;
+    border: 1.5px solid #000;
+    border-radius: 5px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 3px 0;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+    padding: 2px 0;
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
     box-sizing: border-box;
+    cursor: pointer; /* إظهار مؤشر اليد عند التأشير على الحجر */
+    transition: transform 0.1s ease;
+    flex-shrink: 0;  /* عدم السماح بانكماش الحجر */
+}
+
+/* تأثير عند الضغط على الحجر */
+.domino-piece:active {
+    transform: scale(0.92);
 }
 
 /* تصميم الحجر المخفي (ظهر حجر الكمبيوتر) */
@@ -90,42 +100,43 @@ body {
     background: repeating-linear-gradient(
         45deg,
         #8b0000,
-        #8b0000 10px,
-        #a52a2a 10px,
-        #a52a2a 20px
+        #8b0000 8px,
+        #a52a2a 8px,
+        #a52a2a 16px
     );
-    border: 2px solid #fff;
+    border: 1.5px solid #fff;
+    cursor: default;
 }
 
-/* الخط الفاصل */
+/* الخط الفاصل في المنتصف */
 .divider {
     width: 100%;
-    height: 2px;
+    height: 1.5px;
     background-color: black;
 }
 
-/* نصف الحجر: شبكة 3x3 لوضع النقاط */
+/* نصف الحجر المصغر */
 .domino-half {
     width: 100%;
-    height: 44px;
+    height: 33px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    padding: 2px;
+    padding: 1px;
     box-sizing: border-box;
 }
 
-/* تصميم النقطة */
+/* تصميم النقطة السوداء المصغرة */
 .dot {
     background-color: #111;
     border-radius: 50%;
-    width: 7px;
-    height: 7px;
+    width: 5px;
+    height: 5px;
     justify-self: center;
     align-self: center;
 }
 
-/* توزيع مواضع النقاط داخل شبكة 3x3 */
+/* توزيع النقاط داخل الشبكة */
 .p-1 .dot-1 { grid-area: 2 / 2; }
 
 .p-2 .dot-1 { grid-area: 1 / 1; }
