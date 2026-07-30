@@ -1,10 +1,11 @@
-// المتغيرات الأساسية لحفظ حالة اللعبة
-let fullDeck = [];      // الطقم الكامل (28 حجراً)
-let playerHand = [];    // أحجار اللاعب (7 أحجار)
-let computerHand = [];  // أحجار الكمبيوتر (7 أحجار)
-let boneyard = [];      // أحجار السوق (14 حجراً)
+// المتغيرات الأساسية للعبة
+let fullDeck = [];      // طقم الـ 28 حجراً
+let playerHand = [];    // أحجار اللاعب
+let computerHand = [];  // أحجار الكمبيوتر
+let boneyard = [];      // أحجار السوق
+let boardTiles = [];    // الأحجار الملعوبة على الطاولة
 
-// 1. دالة إنشاء الـ 28 حجراً
+// 1. إنشاء الأحجار الـ 28
 function createFullDeck() {
     fullDeck = [];
     for (let top = 0; top <= 6; top++) {
@@ -14,16 +15,15 @@ function createFullDeck() {
     }
 }
 
-// 2. دالة خلط الأحجار عشوائياً (Fisher-Yates Shuffle)
+// 2. خلط الأحجار عشوائياً
 function shuffleDeck(deck) {
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        // تبديل الأماكن عشوائياً
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
 }
 
-// 3. دالة رسم النقاط HTML
+// 3. إنشاء عناصر النقاط HTML
 function createDotsHTML(number) {
     if (number === 0) return `<div class="domino-half p-0"></div>`;
     let dotsHTML = '';
@@ -33,34 +33,42 @@ function createDotsHTML(number) {
     return `<div class="domino-half p-${number}">${dotsHTML}</div>`;
 }
 
-// 4. دالة بدء لعبة جديدة وتوزيع الأحجار
+// 4. دالة لبدء اللعبة وتوزيع 7 كروت لكل طرف
 function startGame() {
-    // إنشاء الكروت ثم خلطها
     createFullDeck();
     shuffleDeck(fullDeck);
 
-    // توزيع الأحجار:
-    // اقتطاع أول 7 كروت للاعب
     playerHand = fullDeck.splice(0, 7);
-    // اقتطاع الـ 7 كروت التالية للكمبيوتر
     computerHand = fullDeck.splice(0, 7);
-    // الـ 14 كارت المتبقية تذهب للسوق
     boneyard = fullDeck;
+    boardTiles = []; // تفريغ الطاولة
 
-    // تنظيف الطاولة وعرض الأحجار الموزعة
     renderGame();
 }
 
-// 5. دالة عرض وتحديث الشاشة (UI)
+// 5. دالة لعب حجر من يد اللاعب وإلقائه على الطاولة
+function playTile(index) {
+    // اقتطاع الحجر المختار من يد اللاعب
+    let tileToPlay = playerHand.splice(index, 1)[0];
+    
+    // إضافة الحجر إلى قائمة الأحجار على الطاولة
+    boardTiles.push(tileToPlay);
+    
+    // إعادة رسم الشاشة لإظهار التعديلات فوراً
+    renderGame();
+}
+
+// 6. عرض وتحديث الواجهة (UI)
 function renderGame() {
-    // أ. عرض أحجار اللاعب (مكشوفة بالنقاط)
+    // أ. عرض أحجار اللاعب وتفعيل حدث الضغط (onclick)
     let playerArea = document.getElementById("player-hand");
     playerArea.innerHTML = "";
-    playerHand.forEach(piece => {
+    playerHand.forEach((piece, index) => {
         let topHalf = createDotsHTML(piece.top);
         let bottomHalf = createDotsHTML(piece.bottom);
+        // إضافة onclick="playTile(index)" لتمكين الضغط
         playerArea.innerHTML += `
-            <div class="domino-piece">
+            <div class="domino-piece" onclick="playTile(${index})">
                 ${topHalf}
                 <div class="divider"></div>
                 ${bottomHalf}
@@ -79,9 +87,26 @@ function renderGame() {
     // ج. تحديث عدد أحجار السوق
     document.getElementById("boneyard-info").innerText = `السوق (السحبة): ${boneyard.length} حجر`;
 
-    // د. تفريغ طاولة اللعب الوسطى في البداية
-    document.getElementById("game-board").innerHTML = `<p style="opacity:0.6;">الطاولة فارغة، اضغط على أحد أحجارك لتلعب</p>`;
+    // د. عرض الأحجار الملعوبة على الطاولة الوسطى
+    let boardArea = document.getElementById("game-board");
+    boardArea.innerHTML = "";
+    
+    if (boardTiles.length === 0) {
+        boardArea.innerHTML = `<p style="opacity:0.6; font-size: 13px;">الطاولة فارغة، اضغط على أحد أحجارك لتلعب</p>`;
+    } else {
+        boardTiles.forEach(piece => {
+            let topHalf = createDotsHTML(piece.top);
+            let bottomHalf = createDotsHTML(piece.bottom);
+            boardArea.innerHTML += `
+                <div class="domino-piece" style="cursor: default;">
+                    ${topHalf}
+                    <div class="divider"></div>
+                    ${bottomHalf}
+                </div>
+            `;
+        });
+    }
 }
 
-// تشغيل اللعبة تلقائياً عند تحميل الصفحة لأول مرة
+// تشغيل اللعبة عند التحميل
 startGame();
