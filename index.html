@@ -2,89 +2,94 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- إعدادات الشاشة لتتناسب مع الأجهزة المحمولة وتثبيت الرؤية -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- وسوم منع المتصفح من حفظ النسخ القديمة (Cache-Control) -->
+    <!-- وسوم منع حفظ النسخ القديمة -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <title>لعبة الدومينو المصرية البريميوم</title>
-    <!-- ربط ملف التصميم المحدث بنسخة الإصدار الرابع -->
-    <link rel="stylesheet" href="style.css?v=4.0">
+    <title>لعبة الدومينو المصرية - البريميوم</title>
+    <!-- تحديث رقم الإصدار إلى v=5.0 لتطبيق التغييرات فوراً -->
+    <link rel="stylesheet" href="style.css?v=5.0">
 </head>
 <body>
 
-    <!-- تنبيه لتدوير الهاتف إلى الوضع الأفقي للحصول على أفضل تجربة -->
-    <div id="landscape-warning" class="landscape-hint">
-        <p>📱 للحصول على تجربة بريميوم احترافية، يُفضل تدوير الهاتف للشاشة الأفقية (Landscape)</p>
-    </div>
-
-    <!-- نافذة اختيار نظام اللعب عند البداية (Modal) -->
+    <!-- نافذة اختيار نظام اللعب (Modal) -->
     <div id="mode-modal" class="modal-overlay">
         <div class="modal-card">
-            <h2>👑 لعبة الدومينو المصرية البريميوم</h2>
-            <p>اختر نظام اللعب الذي تفضله اليوم:</p>
+            <h2>🎲 اختر نظام اللعب</h2>
+            <p>فضلاً اختر عدد المنافسين للبدء:</p>
             <div class="mode-buttons">
-                <button class="btn-primary" onclick="selectGameMode(2)">🎮 لاعب ضد الكمبيوتر (لاعبين)</button>
-                <button class="btn-secondary" onclick="selectGameMode(3)">🔥 ثلاثة لاعبين (أنت ضد 2 كمبيوتر)</button>
+                <button class="btn-primary" onclick="selectGameMode(2)">👤 لاعب ضد الكمبيوتر (لاعبين)</button>
+                <button class="btn-secondary" onclick="selectGameMode(3)">👥 ثلاثة لاعبين (أنت ضد 2 كمبيوتر)</button>
             </div>
         </div>
     </div>
 
-    <!-- الحاوية الرئيسية للعبة (الطاولة الملكية) -->
-    <div id="game-container" class="royal-blue-theme">
-        
-        <!-- الشريط العلوي للإحصائيات وأزرار التحكم -->
-        <header class="game-header">
-            <div class="header-info">
-                <span class="logo">🎲 دومينو بريميوم</span>
-                <span id="boneyard-info" class="boneyard-tag">السوق 📦: 14</span>
-            </div>
-            <div id="turn-display" class="turn-banner">في انتظار اختيار النظام...</div>
-            <button class="btn-restart" onclick="showModeModal()">🔄 لعبة جديدة</button>
-        </header>
-
-        <!-- منطقة المنافس الأول (الكمبيوتر 1 - في الأعلى) -->
-        <div id="comp1-container" class="opponent-slot top-opponent">
-            <div class="player-badge">
-                <span>الكمبيوتر 1 🤖</span>
-                <span id="comp1-count" class="count-badge">7 أحجار</span>
-            </div>
-            <div id="comp1-hand" class="hand-row"></div>
+    <!-- نافذة سحب الأحجار الشفافة عند انسداد اللعب -->
+    <div id="draw-modal" class="modal-overlay hidden">
+        <div class="draw-card">
+            <div class="draw-icon">📦</div>
+            <h3>لا يوجد لديك حجر مناسب!</h3>
+            <p>يجب عليك السحب من السوق للاستمرار في اللعب.</p>
+            <button class="btn-draw" onclick="drawFromBoneyard()">سحب حجر من السوق</button>
         </div>
+    </div>
 
-        <!-- منطقة المنافس الثاني (الكمبيوتر 2 - على الجانب الأيسر لـ 3 لاعبين) -->
-        <div id="comp2-container" class="opponent-slot left-opponent hidden">
-            <div class="player-badge">
-                <span>الكمبيوتر 2 🤖</span>
-                <span id="comp2-count" class="count-badge">7 أحجار</span>
+    <!-- الطاولة البيضاوية الرئيسية (Poker Table Style) -->
+    <div class="main-screen">
+        <div class="poker-table">
+            
+            <!-- منافس 1 (أعلى اليسار) -->
+            <div id="comp1-badge" class="avatar-badge top-left">
+                <div class="avatar-circle">🤖</div>
+                <div class="badge-info">
+                    <span class="player-name">الكمبيوتر 1</span>
+                    <span id="comp1-count" class="card-pill">🂠 7</span>
+                </div>
             </div>
-            <div id="comp2-hand" class="hand-column"></div>
-        </div>
 
-        <!-- طاولة اللعب الوسطى المخصصة للرصة الطبيعية للأحجار -->
-        <main id="table-board" class="table-area">
-            <!-- سيتم رص الأحجار الملعوبة هنا أفقيًا بأسلوب الدومينو الحقيقي عبر JavaScript -->
+            <!-- منافس 2 (أعلى اليمين - لثلاثة لاعبين) -->
+            <div id="comp2-badge" class="avatar-badge top-right hidden">
+                <div class="avatar-circle">🤖</div>
+                <div class="badge-info">
+                    <span class="player-name">الكمبيوتر 2</span>
+                    <span id="comp2-count" class="card-pill">🂠 7</span>
+                </div>
+            </div>
+
+            <!-- أيقونة السوق الجانبية الشفافة -->
+            <div class="market-icon-box">
+                <div class="market-stack">🂠</div>
+                <span id="boneyard-count" class="market-count">14</span>
+            </div>
+
+            <!-- شريط حالة الدور الحالي -->
+            <div id="turn-display" class="turn-status">دورك للعب الآن 🎯</div>
+
+            <!-- زر لعبة جديدة -->
+            <button class="restart-btn" onclick="showModeModal()">🔄 لعبة جديدة</button>
+
+            <!-- طاولة اللعب الوسطى لرص السلسلة -->
             <div id="board-chain" class="domino-chain">
-                <p class="empty-msg">اختر حجراً مناسباً من يدك لبدء السلسلة على الطاولة</p>
+                <p class="empty-msg">الطاولة فارغة، اختر حجراً من يدك للبدء</p>
             </div>
-        </main>
 
-        <!-- منطقة اللاعب الرئيسي (أنت - في الأسفل) -->
-        <footer id="player-container" class="player-slot bottom-player">
-            <div class="player-badge user-badge">
-                <span>أنت (اللاعب) 👤</span>
-                <span id="player-status-tag" class="status-tag">دورك</span>
+            <!-- صورتك الشخصية (أسفل اليسار) -->
+            <div class="avatar-badge bottom-left">
+                <div class="avatar-circle user-avatar">🧔</div>
+                <div class="badge-info">
+                    <span class="player-name">أنت (اللاعب)</span>
+                </div>
             </div>
-            <!-- يد اللاعب التي تحتوي على أحجاره المكشوفة -->
-            <div id="player-hand" class="hand-row user-hand-row"></div>
-        </footer>
 
+            <!-- أحجار اللاعب المترصصة في أسفل المنتصف -->
+            <div id="player-hand" class="player-hand-container"></div>
+
+        </div>
     </div>
 
-    <!-- ربط ملف البرمجة بنسخة الإصدار الرابع -->
-    <script src="script.js?v=4.0"></script>
+    <script src="script.js?v=5.0"></script>
 </body>
 </html>
