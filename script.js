@@ -1,29 +1,44 @@
-// 1. إنشاء مصفوفة (Array) فارغة لتخزين الـ 28 حجراً
+// 1. إنشاء مصفوفة تخزين أحجار الدومينو الـ 28
 let dominoDeck = [];
 
-// 2. استخدام حلقة تكرار مضاعفة (Nested Loops) لإنشاء الأحجار بدون تكرار
-// الرقم العلوي يبدأ من 0 إلى 6
+// 2. حلقة تكرار مضاعفة لبناء كل الأحجار من (0-0) حتى (6-6)
 for (let top = 0; top <= 6; top++) {
-    // الرقم السفلي يبدأ من قيمة الرقم العلوي لضمان عدم تكرار الأحجار (مثل 0-1 و 1-0)
     for (let bottom = top; bottom <= 6; bottom++) {
-        // إضافة الحجر إلى القائمة ككائن (Object) يحتوي على الرقمين
         dominoDeck.push({ top: top, bottom: bottom });
     }
 }
 
-// 3. تحديد عنصر الطاولة من صفحة HTML
+// 3. الوصول إلى طاولة اللعب في الصفحة
 let board = document.getElementById("game-board");
-
-// 4. تفريغ الطاولة من أي محتوى سابق
 board.innerHTML = "";
 
-// 5. تكرار عرض كل حجر داخل المصفوفة على شاشة الطاولة
+// 4. دالة تحويل الرقم البرمجي إلى عناصر HTML تمثل النقاط
+function createDotsHTML(number) {
+    // إذا كان الرقم 0 (بلاطة بيضاء) نعيد شبكة فارغة
+    if (number === 0) {
+        return `<div class="domino-half p-0"></div>`;
+    }
+
+    // بناء النقاط بناءً على الرقم
+    let dotsHTML = '';
+    for (let i = 1; i <= number; i++) {
+        dotsHTML += `<div class="dot dot-${i}"></div>`;
+    }
+
+    // إرجاع النصف المكتمل بالنواحي الجمالية والنقاط
+    return `<div class="domino-half p-${number}">${dotsHTML}</div>`;
+}
+
+// 5. طباعة كل حجر بنقاطه على شاشة الطاولة
 dominoDeck.forEach(piece => {
+    let topHalf = createDotsHTML(piece.top);
+    let bottomHalf = createDotsHTML(piece.bottom);
+
     board.innerHTML += `
         <div class="domino-piece">
-            <div>${piece.top}</div>
+            ${topHalf}
             <div class="divider"></div>
-            <div>${piece.bottom}</div>
+            ${bottomHalf}
         </div>
     `;
 });
