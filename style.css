@@ -1,28 +1,38 @@
 /* تصميم طاولة اللعب */
 body {
-    background-color: #2c7a3f;
+    background-color: #2c7a3f; /* لون أخضر يشبه الطاولة الحقيقية */
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
-    padding: 50px;
+    padding: 15px;
+    margin: 0;
+}
+
+/* حاوية الأحجار على الطاولة */
+#game-board {
+    display: flex;
+    flex-wrap: wrap; /* تسمح بتتابع الأحجار ناعماً والتفافها للسطر التالي */
+    justify-content: center;
+    gap: 12px; /* مسافة فاصلة بين كل حجر وآخر */
+    margin-top: 20px;
 }
 
 /* تصميم حجر الدومينو */
 .domino-piece {
-    width: 60px;
-    height: 120px;
-    background-color: #fffff0;
+    width: 50px;
+    height: 100px;
+    background-color: #fffff0; /* لون أبيض عاجي */
     color: black;
     border: 2px solid #000;
     border-radius: 8px;
-    display: inline-flex;
+    display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: bold;
-    padding: 10px 0;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    padding: 6px 0;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
 }
 
 /* الخط الفاصل في منتصف الحجر */
