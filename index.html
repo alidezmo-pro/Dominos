@@ -2,21 +2,40 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- ضبط أبعاد الصفحة لتعمل بشكل ممتازة على جميع الهواتف -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- وسوم لمنع المتصفح من حفظ النسخ القديمة (Cache-Control) -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <title>لعبة الدومينو المصرية</title>
-    <!-- ربط ملف التصميم -->
-    <link rel="stylesheet" href="style.css">
+    <!-- لاحظ إضافة ?v=2.0 لمنع التخزين المؤقت -->
+    <link rel="stylesheet" href="style.css?v=2.0">
 </head>
 <body>
 
     <h1>طاولة الدومينو المصرية</h1>
-    <p>طقم الأحجار الكامل (28 حجراً بنقاط حقيقية):</p>
+    
+    <!-- زر بدء اللعبة والتوزيع -->
+    <button id="start-btn" onclick="startGame()">🎲 بدء لعبة جديدة وتوزيع الأحجار</button>
 
-    <!-- طاولة اللعب التي ستظهر بها الأحجار -->
-    <div id="game-board"></div>
+    <!-- منطقة أحجار الكمبيوتر (المنافس) -->
+    <div class="section-title">أحجار المنافس (الكمبيوتر) <span id="computer-count"></span></div>
+    <div id="computer-hand" class="hand-container"></div>
 
-    <!-- ربط ملف البرمجة -->
-    <script src="script.js"></script>
+    <!-- منطقة معلومات السوق / السحبة -->
+    <div id="boneyard-info" class="boneyard-box">السوق (السحبة): 14 حجر</div>
+
+    <!-- منطقة طاولة اللعب الرئيسية -->
+    <div class="section-title">طاولة اللعب</div>
+    <div id="game-board" class="board-container"></div>
+
+    <!-- منطقة أحجار اللاعب -->
+    <div class="section-title">أحجارك (اللاعب)</div>
+    <div id="player-hand" class="hand-container"></div>
+
+    <!-- لاحظ إضافة ?v=2.0 لمنع التخزين المؤقت -->
+    <script src="script.js?v=2.0"></script>
 </body>
 </html>
