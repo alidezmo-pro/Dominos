@@ -4,18 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- وسوم منع حفظ النسخ القديمة -->
+    <!-- وسوم منع حفظ النسخ القديمة (الكاش) لضمان ظهور التحديثات فوراً -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
     <title>لعبة الدومينو المصرية - البريميوم</title>
-    <!-- تحديث رقم الإصدار إلى v=5.0 لتطبيق التغييرات فوراً -->
-    <link rel="stylesheet" href="style.css?v=5.0">
+    
+    <!-- ربط ملف التصميم مع تحديث رقم الإصدار إلى v=6.0 لتخطي الكاش -->
+    <link rel="stylesheet" href="style.css?v=6.0">
 </head>
 <body>
 
-    <!-- نافذة اختيار نظام اللعب (Modal) -->
+    <!-- ========================================== -->
+    <!-- 1. نافذة اختيار نظام اللعب (Modal)         -->
+    <!-- ========================================== -->
     <div id="mode-modal" class="modal-overlay">
         <div class="modal-card">
             <h2>🎲 اختر نظام اللعب</h2>
@@ -27,7 +30,9 @@
         </div>
     </div>
 
-    <!-- نافذة سحب الأحجار الشفافة عند انسداد اللعب -->
+    <!-- ========================================== -->
+    <!-- 2. نافذة سحب الأحجار الشفافة عند انسداد اللعب-->
+    <!-- ========================================== -->
     <div id="draw-modal" class="modal-overlay hidden">
         <div class="draw-card">
             <div class="draw-icon">📦</div>
@@ -37,7 +42,9 @@
         </div>
     </div>
 
-    <!-- الطاولة البيضاوية الرئيسية (Poker Table Style) -->
+    <!-- ========================================== -->
+    <!-- 3. الشاشة الرئيسية والطاولة البيضاوية      -->
+    <!-- ========================================== -->
     <div class="main-screen">
         <div class="poker-table">
             
@@ -50,7 +57,7 @@
                 </div>
             </div>
 
-            <!-- منافس 2 (أعلى اليمين - لثلاثة لاعبين) -->
+            <!-- منافس 2 (أعلى اليمين - يظهر فقط في نظام الـ 3 لاعبين) -->
             <div id="comp2-badge" class="avatar-badge top-right hidden">
                 <div class="avatar-circle">🤖</div>
                 <div class="badge-info">
@@ -59,7 +66,7 @@
                 </div>
             </div>
 
-            <!-- أيقونة السوق الجانبية الشفافة -->
+            <!-- أيقونة السوق الجانبية المدمجة -->
             <div class="market-icon-box">
                 <div class="market-stack">🂠</div>
                 <span id="boneyard-count" class="market-count">14</span>
@@ -68,7 +75,7 @@
             <!-- شريط حالة الدور الحالي -->
             <div id="turn-display" class="turn-status">دورك للعب الآن 🎯</div>
 
-            <!-- زر لعبة جديدة -->
+            <!-- زر بدء لعبة جديدة -->
             <button class="restart-btn" onclick="showModeModal()">🔄 لعبة جديدة</button>
 
             <!-- طاولة اللعب الوسطى لرص السلسلة -->
@@ -76,7 +83,7 @@
                 <p class="empty-msg">الطاولة فارغة، اختر حجراً من يدك للبدء</p>
             </div>
 
-            <!-- صورتك الشخصية (أسفل اليسار) -->
+            <!-- صورتك الشخصية كلاعب (أسفل اليسار) -->
             <div class="avatar-badge bottom-left">
                 <div class="avatar-circle user-avatar">🧔</div>
                 <div class="badge-info">
@@ -84,12 +91,13 @@
                 </div>
             </div>
 
-            <!-- أحجار اللاعب المترصصة في أسفل المنتصف -->
+            <!-- الحاوية المخصصة لأحجارك (في أسفل الشاشة) -->
             <div id="player-hand" class="player-hand-container"></div>
 
         </div>
     </div>
 
-    <script src="script.js?v=5.0"></script>
+    <!-- ربط ملف البرمجة مع تحديث رقم الإصدار إلى v=6.0 لتخطي الكاش -->
+    <script src="script.js?v=6.0"></script>
 </body>
 </html>
