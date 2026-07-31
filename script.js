@@ -1,10 +1,7 @@
 /* ==========================================================
- * script.js - محرك اللعب المطور (مع التايمر، النيون، وانحناء S المزدوج)
+ * script.js - محرك اللعب المطور (خوارزمية مراكز المربعات - دقة 100%)
  * ========================================================== */
 
-/* ----------------------------------------------------------
- * 1. المتغيرات العامة للعبة
- * ---------------------------------------------------------- */
 let fullSet = [];          
 let boneyard = [];         
 let playerHand = [];       
@@ -19,11 +16,8 @@ let selectedTileIndex = null;
 let leftEndValue = null;   
 let rightEndValue = null;  
 let isGameOver = false;
-
-// متغير جديد لتتبع ورقة المركز (نقطة الانطلاق)[span_0](start_span)[span_0](end_span)
 let centerTileIndex = 0;
 
-// متغيرات التايمر[span_1](start_span)[span_1](end_span)
 let turnTimerInterval;
 let timeLeft = 25;
 
@@ -37,7 +31,7 @@ window.onload = function() {
 };
 
 /* ----------------------------------------------------------
- * 2. إعداد وبدء اللعبة
+ * إعداد اللعبة والتايمر
  * ---------------------------------------------------------- */
 function showStartModal() {
     document.getElementById("start-modal")?.classList.remove("hidden");
@@ -71,7 +65,7 @@ function startGame(mode) {
     isGameOver = false;
     selectedTileIndex = null;
     boardChain = [];
-    centerTileIndex = 0; // تصفير المركز[span_2](start_span)[span_2](end_span)
+    centerTileIndex = 0;
     leftEndValue = null;
     rightEndValue = null;
     clearInterval(turnTimerInterval);
@@ -86,7 +80,6 @@ function startGame(mode) {
     }
 
     fullSet = shuffle(createDominoSet());
-
     playerHand = fullSet.splice(0, 7);
     comp1Hand = fullSet.splice(0, 7);
     comp2Hand = (gameMode === 3) ? fullSet.splice(0, 7) : [];
@@ -109,9 +102,6 @@ function determineFirstTurn() {
     currentTurn = 'player';
 }
 
-/* ----------------------------------------------------------
- * 3. نظام التايمر وإضاءة النيون
- * ---------------------------------------------------------- */
 function startTimer() {
     clearInterval(turnTimerInterval);
     timeLeft = 25;
@@ -142,9 +132,7 @@ function handleTimeOut() {
         let playableIndices = [];
         playerHand.forEach((tile, idx) => {
             let ends = getPlayableEnds(tile);
-            if (ends.length > 0 || boardChain.length === 0) {
-                playableIndices.push({ index: idx, ends: ends });
-            }
+            if (ends.length > 0 || boardChain.length === 0) playableIndices.push({ index: idx, ends: ends });
         });
 
         if (playableIndices.length > 0) {
@@ -170,19 +158,15 @@ function updateTurnStatus() {
     document.getElementById("comp1-avatar")?.classList.remove("active-neon-comp");
     document.getElementById("comp2-avatar")?.classList.remove("active-neon-comp");
 
-    if (currentTurn === 'player') {
-        document.getElementById("player-avatar")?.classList.add("active-neon-player");
-    } else if (currentTurn === 'comp1') {
-        document.getElementById("comp1-avatar")?.classList.add("active-neon-comp");
-    } else if (currentTurn === 'comp2') {
-        document.getElementById("comp2-avatar")?.classList.add("active-neon-comp");
-    }
+    if (currentTurn === 'player') document.getElementById("player-avatar")?.classList.add("active-neon-player");
+    else if (currentTurn === 'comp1') document.getElementById("comp1-avatar")?.classList.add("active-neon-comp");
+    else if (currentTurn === 'comp2') document.getElementById("comp2-avatar")?.classList.add("active-neon-comp");
 
     startTimer();
 }
 
 /* ----------------------------------------------------------
- * 4. منطق اللعب للأطراف وحركة اللاعب
+ * منطق اللعب
  * ---------------------------------------------------------- */
 function getPlayableEnds(tile) {
     if (boardChain.length === 0) return ['left', 'right'];
@@ -194,7 +178,6 @@ function getPlayableEnds(tile) {
 
 function onPlayerTileClick(index) {
     if (currentTurn !== 'player' || isGameOver) return;
-
     let tile = playerHand[index];
     let ends = getPlayableEnds(tile);
 
@@ -222,17 +205,14 @@ function playPlayerTile(index, end) {
     addTileToBoard(tile, end);
     selectedTileIndex = null;
 
-    if (playerHand.length === 0) {
-        endGame("🎉 مبروك! لقد فزت باللعبة!");
-        return;
-    }
+    if (playerHand.length === 0) { endGame("🎉 مبروك! لقد فزت باللعبة!"); return; }
     nextTurn();
 }
 
 function addTileToBoard(tile, end) {
     if (boardChain.length === 0) {
         boardChain.push({ top: tile.top, bottom: tile.bottom });
-        centerTileIndex = 0; // تعيين المركز لأول ورقة[span_3](start_span)[span_3](end_span)
+        centerTileIndex = 0;
         leftEndValue = tile.top;
         rightEndValue = tile.bottom;
         return;
@@ -244,7 +224,6 @@ function addTileToBoard(tile, end) {
             : { top: tile.bottom, bottom: tile.top };
         leftEndValue = orientedTile.top;
         boardChain.unshift(orientedTile);
-        // تم إضافة ورقة على اليسار، لذا فهرس المركز يتزحزح يميناً خطوة[span_4](start_span)[span_4](end_span)
         centerTileIndex++; 
     } else {
         let orientedTile = (tile.top === rightEndValue) 
@@ -252,39 +231,27 @@ function addTileToBoard(tile, end) {
             : { top: tile.bottom, bottom: tile.top };
         rightEndValue = orientedTile.bottom;
         boardChain.push(orientedTile);
-        // تم الإضافة لليمين، المركز لا يتغير مكانه[span_5](start_span)[span_5](end_span)
     }
 }
 
-/* ----------------------------------------------------------
- * 5. إدارة الأدوار والذكاء الاصطناعي والسوق
- * ---------------------------------------------------------- */
 function nextTurn() {
     if (checkBlockGame()) return;
-
     if (currentTurn === 'player') currentTurn = 'comp1';
     else if (currentTurn === 'comp1') currentTurn = (gameMode === 3) ? 'comp2' : 'player';
     else currentTurn = 'player';
-
     renderGame();
-
-    if (currentTurn !== 'player' && !isGameOver) {
-        setTimeout(playComputerTurn, 900);
-    }
+    if (currentTurn !== 'player' && !isGameOver) setTimeout(playComputerTurn, 900);
 }
 
 function playComputerTurn() {
     if (isGameOver) return;
-
     let hand = (currentTurn === 'comp1') ? comp1Hand : comp2Hand;
     let compName = (currentTurn === 'comp1') ? 'الكمبيوتر 1' : 'الكمبيوتر 2';
-
     let playableIndices = [];
+    
     hand.forEach((tile, idx) => {
         let ends = getPlayableEnds(tile);
-        if (ends.length > 0 || boardChain.length === 0) {
-            playableIndices.push({ index: idx, ends: ends });
-        }
+        if (ends.length > 0 || boardChain.length === 0) playableIndices.push({ index: idx, ends: ends });
     });
 
     if (playableIndices.length > 0) {
@@ -294,15 +261,11 @@ function playComputerTurn() {
 
         addTileToBoard(tile, endToPlay);
 
-        if (hand.length === 0) {
-            endGame(`❌ للأسف، فاز ${compName} باللعبة!`);
-            return;
-        }
+        if (hand.length === 0) { endGame(`❌ للأسف، فاز ${compName} باللعبة!`); return; }
         nextTurn();
     } else {
         if (boneyard.length > 0) {
-            let drawnTile = boneyard.pop();
-            hand.push(drawnTile);
+            hand.push(boneyard.pop());
             renderGame();
             setTimeout(playComputerTurn, 600);
         } else {
@@ -313,213 +276,151 @@ function playComputerTurn() {
 
 function drawFromBoneyard() {
     if (currentTurn !== 'player' || isGameOver) return;
-    
     let hasPlayable = playerHand.some(tile => getPlayableEnds(tile).length > 0);
-    if (hasPlayable && boardChain.length > 0) {
-        alert("لديك أحجار قابلة للعب! لا يمكنك السحب من السوق.");
-        return;
-    }
+    if (hasPlayable && boardChain.length > 0) { alert("لديك أحجار قابلة للعب!"); return; }
     
     if (boneyard.length > 0) {
-        let tile = boneyard.pop();
-        playerHand.push(tile);
+        playerHand.push(boneyard.pop());
         renderGame();
     } else {
-        alert("السوق فارغ! تم نقل الدور.");
+        alert("السوق فارغ!");
         nextTurn();
     }
 }
 
 function checkBlockGame() {
     if (boneyard.length > 0 || boardChain.length === 0) return false;
-
     let playerCanPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
     let comp1CanPlay = comp1Hand.some(t => getPlayableEnds(t).length > 0);
     let comp2CanPlay = (gameMode === 3) ? comp2Hand.some(t => getPlayableEnds(t).length > 0) : false;
 
     if (!playerCanPlay && !comp1CanPlay && (gameMode === 2 || !comp2CanPlay)) {
-        let pScore = calculateScore(playerHand);
-        let c1Score = calculateScore(comp1Hand);
-        let c2Score = (gameMode === 3) ? calculateScore(comp2Hand) : 999;
-
+        let pScore = playerHand.reduce((s, t) => s + t.top + t.bottom, 0);
+        let c1Score = comp1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
+        let c2Score = (gameMode === 3) ? comp2Hand.reduce((s, t) => s + t.top + t.bottom, 0) : 999;
         let minScore = Math.min(pScore, c1Score, c2Score);
-        let winnerMsg = "🔒 انغلقت اللعبة (قَفْلة)! ";
-
-        if (minScore === pScore) winnerMsg += `فزت بأقل عدد نقاط (${pScore})!`;
-        else if (minScore === c1Score) winnerMsg += `فاز الكمبيوتر 1 بأقل نقاط (${c1Score})!`;
-        else winnerMsg += `فاز الكمبيوتر 2 بأقل نقاط (${c2Score})!`;
-
-        endGame(winnerMsg);
-        return true;
+        
+        let msg = "🔒 انغلقت اللعبة! ";
+        if (minScore === pScore) msg += `فزت بأقل نقاط (${pScore})!`;
+        else if (minScore === c1Score) msg += `فاز الكمبيوتر 1 (${c1Score})!`;
+        else msg += `فاز الكمبيوتر 2 (${c2Score})!`;
+        endGame(msg); return true;
     }
     return false;
 }
 
-function calculateScore(hand) {
-    return hand.reduce((sum, tile) => sum + tile.top + tile.bottom, 0);
-}
-
-/* ==========================================================
- * 6. محرك الـ S المزدوج (الرسم والتخطيط على الطاولة)
- * ========================================================== */
-
-// دالة مساعدة لحساب إحداثيات قطعة واحدة بناءً على الاتجاه[span_6](start_span)[span_6](end_span)
-function plotTilePiece(piece, dir, attach_x, attach_y, isDouble) {
-    let cx, cy, visualW, visualH, rotation, next_attach_x, next_attach_y, entry_x, entry_y, exit_x, exit_y;
-    
-    if (dir === 'RIGHT') {
-        if (!isDouble) {
-            cx = attach_x + 14; cy = attach_y;
-            visualW = 56; visualH = 28; rotation = -90;
-            next_attach_x = attach_x + 56; next_attach_y = attach_y;
-            entry_x = cx - 28; entry_y = cy; exit_x = cx + 28; exit_y = cy;
-        } else {
-            cx = attach_x; cy = attach_y;
-            visualW = 28; visualH = 56; rotation = 0;
-            next_attach_x = attach_x + 28; next_attach_y = attach_y;
-            entry_x = cx - 14; entry_y = cy; exit_x = cx + 14; exit_y = cy;
+/* ----------------------------------------------------------
+ * خوارزمية مراكز المربعات لرسم الطاولة (Solid Logic)
+ * ---------------------------------------------------------- */
+// بتحدد دوران ومقاسات مربعات الورقة لضمان التركيب الدقيق بدون تداخل
+function getPieceSquares(in_dir, out_dir, isDouble) {
+    let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
+    if (in_dir === 'RIGHT') {
+        if (!isDouble) { rot = -90; sq1 = {x:-18, y:0}; sq2 = {x:18, y:0}; }
+        else { 
+            rot = 0; sq1 = {x:0, y:0}; 
+            if (out_dir === 'RIGHT') sq2 = {x:0, y:0};
+            else if (out_dir === 'DOWN') sq2 = {x:0, y:18};
+            else if (out_dir === 'UP') sq2 = {x:0, y:-18};
         }
-    } else if (dir === 'LEFT') {
-        if (!isDouble) {
-            cx = attach_x - 14; cy = attach_y;
-            visualW = 56; visualH = 28; rotation = 90;
-            next_attach_x = attach_x - 56; next_attach_y = attach_y;
-            entry_x = cx + 28; entry_y = cy; exit_x = cx - 28; exit_y = cy;
-        } else {
-            cx = attach_x; cy = attach_y;
-            visualW = 28; visualH = 56; rotation = 0;
-            next_attach_x = attach_x - 28; next_attach_y = attach_y;
-            entry_x = cx + 14; entry_y = cy; exit_x = cx - 14; exit_y = cy;
+    } else if (in_dir === 'LEFT') {
+        if (!isDouble) { rot = 90; sq1 = {x:18, y:0}; sq2 = {x:-18, y:0}; }
+        else { 
+            rot = 0; sq1 = {x:0, y:0}; 
+            if (out_dir === 'LEFT') sq2 = {x:0, y:0};
+            else if (out_dir === 'DOWN') sq2 = {x:0, y:18};
+            else if (out_dir === 'UP') sq2 = {x:0, y:-18};
         }
-    } else if (dir === 'DOWN') {
-        if (!isDouble) {
-            cx = attach_x; cy = attach_y + 14;
-            visualW = 28; visualH = 56; rotation = 0;
-            next_attach_x = attach_x; next_attach_y = attach_y + 56;
-            entry_x = cx; entry_y = cy - 28; exit_x = cx; exit_y = cy + 28;
-        } else {
-            cx = attach_x; cy = attach_y;
-            visualW = 56; visualH = 28; rotation = 90;
-            next_attach_x = attach_x; next_attach_y = attach_y + 28;
-            entry_x = cx; entry_y = cy - 14; exit_x = cx; exit_y = cy + 14;
+    } else if (in_dir === 'DOWN') {
+        if (!isDouble) { rot = 0; sq1 = {x:0, y:-18}; sq2 = {x:0, y:18}; }
+        else { 
+            rot = -90; sq1 = {x:0, y:0}; 
+            if (out_dir === 'DOWN') sq2 = {x:0, y:0};
+            else if (out_dir === 'RIGHT') sq2 = {x:18, y:0};
+            else if (out_dir === 'LEFT') sq2 = {x:-18, y:0};
         }
-    } else if (dir === 'UP') { // اتجاه جديد مخصص للجانب الأيسر
-        if (!isDouble) {
-            cx = attach_x; cy = attach_y - 14;
-            visualW = 28; visualH = 56; rotation = 0; 
-            next_attach_x = attach_x; next_attach_y = attach_y - 56;
-            entry_x = cx; entry_y = cy + 28; exit_x = cx; exit_y = cy - 28;
-        } else {
-            cx = attach_x; cy = attach_y;
-            visualW = 56; visualH = 28; rotation = 90; 
-            next_attach_x = attach_x; next_attach_y = attach_y - 28;
-            entry_x = cx; entry_y = cy + 14; exit_x = cx; exit_y = cy - 14;
+    } else if (in_dir === 'UP') {
+        if (!isDouble) { rot = 180; sq1 = {x:0, y:18}; sq2 = {x:0, y:-18}; }
+        else { 
+            rot = -90; sq1 = {x:0, y:0}; 
+            if (out_dir === 'UP') sq2 = {x:0, y:0};
+            else if (out_dir === 'RIGHT') sq2 = {x:18, y:0};
+            else if (out_dir === 'LEFT') sq2 = {x:-18, y:0};
         }
     }
-    
-    return {
-        ...piece, cx, cy, visualW, visualH, rotation, dir,
-        entry_x, entry_y, exit_x, exit_y, next_attach_x, next_attach_y
-    };
+    return { rot, sq1, sq2 };
 }
 
 function calculateSnakeLayout(chain, centerIdx) {
     if (!chain || chain.length === 0) return [];
     
-    let layout = new Array(chain.length);
-    let ROW_LIMIT = 250; // تقليل المسافة قليلاً ليناسب انحناء S المزدوج للشاشات
+    // بناء مسار التوجيهات لتفادي الخروج عن الشاشة
+    let dirs = new Array(chain.length - 1);
+    const MAX_ROW = 4;
     
-    // 1. وضع حجر المركز
-    let centerPiece = chain[centerIdx];
-    let isCenterDouble = (centerPiece.top === centerPiece.bottom);
-    
-    let cx = 0, cy = 0;
-    let rotation = isCenterDouble ? 0 : -90;
-    let visualW = isCenterDouble ? 28 : 56;
-    let visualH = isCenterDouble ? 56 : 28;
-    
-    let right_attach_x = isCenterDouble ? 14 : 28;
-    let left_attach_x = isCenterDouble ? -14 : -28;
-
-    layout[centerIdx] = {
-        ...centerPiece, cx, cy, visualW, visualH, rotation,
-        entry_x: left_attach_x, entry_y: 0,
-        exit_x: right_attach_x, exit_y: 0,
-        dir: 'CENTER'
-    };
-
-    // 2. رسم الجانب الأيمن (ينحني للأسفل DOWN)
-    let dir = 'RIGHT';
-    let attach_x = right_attach_x;
-    let attach_y = 0;
-    let down_count = 0;
-    let next_dir = null;
-
-    for (let i = centerIdx + 1; i < chain.length; i++) {
-        let piece = chain[i];
-        let isDouble = (piece.top === piece.bottom);
-        
-        if (dir === 'RIGHT' && attach_x > ROW_LIMIT && !isDouble) {
-            dir = 'DOWN'; down_count = 2; next_dir = 'LEFT';
-        } else if (dir === 'LEFT' && attach_x < -ROW_LIMIT && !isDouble) {
-            dir = 'DOWN'; down_count = 2; next_dir = 'RIGHT';
-        }
-
-        let result = plotTilePiece(piece, dir, attach_x, attach_y, isDouble);
-        layout[i] = result;
-        attach_x = result.next_attach_x;
-        attach_y = result.next_attach_y;
-
-        if (dir === 'DOWN' && !isDouble) {
-            down_count--;
-            if (down_count <= 0 && next_dir) {
-                dir = next_dir; next_dir = null;
-            }
-        }
+    // الجزء الأيمن
+    let travel = 'RIGHT'; let len = 0;
+    for (let i = centerIdx; i < chain.length - 1; i++) {
+        dirs[i] = travel; len++;
+        if (travel === 'RIGHT' && len >= MAX_ROW) { travel = 'DOWN'; len = 0; }
+        else if (travel === 'DOWN' && len >= 1) { travel = 'LEFT'; len = 0; }
+        else if (travel === 'LEFT' && len >= MAX_ROW) { travel = 'DOWN'; len = 0; }
     }
-
-    // 3. رسم الجانب الأيسر (ينحني للأعلى UP لتجنب التداخل)
-    dir = 'LEFT';
-    attach_x = left_attach_x;
-    attach_y = 0;
-    let up_count = 0;
-    next_dir = null;
-
+    
+    // الجزء الأيسر
+    travel = 'LEFT'; len = 0;
     for (let i = centerIdx - 1; i >= 0; i--) {
-        let piece = chain[i];
-        let isDouble = (piece.top === piece.bottom);
-
-        // هنا نراقب الحدود ولكن بالاتجاه المعاكس[span_7](start_span)[span_7](end_span)
-        if (dir === 'LEFT' && attach_x < -ROW_LIMIT && !isDouble) {
-            dir = 'UP'; up_count = 2; next_dir = 'RIGHT';
-        } else if (dir === 'RIGHT' && attach_x > ROW_LIMIT && !isDouble) {
-            dir = 'UP'; up_count = 2; next_dir = 'LEFT';
-        }
-
-        let result = plotTilePiece(piece, dir, attach_x, attach_y, isDouble);
-        
-        // بما أننا نبني للخلف، نقطة الدخول تصبح خروج والعكس صحيح
-        let tempX = result.entry_x; let tempY = result.entry_y;
-        result.entry_x = result.exit_x; result.entry_y = result.exit_y;
-        result.exit_x = tempX; result.exit_y = tempY;
-
-        layout[i] = result;
-        attach_x = result.next_attach_x;
-        attach_y = result.next_attach_y;
-
-        if (dir === 'UP' && !isDouble) {
-            up_count--;
-            if (up_count <= 0 && next_dir) {
-                dir = next_dir; next_dir = null;
-            }
-        }
+        dirs[i] = (travel === 'LEFT') ? 'RIGHT' : (travel === 'RIGHT') ? 'LEFT' : (travel === 'UP') ? 'DOWN' : 'UP';
+        len++;
+        if (travel === 'LEFT' && len >= MAX_ROW) { travel = 'UP'; len = 0; }
+        else if (travel === 'UP' && len >= 1) { travel = 'RIGHT'; len = 0; }
+        else if (travel === 'RIGHT' && len >= MAX_ROW) { travel = 'UP'; len = 0; }
     }
 
+    let layout = [];
+    let cx = 0, cy = 0;
+    let p_sq2_abs = { x: 0, y: 0 }; 
+
+    for (let i = 0; i < chain.length; i++) {
+        let piece = chain[i];
+        let isDouble = piece.top === piece.bottom;
+
+        let in_dir = (i === 0) ? (dirs[0] || 'RIGHT') : dirs[i-1];
+        let out_dir = (i === chain.length - 1) ? in_dir : dirs[i];
+        
+        let trans = getPieceSquares(in_dir, out_dir, isDouble);
+        
+        if (i === 0) {
+            cx = 0; cy = 0;
+        } else {
+            let vec = {x:0, y:0};
+            if (dirs[i-1] === 'RIGHT') vec = {x: 36, y: 0};
+            else if (dirs[i-1] === 'LEFT') vec = {x: -36, y: 0};
+            else if (dirs[i-1] === 'DOWN') vec = {x: 0, y: 36};
+            else if (dirs[i-1] === 'UP') vec = {x: 0, y: -36};
+
+            let target_sq1_abs = { x: p_sq2_abs.x + vec.x, y: p_sq2_abs.y + vec.y };
+            cx = target_sq1_abs.x - trans.sq1.x;
+            cy = target_sq1_abs.y - trans.sq1.y;
+        }
+        
+        p_sq2_abs = { x: cx + trans.sq2.x, y: cy + trans.sq2.y };
+        
+        layout.push({
+            ...piece,
+            cx: cx, cy: cy, rotation: trans.rot,
+            visualW: (trans.rot === 0 || trans.rot === 180) ? 36 : 72,
+            visualH: (trans.rot === 0 || trans.rot === 180) ? 72 : 36,
+            start_x: cx + trans.sq1.x, start_y: cy + trans.sq1.y,
+            end_x: p_sq2_abs.x, end_y: p_sq2_abs.y,
+            in_dir: in_dir, out_dir: out_dir
+        });
+    }
     return layout;
 }
 
 /* ----------------------------------------------------------
- * 7. واجهة المستخدم وتحديث الشاشة (Rendering)
+ * تحديث الشاشة
  * ---------------------------------------------------------- */
 function renderGame() {
     let playerArea = document.getElementById("player-hand");
@@ -545,10 +446,8 @@ function renderGame() {
 
     let c1Count = document.getElementById("comp1-count");
     if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
-    
     let c2Count = document.getElementById("comp2-count");
     if (c2Count && gameMode === 3) c2Count.innerText = `🂠 ${comp2Hand.length}`;
-    
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
@@ -559,7 +458,6 @@ function renderGame() {
         if (boardChain.length === 0) {
             chainArea.innerHTML = `<p style="color:rgba(255,255,255,0.3); font-size:12px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">الطاولة فارغة</p>`;
         } else {
-            // إرسال المصفوفة مع مؤشر المركز[span_8](start_span)[span_8](end_span)
             let layout = calculateSnakeLayout(boardChain, centerTileIndex);
 
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -572,21 +470,14 @@ function renderGame() {
 
             let totalW = maxX - minX;
             let totalH = maxY - minY;
-            
-            let bboxCenterX = minX + totalW / 2;
-            let bboxCenterY = minY + totalH / 2;
-            let offsetX = -bboxCenterX;
-            let offsetY = -bboxCenterY;
+            let offsetX = -(minX + totalW / 2);
+            let offsetY = -(minY + totalH / 2);
 
-            let tableElem = document.querySelector('.poker-table');
-            let maxAvailableWidth = tableElem ? tableElem.clientWidth - 40 : 520; 
-            let maxAvailableHeight = tableElem ? tableElem.clientHeight - 40 : 200; 
+            let tableElem = document.querySelector('.poker-table') || document.querySelector('.table-container');
+            let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; // تم زيادة مسافة الأمان هنا
+            let maxAvailableHeight = tableElem ? tableElem.clientHeight - 80 : 200;
 
-            let scale = 1;
-            if (totalW > maxAvailableWidth || totalH > maxAvailableHeight) {
-                scale = Math.min(maxAvailableWidth / totalW, maxAvailableHeight / totalH);
-                scale = Math.max(scale, 0.25); 
-            }
+            let scale = Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1);
 
             let first = layout[0];
             let last = layout[layout.length - 1];
@@ -594,26 +485,24 @@ function renderGame() {
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
-                    // الاعتماد على نقطة الخروج للجهة اليسرى[span_9](start_span)[span_9](end_span)
-                    let sx = (first.exit_x + offsetX) * scale;
-                    let sy = (first.exit_y + offsetY) * scale;
-                    if (first.dir === 'LEFT') sx -= (40 * scale);
-                    else if (first.dir === 'RIGHT') sx += (40 * scale);
-                    else if (first.dir === 'UP') sy -= (40 * scale);
-                    else if (first.dir === 'DOWN') sy += (40 * scale);
+                    let sx = (first.start_x + offsetX) * scale;
+                    let sy = (first.start_y + offsetY) * scale;
+                    if (first.in_dir === 'RIGHT') sx -= (40 * scale);
+                    else if (first.in_dir === 'LEFT') sx += (40 * scale);
+                    else if (first.in_dir === 'DOWN') sy -= (40 * scale);
+                    else if (first.in_dir === 'UP') sy += (40 * scale);
                     
                     chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">◀ هنا</div>`;
                 }
                 if (playableEnds.includes('right')) {
-                    // الاعتماد على نقطة الخروج للجهة اليمنى[span_10](start_span)[span_10](end_span)
-                    let sx = (last.exit_x + offsetX) * scale;
-                    let sy = (last.exit_y + offsetY) * scale;
-                    if (last.dir === 'RIGHT') sx += (40 * scale);
-                    else if (last.dir === 'LEFT') sx -= (40 * scale);
-                    else if (last.dir === 'UP') sy -= (40 * scale);
-                    else if (last.dir === 'DOWN') sy += (40 * scale);
+                    let ex = (last.end_x + offsetX) * scale;
+                    let ey = (last.end_y + offsetY) * scale;
+                    if (last.out_dir === 'RIGHT') ex += (40 * scale);
+                    else if (last.out_dir === 'LEFT') ex -= (40 * scale);
+                    else if (last.out_dir === 'DOWN') ey += (40 * scale);
+                    else if (last.out_dir === 'UP') ey -= (40 * scale);
 
-                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">هنا ▶</div>`;
+                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${ex}px); top:calc(50% + ${ey}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">هنا ▶</div>`;
                 }
             }
 
