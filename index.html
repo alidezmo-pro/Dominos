@@ -7,23 +7,23 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- الهيكل الرئيسي للعبة (Grid Layout) -->
+    <!-- الهيكل الرئيسي للعبة -->
     <main class="game-layout">
         
-        <!-- الشريط العلوي: الكمبيوتر 1، الكمبيوتر 2 -->
+        <!-- الشريط العلوي: المنافسون -->
         <header class="top-bar">
             <!-- الكمبيوتر 1 -->
             <div id="comp1-avatar" class="profile top-left">
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الكمبيوتر 1">
                 <div class="profile-info">
-                    <span id="comp1-count" class="profile-count">🂠 7</span>
+                    <span id="comp1-count" class="profile-count">🂠 9</span>
                 </div>
             </div>
 
-            <!-- الكمبيوتر 2 (يظهر في وضع 3 لاعبين) -->
+            <!-- الكمبيوتر 2 (خاص بوضع 3 لاعبين) -->
             <div id="comp2-avatar" class="profile top-right hidden">
                 <div class="profile-info">
-                    <span id="comp2-count" class="profile-count">🂠 7</span>
+                    <span id="comp2-count" class="profile-count">🂠 9</span>
                 </div>
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="الكمبيوتر 2">
             </div>
@@ -34,14 +34,14 @@
             <div id="board-chain"></div>
         </section>
 
-        <!-- الشريط السفلي: اللاعب، الأوراق، زر السوق -->
+        <!-- الشريط السفلي -->
         <footer class="bottom-bar">
-            <!-- اللاعب -->
+            <!-- اللاعب الحقيقي -->
             <div id="player-avatar" class="profile bottom-left">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="اللاعب">
             </div>
 
-            <!-- يد اللاعب -->
+            <!-- أوراق اللاعب -->
             <div class="bottom-center">
                 <div class="player-hand-wrapper">
                     <div id="player-hand"></div>
@@ -51,19 +51,19 @@
             <!-- زر السوق -->
             <div class="bottom-right">
                 <button class="btn-boneyard" onclick="drawFromBoneyard()">
-                    🀙 السوق: <span id="boneyard-count" class="count">14</span>
+                    🀙 السوق: <span id="boneyard-count" class="count">0</span>
                 </button>
             </div>
         </footer>
     </main>
 
-    <!-- النوافذ المنبثقة (Modals) -->
+    <!-- النوافذ المنبثقة -->
     <div id="start-modal" class="modal-overlay">
         <div class="modal-box">
             <h2>أهلاً بك في الدومينو! 🎲</h2>
-            <p>اختر عدد اللاعبين للبدء:</p>
-            <button class="btn-primary" onclick="selectGameMode(2)">👤 ضد لاعب واحد (7 كروت)</button>
-            <button class="btn-primary" onclick="selectGameMode(3)">👥 3 لاعبين (9 كروت / بدون 0-0)</button>
+            <p>اختر نظام اللعب للبدء:</p>
+            <button class="btn-primary" onclick="selectGameMode(2)">👤 لاعبين (7 أوراق)</button>
+            <button class="btn-primary" onclick="selectGameMode(3)">👥 3 لاعبين (9 أوراق / بدون 0-0)</button>
         </div>
     </div>
 
@@ -74,6 +74,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=10.1"></script>
+    <script src="script.js?v=11.1"></script>
 </body>
 </html>
