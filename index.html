@@ -4,79 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لعبة الدومينو الاحترافية</title>
-    
-    <!-- ربط ملف التنسيقات -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <main>
+        <!-- التايمر الجديد (يظهر بدلاً من النص القديم) -->
+        <div id="turn-timer" class="timer-display hidden">⏳ 25</div>
 
-    <!-- الحاوية الرئيسية -->
-    <div class="main-screen">
-
-        <!-- شريط حالة الدور -->
-        <div id="turn-status" class="turn-status">🎯 جاري إعداد اللعبة...</div>
-
-        <!-- الأفاتارات -->
-        <div class="avatar-badge top-left">
-            <div class="avatar-circle">🤖</div>
-            <div class="badge-info">
-                <span class="player-name">الكمبيوتر 1</span>
-                <span id="comp1-count" class="card-pill">🂠 7</span>
-            </div>
-        </div>
-
-        <div id="comp2-avatar" class="avatar-badge top-right hidden">
-            <div class="avatar-circle">🤖</div>
-            <div class="badge-info">
-                <span class="player-name">الكمبيوتر 2</span>
-                <span id="comp2-count" class="card-pill">🂠 7</span>
-            </div>
-        </div>
-
-        <div class="avatar-badge bottom-left">
-            <div class="avatar-circle">👨‍💻</div>
-            <div class="badge-info">
-                <span class="player-name">أنت (اللاعب)</span>
-            </div>
-        </div>
-
-        <!-- طاولة اللعب (هنا يتم رسم شكل الثعبان برمجياً) -->
+        <!-- الطاولة -->
         <div class="poker-table">
-            <div id="board-chain" class="domino-chain">
-                <!-- المحرك البرمجي سيقوم بالرسم داخل هذا الديف -->
+            <!-- منطقة رسم سلسلة الأحجار -->
+            <div id="board-chain" style="position: absolute; width: 100%; height: 100%;"></div>
+        </div>
+
+        <!-- منطقة الأفاتارات (مع الـ IDs المضافة لتأثير النيون) -->
+        <div class="players-container">
+            <!-- الكمبيوتر 1 -->
+            <div id="comp1-avatar" class="avatar-container">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="Bot 1" class="icon">
+                <div>
+                    <div class="name" style="font-size: 14px;">الكمبيوتر 1</div>
+                    <div id="comp1-count" class="count">🂠 7</div>
+                </div>
+            </div>
+
+            <!-- الكمبيوتر 2 (يظهر فقط في نمط 3 لاعبين) -->
+            <div id="comp2-avatar" class="avatar-container hidden">
+                <div>
+                    <div class="name" style="font-size: 14px;">الكمبيوتر 2</div>
+                    <div id="comp2-count" class="count">🂠 7</div>
+                </div>
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="Bot 2" class="icon">
+            </div>
+
+            <!-- أنت (اللاعب) -->
+            <div id="player-avatar" class="avatar-container">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="Player" class="icon">
+                <div class="name" style="font-size: 14px;">أنت (اللاعب)</div>
             </div>
         </div>
 
-        <!-- أيقونة السوق -->
-        <div id="boneyard-box" class="market-icon-box" onclick="drawFromBoneyard()">
-            <div style="font-size: 18px;">🂠</div>
-            <div style="font-size: 11px; margin-top: 2px;">السوق: <span id="boneyard-count">0</span></div>
+        <!-- زر السحب من السوق -->
+        <div class="boneyard-btn" onclick="drawFromBoneyard()">
+            <div>🀙 السوق: <span id="boneyard-count">14</span></div>
         </div>
 
-        <!-- حاوية أحجار اللاعب -->
-        <div id="player-hand" class="player-hand-container">
-            <!-- سيتم ملؤها برمجياً -->
+        <!-- منطقة أوراق اللاعب (يد اللاعب) -->
+        <div class="player-area">
+            <div id="player-hand"></div>
         </div>
+    </main>
 
-    </div>
-
-    <!-- نوافذ التفاعل -->
-    <div id="start-modal" class="modal-overlay">
-        <div class="modal-card">
-            <h2>🀄 لعبة الدومينو</h2>
-            <button class="btn-primary" onclick="selectGameMode(2)">لاعب ضد الكمبيوتر (1v1)</button>
-            <button class="btn-secondary" onclick="selectGameMode(3)">لاعب ضد 2 كمبيوتر (1v2)</button>
-        </div>
-    </div>
-
-    <div id="end-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <h2 id="end-title">انتهت اللعبة</h2>
-            <button class="btn-primary" onclick="showStartModal()">لعبة جديدة 🔄</button>
+    <!-- النوافذ المنبثقة (شاشة البداية والنهاية) -->
+    <div id="start-modal" class="modal">
+        <div class="modal-content">
+            <h2>أهلاً بك في الدومينو! 🎲</h2>
+            <p>اختر عدد اللاعبين للبدء:</p>
+            <button onclick="selectGameMode(2)">👤 ضد لاعب واحد</button>
+            <button onclick="selectGameMode(3)">👥 ضد لاعبين اثنين</button>
         </div>
     </div>
 
-    <!-- استدعاء المحرك البرمجي -->
-    <script src="script.js?v=8.4"></script>
+    <div id="end-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="end-title">انتهت اللعبة!</h2>
+            <button onclick="showStartModal()">🔄 العب مرة أخرى</button>
+        </div>
+    </div>
+
+    <!-- ربط ملف الجافاسكريبت -->
+    <script src="script.js?v=8.6"></script>
 </body>
 </html>
