@@ -18,11 +18,16 @@ let leftEndValue = null;
 let rightEndValue = null;  
 let isGameOver = false;
 
+function selectGameMode(mode) {
+    startGame(mode);
+}
 // ربط الدوال بالمتصفح عالمياً
 window.selectGameMode = selectGameMode;
 window.drawFromBoneyard = drawFromBoneyard;
 window.selectBoardEnd = selectBoardEnd;
 window.showStartModal = showStartModal;
+// أضف هذا السطر في ملف script.js
+
 
 window.onload = function() {
     showStartModal();
