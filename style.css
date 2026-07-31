@@ -2,8 +2,15 @@
  * style.css - لعبة الدومينو الاحترافية (رفع الطاولة وفصل اليد)
  * ========================================================== */
 
+/* ----------------------------------------------------------
+ * 1. المتغيرات والإعدادات الأساسية
+ * ---------------------------------------------------------- */
 :root {
     --board-scale: 1;
+    --primary-color: #f59e0b;
+    --secondary-color: #38bdf8;
+    --bg-dark: #0b0f19;
+    --bg-panel: rgba(15, 23, 42, 0.9);
 }
 
 * {
@@ -14,7 +21,7 @@
 }
 
 body {
-    background-color: #0b0f19;
+    background-color: var(--bg-dark);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     height: 100vh;
     width: 100vw;
@@ -25,6 +32,9 @@ body {
     direction: rtl;
 }
 
+/* ----------------------------------------------------------
+ * 2. تخطيط الشاشة والطاولة
+ * ---------------------------------------------------------- */
 .main-screen {
     width: 100%;
     height: 100%;
@@ -50,17 +60,27 @@ body {
     align-items: center;
     margin-top: 35px;
     z-index: 10;
-     /* يضمن عدم خروج أحجار الطاولة لخارج إطار الطاولة */
+    overflow: hidden;
 }
 
-/* شريط حالة الدور */
+/* رصة الطاولة */
+.domino-chain {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: visible;
+}
+
+/* ----------------------------------------------------------
+ * 3. واجهة المستخدم (حالة الدور والأفاتار)
+ * ---------------------------------------------------------- */
 .turn-status {
     position: absolute;
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.9);
-    color: #38bdf8;
+    background: var(--bg-panel);
+    color: var(--secondary-color);
     padding: 6px 20px;
     border-radius: 20px;
     font-size: 13px;
@@ -70,13 +90,12 @@ body {
     text-align: center;
 }
 
-/* الأفاتارات */
 .avatar-badge {
     position: fixed;
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(15, 23, 42, 0.9);
+    background: var(--bg-panel);
     padding: 6px 12px;
     border-radius: 25px;
     border: 1.5px solid rgba(255, 255, 255, 0.2);
@@ -97,7 +116,7 @@ body {
     justify-content: center;
     align-items: center;
     font-size: 16px;
-    border: 1px solid #f59e0b;
+    border: 1px solid var(--primary-color);
 }
 
 .badge-info {
@@ -105,9 +124,13 @@ body {
     flex-direction: column;
 }
 
-.player-name { font-size: 11px; font-weight: bold; }
+.player-name {
+    font-size: 11px;
+    font-weight: bold;
+}
+
 .card-pill {
-    background: #f59e0b;
+    background: var(--primary-color);
     color: #000;
     font-size: 10px;
     font-weight: bold;
@@ -116,15 +139,9 @@ body {
     width: fit-content;
 }
 
-/* رصة الطاولة */
-.domino-chain {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    overflow: visible;
-}
-
-/* تصميم أحجار الدومينو */
+/* ----------------------------------------------------------
+ * 4. أحجار الدومينو ويد اللاعب
+ * ---------------------------------------------------------- */
 .domino-piece {
     width: 28px;
     height: 56px;
@@ -139,6 +156,7 @@ body {
     cursor: pointer;
     flex-shrink: 0;
     box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* أحجار يد اللاعب (مستقلة بالأسفل بشكل ثابت ومفصل تماماً عن الطاولة) */
@@ -154,22 +172,24 @@ body {
     padding: 8px 15px;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
 }
 
 .player-hand-container .domino-piece.playable {
-    border: 2px solid #f59e0b;
-    box-shadow: 0 0 8px #f59e0b;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 8px var(--primary-color);
     transform: translateY(-8px);
 }
 
 .player-hand-container .domino-piece.selected {
-    border: 2px solid #38bdf8;
-    box-shadow: 0 0 12px #38bdf8;
+    border: 2px solid var(--secondary-color);
+    box-shadow: 0 0 12px var(--secondary-color);
     transform: translateY(-12px);
 }
 
-/* الخط الفاصل ونقاط الأحجار */
+/* ----------------------------------------------------------
+ * 5. تصميم النقاط داخل الأحجار
+ * ---------------------------------------------------------- */
 .divider {
     width: 100%;
     height: 1px;
@@ -194,6 +214,7 @@ body {
     align-self: center;
 }
 
+/* توزيع النقاط */
 .p-1 .dot-1 { grid-area: 2 / 2; }
 .p-2 .dot-1 { grid-area: 1 / 1; }
 .p-2 .dot-2 { grid-area: 3 / 3; }
@@ -216,16 +237,18 @@ body {
 .p-6 .dot-5 { grid-area: 3 / 1; }
 .p-6 .dot-6 { grid-area: 3 / 3; }
 
-/* أزرار وسوق اللعبة */
+/* ----------------------------------------------------------
+ * 6. الأزرار والنوافذ المنبثقة (Modals & Market)
+ * ---------------------------------------------------------- */
 .end-selector {
-    background: #f59e0b;
+    background: var(--primary-color);
     color: #000;
     font-weight: bold;
     font-size: 11px;
     padding: 6px 10px;
     border-radius: 15px;
     cursor: pointer;
-    box-shadow: 0 0 10px #f59e0b;
+    box-shadow: 0 0 10px var(--primary-color);
     margin: 0;
     flex-shrink: 0;
     white-space: nowrap;
@@ -247,15 +270,18 @@ body {
 
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
+    top: 0; left: 0; 
+    width: 100vw; height: 100vh;
     background: rgba(0, 0, 0, 0.85);
-    display: flex; justify-content: center; align-items: center;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
     z-index: 1000;
 }
 
 .modal-card {
     background: #0f172a;
-    border: 2px solid #f59e0b;
+    border: 2px solid var(--primary-color);
     border-radius: 16px;
     padding: 20px;
     text-align: center;
@@ -274,6 +300,16 @@ body {
     margin-top: 10px;
 }
 
-.btn-primary { background: #f59e0b; color: #000; }
-.btn-secondary { background: #3b82f6; color: #fff; }
-.hidden { display: none !important; }
+.btn-primary { 
+    background: var(--primary-color); 
+    color: #000; 
+}
+
+.btn-secondary { 
+    background: #3b82f6; 
+    color: #fff; 
+}
+
+.hidden { 
+    display: none !important; 
+}
