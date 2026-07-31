@@ -7,72 +7,81 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <main>
-        <!-- التايمر الجديد (يظهر بدلاً من النص القديم) -->
-        <div id="turn-timer" class="timer-display hidden">⏳ 25</div>
-
-        <!-- الطاولة -->
-        <div class="poker-table">
-            <!-- منطقة رسم سلسلة الأحجار -->
-            <div id="board-chain" style="position: absolute; width: 100%; height: 100%;"></div>
-        </div>
-
-        <!-- منطقة الأفاتارات (مع الـ IDs المضافة لتأثير النيون) -->
-        <div class="players-container">
+    <!-- الهيكل الرئيسي للعبة (Grid Layout) -->
+    <main class="game-layout">
+        
+        <!-- الشريط العلوي: الكمبيوتر 1، التايمر، الكمبيوتر 2 -->
+        <header class="top-bar">
             <!-- الكمبيوتر 1 -->
-            <div id="comp1-avatar" class="avatar-container">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="Bot 1" class="icon">
-                <div>
-                    <div class="name" style="font-size: 14px;">الكمبيوتر 1</div>
-                    <div id="comp1-count" class="count">🂠 7</div>
+            <div id="comp1-avatar" class="profile top-left">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الكمبيوتر 1">
+                <div class="profile-info">
+                    <span class="profile-name">الكمبيوتر 1</span>
+                    <span id="comp1-count" class="profile-count">🂠 7</span>
                 </div>
             </div>
 
-            <!-- الكمبيوتر 2 (يظهر فقط في نمط 3 لاعبين) -->
-            <div id="comp2-avatar" class="avatar-container hidden">
-                <div>
-                    <div class="name" style="font-size: 14px;">الكمبيوتر 2</div>
-                    <div id="comp2-count" class="count">🂠 7</div>
+            <!-- التايمر -->
+            <div id="turn-timer" class="timer-display top-center hidden">⏳ 25</div>
+
+            <!-- الكمبيوتر 2 (يظهر في وضع 3 لاعبين) -->
+            <div id="comp2-avatar" class="profile top-right hidden">
+                <div class="profile-info">
+                    <span class="profile-name">الكمبيوتر 2</span>
+                    <span id="comp2-count" class="profile-count">🂠 7</span>
                 </div>
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="Bot 2" class="icon">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="الكمبيوتر 2">
+            </div>
+        </header>
+
+        <!-- منطقة الطاولة -->
+        <section class="table-container">
+            <div id="board-chain"></div>
+        </section>
+
+        <!-- الشريط السفلي: اللاعب، الأوراق، زر السوق -->
+        <footer class="bottom-bar">
+            <!-- اللاعب -->
+            <div id="player-avatar" class="profile bottom-left">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="اللاعب">
+                <div class="profile-info">
+                    <span class="profile-name">أنت (اللاعب)</span>
+                </div>
             </div>
 
-            <!-- أنت (اللاعب) -->
-            <div id="player-avatar" class="avatar-container">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="Player" class="icon">
-                <div class="name" style="font-size: 14px;">أنت (اللاعب)</div>
+            <!-- يد اللاعب -->
+            <div class="bottom-center">
+                <div class="player-hand-wrapper">
+                    <div id="player-hand"></div>
+                </div>
             </div>
-        </div>
 
-        <!-- زر السحب من السوق -->
-        <div class="boneyard-btn" onclick="drawFromBoneyard()">
-            <div>🀙 السوق: <span id="boneyard-count">14</span></div>
-        </div>
-
-        <!-- منطقة أوراق اللاعب (يد اللاعب) -->
-        <div class="player-area">
-            <div id="player-hand"></div>
-        </div>
+            <!-- زر السوق -->
+            <div class="bottom-right">
+                <button class="btn-boneyard" onclick="drawFromBoneyard()">
+                    🀙 السوق: <span id="boneyard-count" class="count">14</span>
+                </button>
+            </div>
+        </footer>
     </main>
 
-    <!-- النوافذ المنبثقة (شاشة البداية والنهاية) -->
-    <div id="start-modal" class="modal">
-        <div class="modal-content">
+    <!-- النوافذ المنبثقة (Modals) -->
+    <div id="start-modal" class="modal-overlay">
+        <div class="modal-box">
             <h2>أهلاً بك في الدومينو! 🎲</h2>
             <p>اختر عدد اللاعبين للبدء:</p>
-            <button onclick="selectGameMode(2)">👤 ضد لاعب واحد</button>
-            <button onclick="selectGameMode(3)">👥 ضد لاعبين اثنين</button>
+            <button class="btn-primary" onclick="selectGameMode(2)">👤 ضد لاعب واحد</button>
+            <button class="btn-primary" onclick="selectGameMode(3)">👥 ضد لاعبين اثنين</button>
         </div>
     </div>
 
-    <div id="end-modal" class="modal hidden">
-        <div class="modal-content">
+    <div id="end-modal" class="modal-overlay hidden">
+        <div class="modal-box">
             <h2 id="end-title">انتهت اللعبة!</h2>
-            <button onclick="showStartModal()">🔄 العب مرة أخرى</button>
+            <button class="btn-primary" onclick="showStartModal()">🔄 العب مرة أخرى</button>
         </div>
     </div>
 
-    <!-- ربط ملف الجافاسكريبت -->
-    <script src="script.js?v=8.8"></script>
+    <script src="script.js?v=8.9"></script>
 </body>
 </html>
