@@ -1,11 +1,12 @@
 /* ==========================================================
  * Dominoes Game - Senior Refactor
  * File: style.css
- * Architecture: Max Table + Floating Top Bar (Hairline Gaps)
+ * Architecture: Max Table + Floating UI + Fixed Player Avatar
  * ========================================================== */
 
-/* --- 1. CSS Variables --- */
+/* --- 1. CSS Variables (Design Tokens) --- */
 :root {
+    /* Colors */
     --bg-main: #0f172a;
     --table-bg: #1e293b;
     --table-border: #8b4513;
@@ -21,10 +22,12 @@
     --domino-border: #cbd5e1;
     --domino-divider: #334155;
 
+    /* Sizes */
     --domino-w: 36px;
     --domino-h: 72px;
     --dot-size: 8px;
 
+    /* Z-Index Layers */
     --z-base: 1;
     --z-table: 10;
     --z-domino: 50;
@@ -45,7 +48,7 @@ body {
     color: var(--text-light);
     width: 100vw;
     height: 100dvh;
-    overflow: hidden;
+    overflow: hidden; /* منع التمرير نهائياً */
     user-select: none;
 }
 
@@ -55,26 +58,28 @@ body {
     flex-direction: column;
     height: 100%;
     width: 100%;
-    padding: 4px; /* شعراية 4 بيكسل من حدود الشاشة */
-    gap: 4px; /* شعراية 4 بيكسل بين الطاولة وأوراقك */
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 4px; /* شعراية 4 بيكسل من حدود الشاشة العلوية والجانبية */
+    gap: 4px; /* شعراية 4 بيكسل بين الطاولة وشريط الأوراق السفلي */
     position: relative;
 }
 
 /* --- 4. Floating Top Bar (Over the Table) --- */
 .top-bar {
     position: absolute;
-    top: 12px; /* مسافة بسيطة من أعلى الطاولة */
+    top: 12px;
     left: 12px;
     right: 12px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     z-index: var(--z-ui);
-    pointer-events: none; /* عشان تقدر تلمس الطاولة من تحتهم */
+    pointer-events: none; /* السماح بالضغط على الطاولة من تحتهم */
 }
 
 .top-bar > * {
-    pointer-events: auto; /* تفعيل اللمس للأفاتار والتايمر */
+    pointer-events: auto; /* تفعيل الضغط للعناصر نفسها */
 }
 
 /* Timer - Transparent */
@@ -85,17 +90,16 @@ body {
     font-size: 2rem;
     font-weight: bold;
     color: var(--accent-danger);
-    text-shadow: 0 2px 5px rgba(0,0,0,0.8);
-    box-shadow: none;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9); /* ظل قوي لضمان القراءة فوق أي خلفية */
     text-align: center;
 }
 
-/* Player/Comp Profiles */
+/* Opponents Profiles */
 .profile {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: rgba(51, 65, 85, 0.85); /* شفافية خفيفة */
+    background: rgba(51, 65, 85, 0.85);
     padding: 0.4rem 0.8rem;
     border-radius: 30px;
     border: 2px solid #475569;
@@ -104,8 +108,8 @@ body {
 }
 
 .profile img {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     background: var(--table-bg);
 }
@@ -117,7 +121,7 @@ body {
 }
 
 .profile-name {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
@@ -126,33 +130,21 @@ body {
     color: #000;
     font-size: 0.85rem;
     font-weight: bold;
-    padding: 0.2rem 0.5rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 10px;
     margin-top: 0.2rem;
 }
 
-.neon-player {
-    border-color: var(--accent-player);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
-    transform: scale(1.05);
-}
-
-.neon-comp {
-    border-color: var(--accent-comp);
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
-    transform: scale(1.05);
-}
-
 /* --- 5. Table Area --- */
 .table-container {
-    flex-grow: 1; /* تمتد لأقصى مساحة من فوق لتحت */
+    flex-grow: 1; /* تمتد لأقصى مساحة ممكنة */
     position: relative;
     width: 100%;
     background-color: var(--table-bg);
-    border: 4px solid var(--table-border);
+    border: 4px solid var(--table-border); /* الإطار البرتقالي/البني */
     border-radius: 20px;
     box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
-    overflow: hidden;
+    overflow: hidden; /* إخفاء أي ورق يخرج عن الحدود */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -163,40 +155,52 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
+    /* تجهيز الحاوية للتصغير الديناميكي عبر الـ JS */
+    transform-origin: center center;
+    transition: transform 0.3s ease-in-out;
 }
 
-.board-selector {
-    position: absolute;
-    background: var(--accent-player);
-    color: #000;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 0 10px var(--accent-player);
-    z-index: var(--z-ui);
-    transform: translate(-50%, -50%);
-    animation: pulse 1.5s infinite;
-    will-change: transform, box-shadow;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
-    70% { box-shadow: 0 0 0 15px rgba(56, 189, 248, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
-}
-
-/* --- 6. Bottom Bar --- */
+/* --- 6. Bottom Bar (Boneyard + Hand + Player Avatar) --- */
 .bottom-bar {
-    flex: 0 0 auto; /* ثابتة بالأسفل */
+    flex: 0 0 auto; /* ثابتة بالأسفل ولا تنضغط */
     display: grid;
+    /* 3 أعمدة: السوق - الأوراق (تتمدد) - الأفاتار */
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: flex-end;
     gap: 0.5rem;
     z-index: var(--z-ui);
     width: 100%;
-    padding-bottom: 4px;
+    padding-bottom: 2px;
+}
+
+/* Boneyard / Market Button */
+.btn-boneyard {
+    background: #334155;
+    border: 2px solid #475569;
+    color: var(--text-light);
+    padding: 0.8rem 1rem;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    white-space: nowrap;
+    margin-bottom: 5px; /* رفع الزر قليلاً عن الحافة السفلية */
+}
+
+.btn-boneyard:hover { 
+    background: #475569; 
+    transform: translateY(-3px); 
+}
+
+.btn-boneyard .count { 
+    background: var(--text-light); 
+    color: #000; 
+    padding: 0.1rem 0.5rem; 
+    border-radius: 5px; 
 }
 
 /* Player Hand Container */
@@ -209,13 +213,13 @@ body {
     display: flex;
     overflow-x: auto;
     overflow-y: visible;
-    padding: 1rem 0.5rem;
+    padding: 1rem 0.5rem 0.5rem 0.5rem; /* مساحة علوية لتأثير الـ Hover */
     gap: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--accent-player) transparent;
 }
 
-.player-hand-wrapper::-webkit-scrollbar { height: 6px; }
+.player-hand-wrapper::-webkit-scrollbar { height: 4px; }
 .player-hand-wrapper::-webkit-scrollbar-thumb { background: var(--accent-player); border-radius: 10px; }
 
 #player-hand {
@@ -224,23 +228,26 @@ body {
     margin: 0 auto;
 }
 
-.btn-boneyard {
-    background: #334155;
-    border: 2px solid #475569;
-    color: var(--text-light);
-    padding: 0.75rem 1rem;
-    border-radius: 15px;
-    cursor: pointer;
-    font-weight: bold;
+/* Player Avatar (Right Side) */
+.player-avatar-container {
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-    font-size: 1rem;
-    white-space: nowrap;
+    background: rgba(51, 65, 85, 0.85);
+    border: 2px solid #475569;
+    border-radius: 50%;
+    width: 55px;
+    height: 55px;
+    overflow: hidden;
+    margin-bottom: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
-.btn-boneyard:hover { background: #475569; transform: translateY(-5px); }
-.btn-boneyard .count { background: var(--text-light); color: #000; padding: 0.1rem 0.4rem; border-radius: 5px; }
+
+.player-avatar-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
 /* --- 7. Domino Pieces --- */
 .domino-piece {
@@ -262,23 +269,14 @@ body {
     z-index: var(--z-domino);
 }
 
-#board-chain .domino-piece.new-piece {
-    animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-@keyframes dropIn {
-    0% { transform: scale(1.5) translateY(50px); opacity: 0; }
-    100% { opacity: 1; }
-}
-
 #player-hand .domino-piece {
     cursor: grab;
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-#player-hand .domino-piece:hover { transform: translateY(-20px); }
+#player-hand .domino-piece:hover { transform: translateY(-15px); }
 #player-hand .domino-piece.playable { cursor: pointer; box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); }
-#player-hand .domino-piece.selected { transform: translateY(-25px) scale(1.15); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.9); border: 2px solid var(--accent-player); z-index: 10; }
+#player-hand .domino-piece.selected { transform: translateY(-20px) scale(1.1); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.9); border: 2px solid var(--accent-player); z-index: 10; }
 
 .domino-half { width: 100%; flex: 1; display: flex; flex-wrap: wrap; position: relative; padding: 4px; }
 .divider { width: 100%; height: 1px; background-color: var(--domino-divider); }
@@ -307,22 +305,46 @@ body {
 .p-6 .dot-5 { top: 50%; right: 15%; transform: translateY(-50%); }
 .p-6 .dot-6 { bottom: 15%; right: 15%; }
 
-/* --- 8. Modals --- */
+/* --- 8. Active Turn Effects --- */
+.neon-player {
+    border-color: var(--accent-player);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
+    transform: scale(1.05);
+}
+
+.neon-comp {
+    border-color: var(--accent-comp);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
+    transform: scale(1.05);
+}
+
+/* --- 9. Modals --- */
 .hidden { display: none !important; }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: center; align-items: center; z-index: var(--z-modal); backdrop-filter: blur(4px); }
 .modal-box { background: var(--table-bg); padding: 2.5rem; border-radius: 20px; text-align: center; border: 2px solid var(--accent-player); box-shadow: 0 0 30px rgba(56, 189, 248, 0.3); max-width: 400px; width: 90%; }
 .modal-box h2 { margin-bottom: 1rem; font-size: 1.8rem; }
 .modal-box p { margin-bottom: 1.5rem; color: var(--text-muted); }
-.btn-primary { background: var(--accent-player); color: #000; border: none; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 0.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.btn-primary { background: var(--accent-player); color: #000; border: none; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 0.5rem; transition: transform 0.2s ease; }
 .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); }
 
-/* --- 9. Responsive --- */
+/* --- 10. Responsive Breakpoints --- */
 @media (max-width: 768px) {
-    .profile-name { display: none; }
-    .bottom-bar { grid-template-columns: 1fr auto; }
-    #player-avatar { display: none; } 
-    :root { --domino-w: 30px; --domino-h: 60px; --dot-size: 6px; }
+    .profile-name { display: none; } /* إخفاء الأسماء لتوفير المساحة */
+    .profile img { width: 35px; height: 35px; }
+    .player-avatar-container { width: 45px; height: 45px; }
+    
+    .btn-boneyard { padding: 0.6rem; font-size: 0.9rem; }
+    
+    :root { 
+        --domino-w: 30px; 
+        --domino-h: 60px; 
+        --dot-size: 6px; 
+    }
 }
+
 @media (max-height: 600px) {
-    :root { --domino-w: 26px; --domino-h: 52px; }
+    :root { 
+        --domino-w: 26px; 
+        --domino-h: 52px; 
+    }
 }
