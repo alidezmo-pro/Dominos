@@ -1,6 +1,9 @@
 /* ==========================================================
  * script.js - محرك اللعب المطور
- * التحديثات: تايمر مدمج في الأفاتار + عدم إعادة العداد عند السحب من السوق
+ * التحديثات:
+ * 1. تخصيص وضع 3 لاعبين (9 أوراق لكل لاعب وإلغاء ورقة 0-0).
+ * 2. دمج التايمر بالكامل داخل أفاتار اللاعب النشط.
+ * 3. التخطي التلقائي للدور عند استنفاذ السوق وعدم وجود خيارات لعب.
  * ========================================================== */
 
 let fullSet = [];          
@@ -43,10 +46,14 @@ function selectGameMode(mode) {
     startGame(mode);
 }
 
-function createDominoSet() {
+// إنشاء طقم الدومينو (استبعاد 0-0 إذا كان وضع 3 لاعبين)
+function createDominoSet(mode) {
     let set = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
+            if (mode === 3 && i === 0 && j === 0) {
+                continue; // إلغاء البلاطة 0-0 في وضع 3 لاعبين
+            }
             set.push({ top: i, bottom: j });
         }
     }
@@ -80,10 +87,14 @@ function startGame(mode) {
         else comp2Avatar.classList.add("hidden");
     }
 
-    fullSet = shuffle(createDominoSet());
-    playerHand = fullSet.splice(0, 7);
-    comp1Hand = fullSet.splice(0, 7);
-    comp2Hand = (gameMode === 3) ? fullSet.splice(0, 7) : [];
+    fullSet = shuffle(createDominoSet(gameMode));
+
+    // توزيع الكروت حسب الوضع
+    let handSize = (gameMode === 3) ? 9 : 7;
+
+    playerHand = fullSet.splice(0, handSize);
+    comp1Hand = fullSet.splice(0, handSize);
+    comp2Hand = (gameMode === 3) ? fullSet.splice(0, handSize) : [];
     boneyard = fullSet;
 
     determineFirstTurn();
@@ -108,7 +119,6 @@ function startTimer() {
     clearInterval(turnTimerInterval);
     timeLeft = 25;
     
-    // تجديد عنصر التايمر وتعيينه فوق الأفاتار الحالي
     renderAvatarTimer();
 
     turnTimerInterval = setInterval(() => {
@@ -129,14 +139,13 @@ function startTimer() {
 }
 
 function renderAvatarTimer() {
-    // إزالة أي تايمر قديم من الأفاتارات
     document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
 
     if (isGameOver) return;
 
     let activeAvatarContainer = null;
     if (currentTurn === 'player') {
-        activeAvatarContainer = document.querySelector(".player-avatar-container") || document.getElementById("player-avatar");
+        activeAvatarContainer = document.getElementById("player-avatar");
     } else if (currentTurn === 'comp1') {
         activeAvatarContainer = document.getElementById("comp1-avatar");
     } else if (currentTurn === 'comp2') {
@@ -258,12 +267,25 @@ function addTileToBoard(tile, end) {
 
 function nextTurn() {
     if (checkBlockGame()) return;
+
     if (currentTurn === 'player') currentTurn = 'comp1';
     else if (currentTurn === 'comp1') currentTurn = (gameMode === 3) ? 'comp2' : 'player';
     else currentTurn = 'player';
     
     renderGame();
-    startTimer(); // إشعار التايمر بإعادة البدء فقط عند انتقال الدور للاعب آخَر
+    startTimer();
+
+    // فحص التخطي التلقائي للاعب إذا كان السوق فارغاً ولا يملك ورقاً للعب
+    if (currentTurn === 'player') {
+        let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
+        if (!canPlay && boneyard.length === 0) {
+            setTimeout(() => {
+                alert("السوق فارغ ولا تملك ورقاً صالاحاً للعب.. تم تخطي دورك تلقائياً!");
+                nextTurn();
+            }, 600);
+            return;
+        }
+    }
 
     if (currentTurn !== 'player' && !isGameOver) setTimeout(playComputerTurn, 900);
 }
@@ -306,7 +328,7 @@ function drawFromBoneyard() {
     
     if (boneyard.length > 0) {
         playerHand.push(boneyard.pop());
-        renderGame(); // إعادة رسم الأوراق بدون ريستارت للتايمر
+        renderGame();
     } else {
         alert("السوق فارغ!");
         nextTurn();
@@ -335,7 +357,7 @@ function checkBlockGame() {
 }
 
 /* ----------------------------------------------------------
- * خوارزمية مراكز المربعات لرسم الطاولة
+ * خوارزمية رسم الطاولة Snake Layout
  * ---------------------------------------------------------- */
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
@@ -469,9 +491,9 @@ function renderGame() {
     }
 
     let c1Count = document.getElementById("comp1-count");
-    if (c1Count) c1Count.innerText = `${comp1Hand.length}`;
+    if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
     let c2Count = document.getElementById("comp2-count");
-    if (c2Count && gameMode === 3) c2Count.innerText = `${comp2Hand.length}`;
+    if (c2Count && gameMode === 3) c2Count.innerText = `🂠 ${comp2Hand.length}`;
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
@@ -497,7 +519,7 @@ function renderGame() {
             let offsetX = -(minX + totalW / 2);
             let offsetY = -(minY + totalH / 2);
 
-            let tableElem = document.querySelector('.poker-table') || document.querySelector('.table-container');
+            let tableElem = document.querySelector('.table-container');
             let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; 
             let maxAvailableHeight = tableElem ? tableElem.clientHeight - 80 : 200;
 
@@ -547,7 +569,7 @@ function renderGame() {
         }
     }
     updateTurnStatus();
-    renderAvatarTimer(); // الحفاظ على ظهور عنصر التايمر داخل الأفاتار دون عمل reset للعداد
+    renderAvatarTimer();
 }
 
 function createDotsHTML(value) {
