@@ -313,10 +313,10 @@ function checkBlockGame() {
 /* ----------------------------------------------------------
  * خوارزمية مراكز المربعات لرسم الطاولة (Solid Logic)
  * ---------------------------------------------------------- */
-// تم تقليل المسافات من 18 إلى 17 لتضييق الفواصل بين الأوراق
+// تم ضبط HALF_SIZE و STEP_SIZE لتلتصق الأوراق تماماً بدون أي فراغات
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
-    const HALF_SIZE = 17; // المسافة المخفضة للمربعات 
+    const HALF_SIZE = 14; // نصف طول الورقة العادية (14px)
     
     if (in_dir === 'RIGHT') {
         if (!isDouble) { rot = -90; sq1 = {x: -HALF_SIZE, y:0}; sq2 = {x: HALF_SIZE, y:0}; }
@@ -358,7 +358,7 @@ function calculateSnakeLayout(chain, centerIdx) {
     if (!chain || chain.length === 0) return [];
     
     let dirs = new Array(chain.length - 1);
-    const MAX_ROW = 9; // تم زيادة عدد الأوراق الأفقية إلى 9
+    const MAX_ROW = 9; 
     
     // الجزء الأيمن
     let travel = 'RIGHT'; let len = 0;
@@ -382,7 +382,7 @@ function calculateSnakeLayout(chain, centerIdx) {
     let layout = [];
     let cx = 0, cy = 0;
     let p_sq2_abs = { x: 0, y: 0 }; 
-    const STEP_SIZE = 34; // المسافة الكلية للقطعة الواحدة مخفضة لتجنب الفواصل
+    const STEP_SIZE = 28; // مسافة الإزاحة للقطعة الكاملة (28px) لعدم ترك فواصل
 
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
