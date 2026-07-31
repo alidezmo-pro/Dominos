@@ -1,5 +1,5 @@
 /* ==========================================================
- * script.js - محرك اللعب والشكل الثعباني المطور (النزول بحجرين)
+ * script.js - محرك اللعب المطور (مع التايمر، النيون، وحل تداخل الدومينو)
  * ========================================================== */
 
 /* ----------------------------------------------------------
@@ -10,7 +10,7 @@ let boneyard = [];
 let playerHand = [];       
 let comp1Hand = [];        
 let comp2Hand = [];        
-let boardChain = [];       // سلسلة الأحجار الملعوبة
+let boardChain = [];       
 
 let gameMode = 2;          
 let currentTurn = 'player';
@@ -20,7 +20,10 @@ let leftEndValue = null;
 let rightEndValue = null;  
 let isGameOver = false;
 
-// ربط الدوال بالنافذة لتكون متاحة في HTML
+// متغيرات التايمر
+let turnTimerInterval;
+let timeLeft = 25;
+
 window.selectGameMode = selectGameMode;
 window.drawFromBoneyard = drawFromBoneyard;
 window.selectBoardEnd = selectBoardEnd;
@@ -67,12 +70,11 @@ function startGame(mode) {
     boardChain = [];
     leftEndValue = null;
     rightEndValue = null;
+    clearInterval(turnTimerInterval);
 
-    // إخفاء النوافذ المنبثقة
     document.getElementById("start-modal")?.classList.add("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
 
-    // إعداد لاعب الكمبيوتر الثاني إذا كان النمط 3 لاعبين
     let comp2Avatar = document.getElementById("comp2-avatar");
     if (comp2Avatar) {
         if (gameMode === 3) comp2Avatar.classList.remove("hidden");
@@ -100,11 +102,84 @@ function determineFirstTurn() {
         if (comp1Hand.some(p => p.top === d && p.bottom === d)) { currentTurn = 'comp1'; return; }
         if (gameMode === 3 && comp2Hand.some(p => p.top === d && p.bottom === d)) { currentTurn = 'comp2'; return; }
     }
-    currentTurn = 'player'; // افتراضي
+    currentTurn = 'player';
 }
 
 /* ----------------------------------------------------------
- * 3. منطق اللعب للأطراف وحركة اللاعب
+ * 3. نظام التايمر وإضاءة النيون
+ * ---------------------------------------------------------- */
+function startTimer() {
+    clearInterval(turnTimerInterval);
+    timeLeft = 25;
+    let timerElem = document.getElementById("turn-timer");
+    
+    if(timerElem) {
+        timerElem.classList.remove("hidden");
+        timerElem.innerText = `⏳ ${timeLeft}`;
+        timerElem.style.color = "#ef4444";
+    }
+
+    turnTimerInterval = setInterval(() => {
+        timeLeft--;
+        if(timerElem) {
+            timerElem.innerText = `⏳ ${timeLeft}`;
+            if (timeLeft <= 5) timerElem.style.color = (timeLeft % 2 === 0) ? "#ffffff" : "#ef4444";
+        }
+        
+        if (timeLeft <= 0) {
+            clearInterval(turnTimerInterval);
+            handleTimeOut();
+        }
+    }, 1000);
+}
+
+function handleTimeOut() {
+    if (currentTurn === 'player' && !isGameOver) {
+        let playableIndices = [];
+        playerHand.forEach((tile, idx) => {
+            let ends = getPlayableEnds(tile);
+            if (ends.length > 0 || boardChain.length === 0) {
+                playableIndices.push({ index: idx, ends: ends });
+            }
+        });
+
+        if (playableIndices.length > 0) {
+            let chosen = playableIndices[Math.floor(Math.random() * playableIndices.length)];
+            playPlayerTile(chosen.index, chosen.ends[0]);
+        } else if (boneyard.length > 0) {
+            drawFromBoneyard();
+            // بعد السحب نمرر الدور إذا لم يلعب تلقائيا
+            setTimeout(nextTurn, 500); 
+        } else {
+            nextTurn();
+        }
+    }
+}
+
+function updateTurnStatus() {
+    if (isGameOver) {
+        clearInterval(turnTimerInterval);
+        document.getElementById("turn-timer")?.classList.add("hidden");
+        return;
+    }
+
+    document.getElementById("player-avatar")?.classList.remove("active-neon-player");
+    document.getElementById("comp1-avatar")?.classList.remove("active-neon-comp");
+    document.getElementById("comp2-avatar")?.classList.remove("active-neon-comp");
+
+    if (currentTurn === 'player') {
+        document.getElementById("player-avatar")?.classList.add("active-neon-player");
+    } else if (currentTurn === 'comp1') {
+        document.getElementById("comp1-avatar")?.classList.add("active-neon-comp");
+    } else if (currentTurn === 'comp2') {
+        document.getElementById("comp2-avatar")?.classList.add("active-neon-comp");
+    }
+
+    startTimer();
+}
+
+/* ----------------------------------------------------------
+ * 4. منطق اللعب للأطراف وحركة اللاعب
  * ---------------------------------------------------------- */
 function getPlayableEnds(tile) {
     if (boardChain.length === 0) return ['left', 'right'];
@@ -122,7 +197,6 @@ function onPlayerTileClick(index) {
 
     if (ends.length === 0 && boardChain.length > 0) return;
 
-    // إذا كان الحجر قابلاً للعب على كلا الطرفين
     if (ends.length === 2 && leftEndValue !== rightEndValue) {
         selectedTileIndex = (selectedTileIndex === index) ? null : index;
         renderGame();
@@ -176,7 +250,7 @@ function addTileToBoard(tile, end) {
 }
 
 /* ----------------------------------------------------------
- * 4. إدارة الأدوار والذكاء الاصطناعي والسوق
+ * 5. إدارة الأدوار والذكاء الاصطناعي والسوق
  * ---------------------------------------------------------- */
 function nextTurn() {
     if (checkBlockGame()) return;
@@ -279,38 +353,32 @@ function calculateScore(hand) {
 }
 
 /* ==========================================================
- * 5. محرك الـ Snake (الرسم والتخطيط على الطاولة) - معدل
+ * 6. محرك الـ Snake (الرسم والتخطيط على الطاولة)
  * ========================================================== */
 function calculateSnakeLayout(chain) {
     if (!chain || chain.length === 0) return [];
     
     let layout = [];
-    let attach_x = 0, attach_y = 0; // نقطة الالتحام الدقيقة بين الأحجار
+    let attach_x = 0, attach_y = 0; 
     let dir = 'RIGHT'; 
     let next_dir = null;
     let down_count = 0; 
-    let ROW_LIMIT = 320; // زيادة المساحة الأفقية قبل الالتفاف
+    let ROW_LIMIT = 320; 
 
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
         let isDouble = (piece.top === piece.bottom);
         
-        // الانعطاف ونزول حجرين عند الوصول للحد الأقصى
         if (dir === 'RIGHT' && attach_x > ROW_LIMIT && !isDouble) {
-            dir = 'DOWN';
-            down_count = 2; 
-            next_dir = 'LEFT';
+            dir = 'DOWN'; down_count = 2; next_dir = 'LEFT';
         } else if (dir === 'LEFT' && attach_x < -ROW_LIMIT && !isDouble) {
-            dir = 'DOWN';
-            down_count = 2; 
-            next_dir = 'RIGHT';
+            dir = 'DOWN'; down_count = 2; next_dir = 'RIGHT';
         }
 
         let rotation = 0;
         let cx, cy, visualW, visualH, next_attach_x, next_attach_y;
         let entry_x, entry_y, exit_x, exit_y;
 
-        // حساب الأبعاد بدقة لمنع أي تداخل (Overlap)
         if (dir === 'RIGHT') {
             if (!isDouble) {
                 cx = attach_x + 14; cy = attach_y;
@@ -351,8 +419,7 @@ function calculateSnakeLayout(chain) {
             if (!isDouble) {
                 down_count--;
                 if (down_count <= 0 && next_dir) {
-                    dir = next_dir;
-                    next_dir = null;
+                    dir = next_dir; next_dir = null;
                 }
             }
         }
@@ -370,7 +437,7 @@ function calculateSnakeLayout(chain) {
 }
 
 /* ----------------------------------------------------------
- * 6. واجهة المستخدم وتحديث الشاشة (Rendering) - معدل
+ * 7. واجهة المستخدم وتحديث الشاشة (Rendering)
  * ---------------------------------------------------------- */
 function renderGame() {
     let playerArea = document.getElementById("player-hand");
@@ -408,7 +475,7 @@ function renderGame() {
         chainArea.innerHTML = "";
 
         if (boardChain.length === 0) {
-            chainArea.innerHTML = `<p style="color:rgba(255,255,255,0.5); font-size:12px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">الطاولة فارغة، اختر حجراً للبدء</p>`;
+            chainArea.innerHTML = `<p style="color:rgba(255,255,255,0.3); font-size:12px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">الطاولة فارغة</p>`;
         } else {
             let layout = calculateSnakeLayout(boardChain);
 
@@ -428,7 +495,6 @@ function renderGame() {
             let offsetX = -bboxCenterX;
             let offsetY = -bboxCenterY;
 
-            // حساب أبعاد الطاولة ديناميكياً لمنع القص (Cut-off)
             let tableElem = document.querySelector('.poker-table');
             let maxAvailableWidth = tableElem ? tableElem.clientWidth - 40 : 520; 
             let maxAvailableHeight = tableElem ? tableElem.clientHeight - 40 : 200; 
@@ -436,13 +502,12 @@ function renderGame() {
             let scale = 1;
             if (totalW > maxAvailableWidth || totalH > maxAvailableHeight) {
                 scale = Math.min(maxAvailableWidth / totalW, maxAvailableHeight / totalH);
-                scale = Math.max(scale, 0.25); // السماح بتصغير أكبر لمنع خروج الأحجار
+                scale = Math.max(scale, 0.25); 
             }
 
             let first = layout[0];
             let last = layout[layout.length - 1];
 
-            // رسم أزرار تحديد الأطراف ديناميكياً بدون تداخل
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
@@ -465,7 +530,6 @@ function renderGame() {
                 }
             }
 
-            // رسم الأحجار
             layout.forEach(item => {
                 let px = (item.cx + offsetX) * scale;
                 let py = (item.cy + offsetY) * scale;
@@ -492,24 +556,11 @@ function createDotsHTML(value) {
     return `<div class="domino-half p-${value}">${dotsHTML}</div>`;
 }
 
-function updateTurnStatus() {
-    let statusElem = document.getElementById("turn-status");
-    if (!statusElem || isGameOver) return;
-
-    if (currentTurn === 'player') {
-        statusElem.innerText = "🎯 دورك للعب الآن";
-        statusElem.style.color = "#38bdf8";
-    } else if (currentTurn === 'comp1') {
-        statusElem.innerText = "🤖 يفكر الكمبيوتر 1...";
-        statusElem.style.color = "#f59e0b";
-    } else if (currentTurn === 'comp2') {
-        statusElem.innerText = "🤖 يفكر الكمبيوتر 2...";
-        statusElem.style.color = "#f59e0b";
-    }
-}
-
 function endGame(message) {
     isGameOver = true;
+    clearInterval(turnTimerInterval); // إيقاف التايمر عند نهاية اللعبة
+    document.getElementById("turn-timer")?.classList.add("hidden"); // إخفاء التايمر
+
     let endTitle = document.getElementById("end-title");
     if (endTitle) endTitle.innerText = message;
     document.getElementById("end-modal")?.classList.remove("hidden");
