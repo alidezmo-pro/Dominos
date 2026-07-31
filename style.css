@@ -1,14 +1,17 @@
 /* ==========================================================
- * لعبة الدومينو الاحترافية - Dominoes Styling File
- * يحتوي هذا الملف على جميع تنسيقات الطاولة والأوراق والواجهات.
+ * لعبة الدومينو الاحترافية - Dominoes Styling File (V2)
  * ========================================================== */
 
-/* 1. إعدادات الصفحة الأساسية والتصفير (Reset & Base) */
+:root {
+    /* متغير ديناميكي لحجم أحجار الطاولة - يتم تعديله بالجافاسكربت تلقائياً */
+    --board-scale: 1;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    user-select: none; /* منع تحديد النصوص لمنع التشتت أثناء اللعب */
+    user-select: none;
 }
 
 body {
@@ -16,7 +19,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     height: 100vh;
     width: 100vw;
-    overflow: hidden; /* منع التمرير الخارجي للشاشة */
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -26,179 +29,214 @@ body {
 .main-screen {
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-}
-
-/* 2. تصميم طاولة الدومينو البيضاوية (Poker Table Layout) */
-.poker-table {
-    width: 96%;
-    height: 82vh;
-    background: radial-gradient(circle, #1a2a4a 0%, #0d1527 100%);
-    border: 10px solid #3d2314; /* إطار خشبي عريض */
-    border-radius: 140px;
-    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85), 0 12px 35px rgba(0, 0, 0, 0.7);
     position: relative;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
-/* 3. شريط الحالة العلوي لعرض أدوار اللاعبين والتنبيهات */
+/* 1. الطاولة البيضاوية (مساحة واسعة وواضحة) */
+.poker-table {
+    width: 90%;
+    height: 75vh;
+    background: radial-gradient(circle, #1a2a4a 0%, #0d1527 100%);
+    border: 8px solid #3d2314;
+    border-radius: 120px;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85), 0 10px 30px rgba(0, 0, 0, 0.7);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 2. شريط حالة الدور العلوي */
 .turn-status {
     position: absolute;
-    top: 18px;
+    top: 15px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(15, 23, 42, 0.9);
     color: #38bdf8;
-    padding: 6px 22px;
+    padding: 6px 20px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: bold;
     border: 1.5px solid rgba(56, 189, 248, 0.4);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     z-index: 20;
     text-align: center;
-    white-space: nowrap;
 }
 
-/* 4. منطقة رصة أحجار الطاولة (Domino Board Chain) */
+/* 3. نقل الأفاتارات إلى زوايا الصفحة الخارجية تماماً بعيداً عن الطاولة */
+.avatar-badge {
+    position: fixed; /* تثبيت في زوايا الشاشة */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 6px 12px;
+    border-radius: 25px;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    z-index: 100;
+}
+
+.top-left { top: 15px; left: 15px; }
+.top-right { top: 15px; right: 15px; }
+.bottom-left { bottom: 15px; left: 15px; }
+
+.avatar-circle {
+    width: 34px;
+    height: 34px;
+    background: #1e293b;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    border: 1px solid #f59e0b;
+}
+
+.badge-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name { font-size: 11px; font-weight: bold; }
+.card-pill {
+    background: #f59e0b;
+    color: #000;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 1px 6px;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+/* 4. رصة الطاولة والتصغير التلقائي (Snake Chain Layout) */
 .domino-chain {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap; /* السماح بالتفاف الأوراق لسطر جديد بشكل منظم */
-    gap: 6px;
-    width: 90%;
-    max-height: 55%;
-    padding: 15px;
-    overflow-y: auto; /* إضافة شريط تمرير داخلي إذا كثرت الأوراق جداً */
+    flex-wrap: wrap; /* يلتف المسار بمرونة */
+    gap: 4px;
+    width: 95%;
+    max-height: 80%;
+    padding: 10px;
     transition: all 0.3s ease;
 }
 
-/* زر اختيار الطرف عند اللعب (يمين / يسار) */
-.end-selector {
-    background: #f59e0b;
-    color: #000;
-    font-weight: bold;
-    font-size: 13px;
-    padding: 8px 14px;
-    border-radius: 20px;
-    cursor: pointer;
-    box-shadow: 0 0 12px #f59e0b;
-    animation: pulseSelector 1.2s infinite alternate;
-    margin: 0 6px;
-    z-index: 30;
+/* 5. أحجار الطاولة (تتأثر بالمقياس التلقائي) */
+.domino-chain .domino-piece {
+    transform: scale(var(--board-scale));
+    transform-origin: center center;
+    transition: transform 0.3s ease;
 }
 
-@keyframes pulseSelector {
-    0% { transform: scale(0.95); opacity: 0.85; }
-    100% { transform: scale(1.08); opacity: 1; }
-}
-
-/* 5. تصميم حجر الدومينو (Domino Tile Design) */
 .domino-piece {
-    width: 32px;
-    height: 64px;
+    width: 28px;
+    height: 56px;
     background-color: #fcfbf7;
     border: 1.5px solid #111;
-    border-radius: 5px;
+    border-radius: 4px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 2px 0;
-    box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.5);
-    box-sizing: border-box;
+    box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.4);
     cursor: pointer;
     flex-shrink: 0;
-    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
-/* الوضع الأفقي للأوراق غير المزدوجة على الطاولة */
 .domino-piece.horizontal {
-    width: 64px;
-    height: 32px;
+    width: 56px;
+    height: 28px;
     flex-direction: row;
     padding: 0 2px;
 }
 
-/* تمييز الأوراق المتاحة للعب في يد اللاعب */
-.domino-piece.playable {
+/* 6. أحجار يد اللاعب (حجم أصغر لتفادي التغطية على الطاولة) */
+.player-hand-container {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 90;
+    background: rgba(15, 23, 42, 0.75);
+    padding: 6px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.player-hand-container .domino-piece {
+    width: 24px; /* حجم أصغر مدمج */
+    height: 48px;
+}
+
+.player-hand-container .domino-piece.playable {
     border: 2px solid #f59e0b;
-    box-shadow: 0 0 10px #f59e0b;
-    transform: translateY(-4px);
+    box-shadow: 0 0 8px #f59e0b;
+    transform: translateY(-5px);
 }
 
-/* تمييز الكارت المختار حالياً للاختيار بين الطرفين */
-.domino-piece.selected {
-    border: 2.5px solid #38bdf8;
-    box-shadow: 0 0 15px #38bdf8;
-    transform: translateY(-8px) scale(1.06);
+.player-hand-container .domino-piece.selected {
+    border: 2px solid #38bdf8;
+    box-shadow: 0 0 12px #38bdf8;
+    transform: translateY(-8px);
 }
 
-/* الخط الفاصل بين نصفي الحجر */
+/* 7. تفاصيل النقاط والفاصل */
 .divider {
     width: 100%;
-    height: 1.5px;
+    height: 1px;
     background: #111;
 }
 
 .domino-piece.horizontal .divider {
-    width: 1.5px;
+    width: 1px;
     height: 100%;
 }
 
-/* نصف الحجر وشبكة النقاط (3x3 Grid) */
 .domino-half {
     width: 100%;
-    height: 28px;
+    height: 22px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    padding: 2px;
-    box-sizing: border-box;
+    padding: 1px;
 }
 
 .domino-piece.horizontal .domino-half {
-    width: 28px;
+    width: 22px;
     height: 100%;
 }
 
-/* النقطة السوداء داخل الحجر */
 .dot {
     background-color: #111;
     border-radius: 50%;
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     justify-self: center;
     align-self: center;
 }
 
-/* إحداثيات توزيع النقاط داخل الشبكة من 1 إلى 6 */
+/* أماكن النقاط داخل الحجر */
 .p-1 .dot-1 { grid-area: 2 / 2; }
-
 .p-2 .dot-1 { grid-area: 1 / 1; }
 .p-2 .dot-2 { grid-area: 3 / 3; }
-
 .p-3 .dot-1 { grid-area: 1 / 1; }
 .p-3 .dot-2 { grid-area: 2 / 2; }
 .p-3 .dot-3 { grid-area: 3 / 3; }
-
 .p-4 .dot-1 { grid-area: 1 / 1; }
 .p-4 .dot-2 { grid-area: 1 / 3; }
 .p-4 .dot-3 { grid-area: 3 / 1; }
 .p-4 .dot-4 { grid-area: 3 / 3; }
-
 .p-5 .dot-1 { grid-area: 1 / 1; }
 .p-5 .dot-2 { grid-area: 1 / 3; }
 .p-5 .dot-3 { grid-area: 2 / 2; }
 .p-5 .dot-4 { grid-area: 3 / 1; }
 .p-5 .dot-5 { grid-area: 3 / 3; }
-
 .p-6 .dot-1 { grid-area: 1 / 1; }
 .p-6 .dot-2 { grid-area: 1 / 3; }
 .p-6 .dot-3 { grid-area: 2 / 1; }
@@ -206,197 +244,47 @@ body {
 .p-6 .dot-5 { grid-area: 3 / 1; }
 .p-6 .dot-6 { grid-area: 3 / 3; }
 
-/* 6. حاوية أحجار اللاعب أسفل الشاشة */
-.player-hand-container {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    z-index: 50;
-    background: rgba(15, 23, 42, 0.6);
-    padding: 8px 16px;
-    border-radius: 16px;
-    max-width: 90%;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* 7. تصميم بطاقات اللاعبين والمنافسين والسوق */
-.avatar-badge {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(15, 23, 42, 0.85);
-    padding: 6px 14px;
-    border-radius: 30px;
-    border: 1.5px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    z-index: 10;
-}
-
-.top-left { top: 20px; left: 30px; }
-.top-right { top: 20px; right: 30px; }
-.bottom-left { bottom: 20px; left: 30px; }
-
-.avatar-circle {
-    width: 36px;
-    height: 36px;
-    background: #1e293b;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 18px;
-    border: 1px solid #f59e0b;
-}
-
-.user-avatar { border-color: #10b981; }
-
-.badge-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.player-name {
-    font-size: 11px;
-    font-weight: bold;
-    opacity: 0.9;
-}
-
-.card-pill {
+/* 8. زر اختيار الطرف والآيقونات */
+.end-selector {
     background: #f59e0b;
     color: #000;
+    font-weight: bold;
     font-size: 11px;
-    font-weight: bold;
-    padding: 1px 7px;
-    border-radius: 10px;
-    margin-top: 2px;
-}
-
-/* صندوق آيقونة السوق */
-.market-icon-box {
-    position: absolute;
-    left: 25px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 14px;
-    padding: 10px 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #fff;
-}
-
-.market-stack { font-size: 24px; }
-.market-count {
-    font-size: 12px;
-    font-weight: bold;
-    color: #f59e0b;
-    margin-top: 2px;
-}
-
-/* زر إعادة التشغيل */
-.restart-btn {
-    position: absolute;
-    bottom: 20px;
-    right: 30px;
-    background: rgba(245, 158, 11, 0.2);
-    border: 1px solid #f59e0b;
-    color: #fff;
-    padding: 7px 16px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: bold;
+    padding: 6px 10px;
+    border-radius: 15px;
     cursor: pointer;
+    box-shadow: 0 0 10px #f59e0b;
+    margin: 0 4px;
+}
+
+.market-icon-box {
+    position: fixed;
+    right: 15px;
+    bottom: 85px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: #fff;
+    text-align: center;
     z-index: 100;
-    transition: all 0.2s;
 }
 
-.restart-btn:hover {
-    background: #f59e0b;
-    color: #000;
-}
-
-.empty-msg {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 14px;
-    font-weight: 500;
-}
-
-/* 8. النوافذ المنبثقة للبدء والاختيار (Modals) */
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(6px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: flex; justify-content: center; align-items: center;
     z-index: 1000;
 }
 
 .modal-card {
     background: #0f172a;
     border: 2px solid #f59e0b;
-    border-radius: 18px;
-    padding: 24px 32px;
+    border-radius: 16px;
+    padding: 20px;
     text-align: center;
     color: #fff;
-    box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
-    max-width: 400px;
-    width: 85%;
 }
 
-.modal-card h2 {
-    color: #f59e0b;
-    margin-bottom: 12px;
-    font-size: 20px;
-}
-
-.modal-card p {
-    font-size: 14px;
-    color: #94a3b8;
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-.btn-primary, .btn-secondary {
-    padding: 12px 20px;
-    font-size: 14px;
-    font-weight: bold;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 10px;
-    transition: transform 0.15s, background-color 0.2s;
-}
-
-.btn-primary {
-    background: #f59e0b;
-    color: #000;
-}
-
-.btn-secondary {
-    background: #3b82f6;
-    color: #fff;
-}
-
-.btn-primary:active, .btn-secondary:active {
-    transform: scale(0.96);
-}
-
-/* كلاس الإخفاء العام */
-.hidden {
-    display: none !important;
-}
+.hidden { display: none !important; }
