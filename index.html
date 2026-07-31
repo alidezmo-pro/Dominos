@@ -2,102 +2,84 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <!-- وسوم منع حفظ النسخ القديمة (الكاش) لضمان ظهور التحديثات فوراً -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
-    <title>لعبة الدومينو المصرية - البريميوم</title>
-    
-    <!-- ربط ملف التصميم مع تحديث رقم الإصدار إلى v=6.0 لتخطي الكاش -->
-    <link rel="stylesheet" href="style.css?v=6.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الدومينو الاحترافية</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- 1. نافذة اختيار نظام اللعب (Modal)         -->
-    <!-- ========================================== -->
-    <div id="mode-modal" class="modal-overlay">
-        <div class="modal-card">
-            <h2>🎲 اختر نظام اللعب</h2>
-            <p>فضلاً اختر عدد المنافسين للبدء:</p>
-            <div class="mode-buttons">
-                <button class="btn-primary" onclick="selectGameMode(2)">👤 لاعب ضد الكمبيوتر (لاعبين)</button>
-                <button class="btn-secondary" onclick="selectGameMode(3)">👥 ثلاثة لاعبين (أنت ضد 2 كمبيوتر)</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- 2. نافذة سحب الأحجار الشفافة عند انسداد اللعب-->
-    <!-- ========================================== -->
-    <div id="draw-modal" class="modal-overlay hidden">
-        <div class="draw-card">
-            <div class="draw-icon">📦</div>
-            <h3>لا يوجد لديك حجر مناسب!</h3>
-            <p>يجب عليك السحب من السوق للاستمرار في اللعب.</p>
-            <button class="btn-draw" onclick="drawFromBoneyard()">سحب حجر من السوق</button>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- 3. الشاشة الرئيسية والطاولة البيضاوية      -->
-    <!-- ========================================== -->
     <div class="main-screen">
+
+        <!-- 1. شريط حالة الدور العلوي -->
+        <div id="turn-status" class="turn-status">🎯 جاري إعداد اللعبة...</div>
+
+        <!-- 2. بطاقات اللاعبين (الأفاتارات) في زوايا الشاشة -->
+        <!-- الكمبيوتر 1 (أعلى اليسار) -->
+        <div class="avatar-badge top-left">
+            <div class="avatar-circle">🤖</div>
+            <div class="badge-info">
+                <span class="player-name">الكمبيوتر 1</span>
+                <span id="comp1-count" class="card-pill">🂠 7</span>
+            </div>
+        </div>
+
+        <!-- الكمبيوتر 2 (أعلى اليمين) -->
+        <div id="comp2-avatar" class="avatar-badge top-right hidden">
+            <div class="avatar-circle">🤖</div>
+            <div class="badge-info">
+                <span class="player-name">الكمبيوتر 2</span>
+                <span id="comp2-count" class="card-pill">🂠 7</span>
+            </div>
+        </div>
+
+        <!-- اللاعب البشري (أسفل اليسار) -->
+        <div class="avatar-badge bottom-left">
+            <div class="avatar-circle">👨‍💻</div>
+            <div class="badge-info">
+                <span class="player-name">أنت (اللاعب)</span>
+            </div>
+        </div>
+
+        <!-- 3. طاولة اللعب البيضاوية -->
         <div class="poker-table">
-            
-            <!-- منافس 1 (أعلى اليسار) -->
-            <div id="comp1-badge" class="avatar-badge top-left">
-                <div class="avatar-circle">🤖</div>
-                <div class="badge-info">
-                    <span class="player-name">الكمبيوتر 1</span>
-                    <span id="comp1-count" class="card-pill">🂠 7</span>
-                </div>
-            </div>
-
-            <!-- منافس 2 (أعلى اليمين - يظهر فقط في نظام الـ 3 لاعبين) -->
-            <div id="comp2-badge" class="avatar-badge top-right hidden">
-                <div class="avatar-circle">🤖</div>
-                <div class="badge-info">
-                    <span class="player-name">الكمبيوتر 2</span>
-                    <span id="comp2-count" class="card-pill">🂠 7</span>
-                </div>
-            </div>
-
-            <!-- أيقونة السوق الجانبية المدمجة -->
-            <div class="market-icon-box">
-                <div class="market-stack">🂠</div>
-                <span id="boneyard-count" class="market-count">14</span>
-            </div>
-
-            <!-- شريط حالة الدور الحالي -->
-            <div id="turn-display" class="turn-status">دورك للعب الآن 🎯</div>
-
-            <!-- زر بدء لعبة جديدة -->
-            <button class="restart-btn" onclick="showModeModal()">🔄 لعبة جديدة</button>
-
-            <!-- طاولة اللعب الوسطى لرص السلسلة -->
+            <!-- مسار رص أحجار الدومينو -->
             <div id="board-chain" class="domino-chain">
-                <p class="empty-msg">الطاولة فارغة، اختر حجراً من يدك للبدء</p>
+                <!-- يتم توليد الأحجار هنا برمجياً -->
             </div>
+        </div>
 
-            <!-- صورتك الشخصية كلاعب (أسفل اليسار) -->
-            <div class="avatar-badge bottom-left">
-                <div class="avatar-circle user-avatar">🧔</div>
-                <div class="badge-info">
-                    <span class="player-name">أنت (اللاعب)</span>
-                </div>
-            </div>
+        <!-- 4. أيقونة السوق (السحب من البلاط المتبقي) -->
+        <div id="boneyard-box" class="market-icon-box" onclick="drawFromBoneyard()">
+            <div style="font-size: 18px;">🂠</div>
+            <div style="font-size: 11px; margin-top: 2px;">السوق: <span id="boneyard-count">0</span></div>
+        </div>
 
-            <!-- الحاوية المخصصة لأحجارك (في أسفل الشاشة) -->
-            <div id="player-hand" class="player-hand-container"></div>
+        <!-- 5. حاوية أحجار اللاعب أسفل الشاشة -->
+        <div id="player-hand" class="player-hand-container">
+            <!-- يتم توليد أحجار يد اللاعب هنا برمجياً -->
+        </div>
 
+    </div>
+
+    <!-- 6. النافذة المنبثقة لاختيار نمط اللعب عند البداية -->
+    <div id="start-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2>🀄 مرحباً بك في لعبة الدومينو</h2>
+            <p style="margin: 15px 0; color: #cbd5e1; font-size: 14px;">اختر نمط اللعب للبدء:</p>
+            <button class="btn-primary" onclick="selectGameMode(2)">لاعب ضد الكمبيوتر (1v1)</button>
+            <button class="btn-secondary" onclick="selectGameMode(3)">لاعب ضد 2 كمبيوتر (1v2)</button>
         </div>
     </div>
 
-    <!-- ربط ملف البرمجة مع تحديث رقم الإصدار إلى v=6.0 لتخطي الكاش -->
-    <script src="script.js?v=7.3"></script>
+    <!-- 7. النافذة المنبثقة عند نهاية اللعبة -->
+    <div id="end-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <h2 id="end-title">🎉 انتهاء اللعبة</h2>
+            <button class="btn-primary" onclick="showStartModal()">لعبة جديدة 🔄</button>
+        </div>
+    </div>
+
+    <!-- استدعاء ملف الجافاسكربت -->
+    <script src="script.js?v=7.5"></script>
 </body>
 </html>
