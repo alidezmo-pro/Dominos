@@ -23,9 +23,9 @@
     --domino-divider: #334155;
 
     /* Sizes */
-    --domino-w: 32px;
-    --domino-h: 64px;
-    --dot-size: 6px;
+    --domino-w: 36px;
+    --domino-h: 72px;
+    --dot-size: 8px;
 
     /* Z-Index Layers */
     --z-base: 1;
@@ -47,7 +47,6 @@ body {
     background-color: var(--bg-main);
     color: var(--text-light);
     width: 100vw;
-    /* Using dvh prevents mobile browser UI from clipping content */
     height: 100dvh; 
     overflow: hidden;
     user-select: none;
@@ -55,12 +54,11 @@ body {
 
 /* --- 3. Main Layout Structure (CSS Grid) --- */
 .game-layout {
-    display: grid;
-    /* Top Bar, Table Area, Bottom Bar */
-    grid-template-rows: auto 1fr auto; 
+    display: flex;
+    flex-direction: column;
     height: 100%;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 1rem;
     gap: 1rem;
@@ -68,15 +66,12 @@ body {
 
 /* --- 4. Top Bar (Comps & Timer) --- */
 .top-bar {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     z-index: var(--z-ui);
+    flex-shrink: 0; /* يمنع انضغاط هذا الشريط */
 }
-
-.top-left { justify-self: start; }
-.top-center { justify-self: center; }
-.top-right { justify-self: end; }
 
 /* Timer */
 .timer-display {
@@ -84,12 +79,12 @@ body {
     border: 2px solid var(--domino-divider);
     padding: 0.5rem 1.5rem;
     border-radius: 20px;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: var(--accent-danger);
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     text-align: center;
-    min-width: 80px;
+    min-width: 100px;
 }
 
 /* Player/Comp Profiles */
@@ -105,8 +100,8 @@ body {
 }
 
 .profile img {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     background: var(--table-bg);
 }
@@ -114,22 +109,22 @@ body {
 .profile-info {
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .profile-name {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 600;
 }
 
 .profile-count {
     background: var(--accent-comp);
     color: #000;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: bold;
-    padding: 0.1rem 0.5rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 10px;
     margin-top: 0.2rem;
-    align-self: flex-start;
 }
 
 /* Active Turn Neon Effect */
@@ -148,11 +143,13 @@ body {
 /* --- 5. Table Area --- */
 .table-container {
     position: relative;
+    flex-grow: 1; /* يأخذ كل المساحة المتبقية */
+    min-height: 45vh; /* يضمن عدم انضغاط الطاولة أبداً */
     background-color: var(--table-bg);
     border: 8px solid var(--table-border);
     border-radius: 60px;
     box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.3);
-    overflow: hidden; /* Ensure nothing visually spills out */
+    overflow: hidden; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -160,7 +157,6 @@ body {
 }
 
 #board-chain {
-    /* This will be the relative canvas for absolute positioning calculated by JS */
     position: relative;
     width: 100%;
     height: 100%;
@@ -171,9 +167,9 @@ body {
     position: absolute;
     background: var(--accent-player);
     color: #000;
-    padding: 0.25rem 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
     box-shadow: 0 0 10px var(--accent-player);
@@ -185,32 +181,32 @@ body {
 
 @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+    70% { box-shadow: 0 0 0 15px rgba(56, 189, 248, 0); }
     100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
 }
 
 /* --- 6. Bottom Bar (Player Hand & Boneyard) --- */
 .bottom-bar {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+    display: flex;
+    justify-content: space-between;
     align-items: flex-end;
     gap: 1rem;
     z-index: var(--z-ui);
+    flex-shrink: 0;
 }
 
-.bottom-left { justify-self: start; }
-.bottom-center { justify-self: center; width: 100%; overflow: hidden; }
-.bottom-right { justify-self: end; }
+.bottom-left { flex: 0 0 auto; }
+.bottom-center { flex: 1; overflow: hidden; display: flex; justify-content: center; }
+.bottom-right { flex: 0 0 auto; }
 
 /* Player Hand Container */
 .player-hand-wrapper {
     display: flex;
     overflow-x: auto;
-    overflow-y: visible; /* Allow hover transform to spill out top */
-    padding: 1rem 0.5rem;
+    overflow-y: visible;
+    padding: 1.5rem 0.5rem;
     gap: 0.5rem;
-    min-height: calc(var(--domino-h) + 2rem);
-    /* Custom Scrollbar for Hand */
+    max-width: 100%;
     scrollbar-width: thin;
     scrollbar-color: var(--accent-player) transparent;
 }
@@ -220,7 +216,7 @@ body {
 
 #player-hand {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     margin: 0 auto;
 }
 
@@ -229,7 +225,7 @@ body {
     background: #334155;
     border: 2px solid #475569;
     color: var(--text-light);
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.5rem;
     border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
@@ -238,6 +234,7 @@ body {
     gap: 0.5rem;
     transition: all 0.2s ease;
     will-change: transform;
+    font-size: 1.1rem;
 }
 .btn-boneyard:hover {
     background: #475569;
@@ -246,7 +243,7 @@ body {
 .btn-boneyard .count {
     background: var(--text-light);
     color: #000;
-    padding: 0.1rem 0.4rem;
+    padding: 0.1rem 0.5rem;
     border-radius: 5px;
 }
 
@@ -267,9 +264,19 @@ body {
 /* Board specific domino overrides */
 #board-chain .domino-piece {
     position: absolute;
-    /* Transforms will be injected by JS for precise positioning & rotation */
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    /* إزالة الأنيميشن العشوائي وترك الانتقال السلس فقط */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: var(--z-domino);
+}
+
+/* حركة الورقة الجديدة فقط (سيتم التحكم بها من الـ JS) */
+#board-chain .domino-piece.new-piece {
+    animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes dropIn {
+    0% { transform: scale(1.5) translateY(50px); opacity: 0; }
+    100% { opacity: 1; } /* الـ transform النهائي سيأخذه من الـ JS مباشرة */
 }
 
 /* Player Hand specific domino overrides */
@@ -279,17 +286,17 @@ body {
 }
 
 #player-hand .domino-piece:hover {
-    transform: translateY(-15px);
+    transform: translateY(-20px);
 }
 
 #player-hand .domino-piece.playable {
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 
 #player-hand .domino-piece.selected {
-    transform: translateY(-20px) scale(1.1);
-    box-shadow: 0 10px 25px rgba(56, 189, 248, 0.8);
+    transform: translateY(-25px) scale(1.15);
+    box-shadow: 0 10px 25px rgba(56, 189, 248, 0.9);
     border: 2px solid var(--accent-player);
     z-index: 10;
 }
@@ -318,7 +325,7 @@ body {
     position: absolute;
 }
 
-/* Pre-calculated dot positions to avoid inline styling mess */
+/* Pre-calculated dot positions */
 .p-1 .dot-1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .p-2 .dot-1 { top: 15%; left: 15%; }
 .p-2 .dot-2 { bottom: 15%; right: 15%; }
@@ -342,9 +349,7 @@ body {
 .p-6 .dot-6 { bottom: 15%; right: 15%; }
 
 /* --- 8. Modals (Overlays) --- */
-.hidden {
-    display: none !important;
-}
+.hidden { display: none !important; }
 
 .modal-overlay {
     position: fixed;
@@ -368,15 +373,8 @@ body {
     width: 90%;
 }
 
-.modal-box h2 {
-    margin-bottom: 1rem;
-    font-size: 1.8rem;
-}
-
-.modal-box p {
-    margin-bottom: 1.5rem;
-    color: var(--text-muted);
-}
+.modal-box h2 { margin-bottom: 1rem; font-size: 1.8rem; }
+.modal-box p { margin-bottom: 1.5rem; color: var(--text-muted); }
 
 .btn-primary {
     background: var(--accent-player);
@@ -390,7 +388,6 @@ body {
     margin: 0.5rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .btn-primary:hover {
     transform: scale(1.05);
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
@@ -398,27 +395,21 @@ body {
 
 /* --- 9. Responsive Breakpoints --- */
 @media (max-width: 768px) {
-    .game-layout {
-        padding: 0.5rem;
-        gap: 0.5rem;
-    }
-    .profile-name { display: none; } /* Hide names on small screens, keep icons */
-    .profile { padding: 0.4rem; }
+    .game-layout { padding: 0.5rem; gap: 0.5rem; }
     
-    .table-container {
-        border-width: 4px;
-        border-radius: 30px;
-    }
+    .profile { padding: 0.4rem; gap: 0.5rem; }
+    .profile img { width: 35px; height: 35px; }
+    .profile-name { display: none; } /* إخفاء الأسماء لتوفير المساحة */
     
-    /* Scale dominos down on mobile */
+    .timer-display { font-size: 1.2rem; padding: 0.3rem 1rem; min-width: 70px; }
+    
+    .table-container { border-width: 4px; border-radius: 30px; min-height: 50vh; }
+    
+    .btn-boneyard { padding: 0.6rem 1rem; font-size: 0.9rem; }
+    
     :root {
-        --domino-w: 24px;
-        --domino-h: 48px;
-        --dot-size: 4px;
-    }
-    
-    .btn-boneyard {
-        padding: 0.5rem;
-        font-size: 0.9rem;
+        --domino-w: 28px;
+        --domino-h: 56px;
+        --dot-size: 5px;
     }
 }
