@@ -1,7 +1,7 @@
 /* ==========================================================
  * Dominoes Game - Senior Refactor
  * File: style.css
- * Architecture: CSS Grid, CSS Variables, Strict Responsive
+ * Architecture: Floating UI, Max Table Area
  * ========================================================== */
 
 /* --- 1. CSS Variables (Design Tokens) --- */
@@ -48,44 +48,51 @@ body {
     color: var(--text-light);
     width: 100vw;
     height: 100dvh; /* dvh ensures it respects mobile browser bars */
-    overflow: hidden; /* يمنع ظهور أي سكرول في الشاشة بالكامل */
+    overflow: hidden; 
     user-select: none;
 }
 
-/* --- 3. Main Layout Structure (Strict CSS Grid) --- */
+/* --- 3. Main Layout Structure --- */
 .game-layout {
-    display: grid;
-    /* الصف الأول للعلوي، الأخير للسفلي، والمنتصف يأخذ المساحة المتبقية بصرامة */
-    grid-template-rows: auto minmax(0, 1fr) auto; 
+    position: relative;
+    display: flex;
+    flex-direction: column;
     height: 100%;
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
-    padding: 1rem;
-    gap: 1rem;
+    padding: 4px; /* فاصل 4 بيكسل من حدود الشاشة */
+    gap: 4px; /* فاصل 4 بيكسل بين الطاولة وأوراقك */
 }
 
-/* --- 4. Top Bar (Comps & Timer) --- */
+/* --- 4. Floating Top Bar (Comps & Timer Over the Table) --- */
 .top-bar {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    padding: 0 20px;
     z-index: var(--z-ui);
-    width: 100%;
+    pointer-events: none; /* للسماح بالضغط على الطاولة من تحتهم */
 }
 
-/* Timer */
+.top-bar > * {
+    pointer-events: auto; /* إعادة تفعيل الضغط للعناصر نفسها */
+}
+
+/* Timer - Transparent */
 .timer-display {
-    background: var(--table-bg);
-    border: 2px solid var(--domino-divider);
-    padding: 0.5rem 1.5rem;
-    border-radius: 20px;
-    font-size: 1.5rem;
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 2rem;
     font-weight: bold;
     color: var(--accent-danger);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     text-align: center;
-    min-width: 100px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
 }
 
 /* Player/Comp Profiles */
@@ -93,10 +100,11 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: #334155;
+    background: rgba(51, 65, 85, 0.9); /* شفافية خفيفة */
     padding: 0.5rem 1rem;
     border-radius: 30px;
     border: 2px solid #475569;
+    backdrop-filter: blur(4px);
     transition: all 0.3s ease;
 }
 
@@ -131,26 +139,26 @@ body {
 /* Active Turn Neon Effect */
 .neon-player {
     border-color: var(--accent-player);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
     transform: scale(1.05);
 }
 
 .neon-comp {
     border-color: var(--accent-comp);
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
     transform: scale(1.05);
 }
 
-/* --- 5. Table Area --- */
+/* --- 5. Table Area (Takes Maximum Space) --- */
 .table-container {
+    flex: 1; /* تمتد الطاولة لأقصى مساحة ممكنة */
     position: relative;
     width: 100%;
-    height: 100%; /* سيأخذ 100% من المساحة المتاحة له في الـ Grid فقط */
     background-color: var(--table-bg);
-    border: 8px solid var(--table-border);
-    border-radius: 60px;
+    border: 6px solid var(--table-border);
+    border-radius: 30px;
     box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.3);
-    overflow: hidden; /* أي ورق يخرج عن الحدود سيتم إخفاؤه */
+    overflow: hidden; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -188,13 +196,14 @@ body {
 
 /* --- 6. Bottom Bar (Player Hand & Boneyard) --- */
 .bottom-bar {
+    flex: 0 0 auto; /* ثابتة بالأسفل لا تنضغط */
     display: grid;
-    /* مساحة للأفاتار - مساحة تتمدد للورق - مساحة لزر السوق */
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: flex-end;
     gap: 1rem;
     z-index: var(--z-ui);
     width: 100%;
+    padding: 0 4px; /* لضمان عدم ملامسة الحواف الجانبية */
 }
 
 /* Player Hand Container */
@@ -303,7 +312,7 @@ body {
     z-index: 10;
 }
 
-/* Domino Dots Internal Layout (Flex/Grid mix for precise dots) */
+/* Domino Dots Internal Layout */
 .domino-half {
     width: 100%;
     flex: 1;
@@ -376,53 +385,44 @@ body {
 }
 
 .modal-box h2 { margin-bottom: 1rem; font-size: 1.8rem; }
-.modal-box p { margin-bottom: 1.5rem; color: var(--text-muted); }
+ولا تزعل نفسك يا معلم، بسيطة وهنظبطها وتيجي على الفرازة زي ما أنت عايز بالظبط! 
 
-.btn-primary {
-    background: var(--accent-player);
-    color: #000;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    font-size: 1.1rem;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    margin: 0.5rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
-}
+فهمت قصدك من الصورة `IMG_20260731_211041.jpg`. الفكرة كلها إننا محتاجين ندي الطاولة مساحة تتمدد فيها (Flex-grow)، ونخلي العناصر التانية (الافتارات والتايمر) عايمة فوقها (Absolute Positioning) عشان نستغل المساحة المهملة دي، مع تثبيت الورق تحت.
 
-/* --- 9. Responsive Breakpoints --- */
-@media (max-width: 768px) {
-    .game-layout { padding: 0.5rem; gap: 0.5rem; }
-    
-    .profile { padding: 0.4rem; gap: 0.5rem; }
-    .profile img { width: 35px; height: 35px; }
-    .profile-name { display: none; }
-    
-    .timer-display { font-size: 1.2rem; padding: 0.3rem 1rem; min-width: 70px; }
-    
-    .table-container { border-width: 4px; border-radius: 30px; }
-    
-    .btn-boneyard { padding: 0.6rem 1rem; font-size: 0.9rem; }
-    
-    .bottom-bar { gap: 0.5rem; }
-    .player-hand-wrapper { padding: 1rem 0.2rem; }
-    
-    :root {
-        --domino-w: 30px;
-        --domino-h: 60px;
-        --dot-size: 6px;
-    }
+إليك الكود اللي هيعملك السحر ده. تقدر تعدل أسماء الكلاسات (Classes) بناءً على اللي مكتوب عندك في الـ HTML:
+
+### أولاً: كود الـ CSS الأساسي (الهيكلة)
+
+```css
+/* حاوية اللعبة بالكامل (عشان تملى الشاشة وتظبط المسافات) */
+.game-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* تملى الشاشة من فوق لتحت */
+  overflow: hidden;
+  position: relative;
 }
 
-/* لضمان عدم تداخل الأوراق في الشاشات القصيرة جداً */
-@media (max-height: 600px) {
-    :root {
-        --domino-w: 26px;
-        --domino-h: 52px;
-    }
+/* الطاولة */
+.table-area {
+  margin-top: 4px;    /* فاصل 4 من فوق */
+  margin-bottom: 4px; /* فاصل 4 من تحت قبل الأوراق */
+  flex-grow: 1;       /* تمتد عشان تاخد كل المساحة الفاضية */
+  position: relative; /* مهم جداً عشان الافتارات تترص فوقها صح */
+  
+  /* تنسيقات شكل الطاولة اللي عندك (الحدود البرتقالي والخلفية) */
+  border: 2px solid #d38b36;
+  border-radius: 20px;
+  background-color: #1e293b; 
+}
+
+/* منطقة الأوراق (في إيدك تحت) */
+.cards-area {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  z-index: 20; /* عشان تفضل دايماً ظاهرة فوق أي حاجة */
 }
