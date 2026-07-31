@@ -1,312 +1,424 @@
 /* ==========================================================
- * style.css - تصميم اللعبة (معدل لإصلاح المسافات والأنيميشن)
+ * Dominoes Game - Senior Refactor
+ * File: style.css
+ * Architecture: CSS Grid/Flexbox, CSS Variables, Responsive
  * ========================================================== */
 
-/* --- 1. الإعدادات الأساسية --- */
+/* --- 1. CSS Variables (Design Tokens) --- */
+:root {
+    /* Colors */
+    --bg-main: #0f172a;
+    --table-bg: #1e293b;
+    --table-border: #8b4513;
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+    
+    --accent-player: #38bdf8;
+    --accent-comp: #f59e0b;
+    --accent-danger: #ef4444;
+    
+    --domino-bg: #f8fafc;
+    --domino-dot: #0f172a;
+    --domino-border: #cbd5e1;
+    --domino-divider: #334155;
+
+    /* Sizes */
+    --domino-w: 32px;
+    --domino-h: 64px;
+    --dot-size: 6px;
+
+    /* Z-Index Layers */
+    --z-base: 1;
+    --z-table: 10;
+    --z-domino: 50;
+    --z-ui: 100;
+    --z-modal: 1000;
+}
+
+/* --- 2. Base Resets --- */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    background-color: #0f172a; 
-    color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    /* استخدام dvh بدلاً من vh ليتناسب مع شاشات الهواتف بدون قص */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-light);
+    width: 100vw;
+    /* Using dvh prevents mobile browser UI from clipping content */
     height: 100dvh; 
-    overflow: hidden; 
+    overflow: hidden;
+    user-select: none;
 }
 
-/* --- 2. الهيكل الرئيسي والطاولة --- */
-main {
-    flex: 1;
+/* --- 3. Main Layout Structure (CSS Grid) --- */
+.game-layout {
+    display: grid;
+    /* Top Bar, Table Area, Bottom Bar */
+    grid-template-rows: auto 1fr auto; 
+    height: 100%;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+/* --- 4. Top Bar (Comps & Timer) --- */
+.top-bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    z-index: var(--z-ui);
+}
+
+.top-left { justify-self: start; }
+.top-center { justify-self: center; }
+.top-right { justify-self: end; }
+
+/* Timer */
+.timer-display {
+    background: var(--table-bg);
+    border: 2px solid var(--domino-divider);
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent-danger);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    text-align: center;
+    min-width: 80px;
+}
+
+/* Player/Comp Profiles */
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #334155;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    border: 2px solid #475569;
+    transition: all 0.3s ease;
+}
+
+.profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--table-bg);
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.profile-count {
+    background: var(--accent-comp);
+    color: #000;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 0.1rem 0.5rem;
+    border-radius: 10px;
+    margin-top: 0.2rem;
+    align-self: flex-start;
+}
+
+/* Active Turn Neon Effect */
+.neon-player {
+    border-color: var(--accent-player);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+    transform: scale(1.05);
+}
+
+.neon-comp {
+    border-color: var(--accent-comp);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+    transform: scale(1.05);
+}
+
+/* --- 5. Table Area --- */
+.table-container {
+    position: relative;
+    background-color: var(--table-bg);
+    border: 8px solid var(--table-border);
+    border-radius: 60px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.3);
+    overflow: hidden; /* Ensure nothing visually spills out */
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-    width: 100%;
-    /* إضافة مساحات داخلية آمنة لحماية العناصر من القص */
-    padding: 80px 0 120px 0; 
+    z-index: var(--z-table);
 }
 
-.poker-table {
-    width: 90%;
-    max-width: 800px;
-    height: 100%; /* تأخذ المساحة المتبقية بأمان */
-    max-height: 55vh;
-    background-color: #1e293b;
-    border: 8px solid #8b4513; 
-    border-radius: 100px;
+#board-chain {
+    /* This will be the relative canvas for absolute positioning calculated by JS */
     position: relative;
-    box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5);
-}
-
-/* --- 3. منطقة اللاعبين والأفاتار --- */
-.players-container {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; 
 }
 
-.avatar-container {
+/* Board Connectors / Selectors */
+.board-selector {
     position: absolute;
-    background-color: #334155;
-    padding: 8px 15px;
-    border-radius: 30px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    pointer-events: auto;
-    border: 2px solid #475569;
-    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-}
-
-.avatar-container img, .avatar-container .icon {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-}
-
-.avatar-container .count {
-    background: #f59e0b;
+    background: var(--accent-player);
     color: #000;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: bold;
-    font-size: 0.9rem;
-}
-
-/* الإضاءة الديناميكية (النيون) */
-.active-neon-player {
-    box-shadow: 0 0 20px 8px rgba(56, 189, 248, 0.7); 
-    border-color: #38bdf8;
-    transform: scale(1.1);
-    z-index: 10;
-}
-
-.active-neon-comp {
-    box-shadow: 0 0 20px 8px rgba(245, 158, 11, 0.7); 
-    border-color: #f59e0b;
-    transform: scale(1.1);
-    z-index: 10;
-}
-
-/* تعديل أماكن اللاعبين لتكون داخل الشاشة تماماً */
-#player-avatar { bottom: 120px; left: 15px; } 
-#comp1-avatar { top: 15px; left: 15px; }
-#comp2-avatar { top: 15px; right: 15px; }
-
-/* --- 4. التايمر والسوق --- */
-.timer-display {
-    position: absolute;
-    top: 20px; /* تم إنزاله ليكون مرئياً */
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #ef4444;
-    text-align: center;
-    text-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
-    transition: color 0.3s ease;
-    background: #1e293b;
-    padding: 5px 20px;
-    border-radius: 20px;
-    border: 2px solid #334155;
-    z-index: 20;
-}
-
-.boneyard-btn {
-    position: absolute;
-    right: 15px;
-    bottom: 120px; /* تم رفعه ليتوازى مع افتار اللاعب */
-    background-color: #334155;
-    border: 2px solid #475569;
-    padding: 10px 15px;
-    border-radius: 15px;
-    color: white;
-    cursor: pointer;
-    text-align: center;
-    pointer-events: auto;
-    transition: transform 0.2s, background 0.2s;
-}
-.boneyard-btn:hover { background-color: #475569; transform: scale(1.05); }
-
-/* --- 5. أوراق الدومينو --- */
-.domino-piece {
-    background-color: #f8fafc;
+    padding: 0.25rem 0.75rem;
     border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    display: inline-flex;
-    flex-direction: column;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-    width: 28px;
-    height: 56px;
-}
-
-/* حركة الأوراق على الطاولة (بدون التأثير على الدوران) */
-#board-chain .domino-piece {
-    transition: left 0.4s ease, top 0.4s ease, opacity 0.4s ease;
-    animation: fadeIn 0.4s ease-out;
-}
-
-/* حركة أوراق يد اللاعب (مع تأثير الصعود) */
-#player-hand .domino-piece {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    animation: popIn 0.4s ease-out backwards;
-}
-
-#player-hand .domino-piece.selected {
-    transform: translateY(-20px) scale(1.15) !important;
-    box-shadow: 0 15px 25px rgba(56, 189, 248, 0.8) !important;
-    border-color: #38bdf8;
-    z-index: 100;
-}
-
-.domino-piece.playable {
+    font-size: 0.8rem;
+    font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-}
-.domino-piece.playable:hover {
-    transform: translateY(-10px);
-}
-
-/* الأنيميشن المفصول لمنع المشاكل */
-@keyframes fadeIn {
-    0% { opacity: 0; }
-    100% { opacity: 1; }
+    box-shadow: 0 0 10px var(--accent-player);
+    z-index: var(--z-ui);
+    transform: translate(-50%, -50%);
+    animation: pulse 1.5s infinite;
+    will-change: transform, box-shadow;
 }
 
-@keyframes popIn {
-    0% { opacity: 0; transform: translateY(30px); }
-    100% { opacity: 1; transform: translateY(0); }
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
 }
 
-/* تفاصيل الورقة (النقاط والخط الفاصل) */
-.domino-half {
-    width: 100%;
-    height: 50%;
+/* --- 6. Bottom Bar (Player Hand & Boneyard) --- */
+.bottom-bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: flex-end;
+    gap: 1rem;
+    z-index: var(--z-ui);
+}
+
+.bottom-left { justify-self: start; }
+.bottom-center { justify-self: center; width: 100%; overflow: hidden; }
+.bottom-right { justify-self: end; }
+
+/* Player Hand Container */
+.player-hand-wrapper {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    padding: 2px;
-    position: relative;
+    overflow-x: auto;
+    overflow-y: visible; /* Allow hover transform to spill out top */
+    padding: 1rem 0.5rem;
+    gap: 0.5rem;
+    min-height: calc(var(--domino-h) + 2rem);
+    /* Custom Scrollbar for Hand */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-player) transparent;
 }
 
-.divider {
-    width: 100%;
-    height: 2px;
-    background-color: #334155;
-}
-
-.dot {
-    width: 6px;
-    height: 6px;
-    background-color: #0f172a;
-    border-radius: 50%;
-    position: absolute;
-}
-
-/* توزيع النقاط داخل الورقة */
-.p-1 .dot-1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.p-2 .dot-1 { top: 20%; left: 20%; }
-.p-2 .dot-2 { bottom: 20%; right: 20%; }
-.p-3 .dot-1 { top: 20%; left: 20%; }
-.p-3 .dot-2 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.p-3 .dot-3 { bottom: 20%; right: 20%; }
-.p-4 .dot-1 { top: 20%; left: 20%; }
-.p-4 .dot-2 { top: 20%; right: 20%; }
-.p-4 .dot-3 { bottom: 20%; left: 20%; }
-.p-4 .dot-4 { bottom: 20%; right: 20%; }
-.p-5 .dot-1 { top: 20%; left: 20%; }
-.p-5 .dot-2 { top: 20%; right: 20%; }
-.p-5 .dot-3 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.p-5 .dot-4 { bottom: 20%; left: 20%; }
-.p-5 .dot-5 { bottom: 20%; right: 20%; }
-.p-6 .dot-1 { top: 20%; left: 20%; }
-.p-6 .dot-2 { top: 50%; left: 20%; transform: translateY(-50%); }
-.p-6 .dot-3 { bottom: 20%; left: 20%; }
-.p-6 .dot-4 { top: 20%; right: 20%; }
-.p-6 .dot-5 { top: 50%; right: 20%; transform: translateY(-50%); }
-.p-6 .dot-6 { bottom: 20%; right: 20%; }
-
-/* --- 6. يد اللاعب (الأوراق بالأسفل) --- */
-.player-area {
-    position: absolute;
-    bottom: 15px; /* تم رفعها قليلاً لتكون ظاهرة تماماً */
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    z-index: 50;
-}
+.player-hand-wrapper::-webkit-scrollbar { height: 6px; }
+.player-hand-wrapper::-webkit-scrollbar-thumb { background: var(--accent-player); border-radius: 10px; }
 
 #player-hand {
     display: flex;
     gap: 8px;
-    padding: 10px 15px;
-    background: rgba(30, 41, 59, 0.9);
+    margin: 0 auto;
+}
+
+/* Boneyard Button */
+.btn-boneyard {
+    background: #334155;
+    border: 2px solid #475569;
+    color: var(--text-light);
+    padding: 0.75rem 1rem;
     border-radius: 15px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    border: 1px solid #334155;
-    min-height: 80px;
-    align-items: flex-end;
-}
-
-/* --- 7. أزرار تحديد الأطراف --- */
-.end-selector {
-    background: #38bdf8;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 8px;
     cursor: pointer;
-    font-size: 12px;
     font-weight: bold;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
-    animation: pulse 1.5s infinite;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    will-change: transform;
+}
+.btn-boneyard:hover {
+    background: #475569;
+    transform: translateY(-5px);
+}
+.btn-boneyard .count {
+    background: var(--text-light);
+    color: #000;
+    padding: 0.1rem 0.4rem;
+    border-radius: 5px;
 }
 
-@keyframes pulse {
-    0% { transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
-    70% { transform: translate(-50%,-50%) scale(1.1); box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
-    100% { transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+/* --- 7. Domino Pieces --- */
+.domino-piece {
+    width: var(--domino-w);
+    height: var(--domino-h);
+    background-color: var(--domino-bg);
+    border: 1px solid var(--domino-border);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+    will-change: transform, opacity;
 }
 
-/* --- 8. النوافذ المنبثقة (Modals) --- */
-.hidden { display: none !important; }
+/* Board specific domino overrides */
+#board-chain .domino-piece {
+    position: absolute;
+    /* Transforms will be injected by JS for precise positioning & rotation */
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    z-index: var(--z-domino);
+}
 
-.modal {
+/* Player Hand specific domino overrides */
+#player-hand .domino-piece {
+    cursor: grab;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+#player-hand .domino-piece:hover {
+    transform: translateY(-15px);
+}
+
+#player-hand .domino-piece.playable {
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+#player-hand .domino-piece.selected {
+    transform: translateY(-20px) scale(1.1);
+    box-shadow: 0 10px 25px rgba(56, 189, 248, 0.8);
+    border: 2px solid var(--accent-player);
+    z-index: 10;
+}
+
+/* Domino Dots Internal Layout (Flex/Grid mix for precise dots) */
+.domino-half {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+    padding: 4px;
+}
+
+.divider {
+    width: 100%;
+    height: 1px;
+    background-color: var(--domino-divider);
+}
+
+.dot {
+    width: var(--dot-size);
+    height: var(--dot-size);
+    background-color: var(--domino-dot);
+    border-radius: 50%;
+    position: absolute;
+}
+
+/* Pre-calculated dot positions to avoid inline styling mess */
+.p-1 .dot-1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.p-2 .dot-1 { top: 15%; left: 15%; }
+.p-2 .dot-2 { bottom: 15%; right: 15%; }
+.p-3 .dot-1 { top: 15%; left: 15%; }
+.p-3 .dot-2 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.p-3 .dot-3 { bottom: 15%; right: 15%; }
+.p-4 .dot-1 { top: 15%; left: 15%; }
+.p-4 .dot-2 { top: 15%; right: 15%; }
+.p-4 .dot-3 { bottom: 15%; left: 15%; }
+.p-4 .dot-4 { bottom: 15%; right: 15%; }
+.p-5 .dot-1 { top: 15%; left: 15%; }
+.p-5 .dot-2 { top: 15%; right: 15%; }
+.p-5 .dot-3 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.p-5 .dot-4 { bottom: 15%; left: 15%; }
+.p-5 .dot-5 { bottom: 15%; right: 15%; }
+.p-6 .dot-1 { top: 15%; left: 15%; }
+.p-6 .dot-2 { top: 50%; left: 15%; transform: translateY(-50%); }
+.p-6 .dot-3 { bottom: 15%; left: 15%; }
+.p-6 .dot-4 { top: 15%; right: 15%; }
+.p-6 .dot-5 { top: 50%; right: 15%; transform: translateY(-50%); }
+.p-6 .dot-6 { bottom: 15%; right: 15%; }
+
+/* --- 8. Modals (Overlays) --- */
+.hidden {
+    display: none !important;
+}
+
+.modal-overlay {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    top: 0; left: 0; width: 100vw; height: 100dvh;
+    background: rgba(15, 23, 42, 0.9);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--z-modal);
+    backdrop-filter: blur(4px);
 }
 
-.modal-content {
-    background: #1e293b;
-    padding: 30px;
-    border-radius: 15px;
+.modal-box {
+    background: var(--table-bg);
+    padding: 2.5rem;
+    border-radius: 20px;
     text-align: center;
-    border: 2px solid #38bdf8;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    border: 2px solid var(--accent-player);
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+    max-width: 400px;
+    width: 90%;
 }
 
-.modal h2 { margin-bottom: 20px; font-size: 1.8rem; color: #fff; }
-.modal p { margin-bottom: 20px; font-size: 1.1rem; color: #cbd5e1; }
-.modal button {
-    background: #38bdf8; color: #000;
-    border: none; padding: 10px 20px;
-    font-size: 1.1rem; border-radius: 8px;
-    cursor: pointer; font-weight: bold;
-    margin: 5px; transition: transform 0.2s;
+.modal-box h2 {
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
 }
-.modal button:hover { transform: scale(1.05); }
+
+.modal-box p {
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+}
+
+.btn-primary {
+    background: var(--accent-player);
+    color: #000;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 0.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+
+/* --- 9. Responsive Breakpoints --- */
+@media (max-width: 768px) {
+    .game-layout {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+    .profile-name { display: none; } /* Hide names on small screens, keep icons */
+    .profile { padding: 0.4rem; }
+    
+    .table-container {
+        border-width: 4px;
+        border-radius: 30px;
+    }
+    
+    /* Scale dominos down on mobile */
+    :root {
+        --domino-w: 24px;
+        --domino-h: 48px;
+        --dot-size: 4px;
+    }
+    
+    .btn-boneyard {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
