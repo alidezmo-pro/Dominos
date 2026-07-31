@@ -1,5 +1,5 @@
 /* ==========================================================
- * style.css - تصميم اللعبة (محدث بـ النيون، التايمر، والأنيميشن)
+ * style.css - تصميم اللعبة (معدل لإصلاح المسافات والأنيميشن)
  * ========================================================== */
 
 /* --- 1. الإعدادات الأساسية --- */
@@ -11,12 +11,13 @@
 }
 
 body {
-    background-color: #0f172a; /* لون خلفية داكن */
+    background-color: #0f172a; 
     color: #ffffff;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow: hidden; /* لمنع التمرير وتثبيت الشاشة */
+    /* استخدام dvh بدلاً من vh ليتناسب مع شاشات الهواتف بدون قص */
+    height: 100dvh; 
+    overflow: hidden; 
 }
 
 /* --- 2. الهيكل الرئيسي والطاولة --- */
@@ -27,49 +28,48 @@ main {
     align-items: center;
     position: relative;
     width: 100%;
+    /* إضافة مساحات داخلية آمنة لحماية العناصر من القص */
+    padding: 80px 0 120px 0; 
 }
 
 .poker-table {
     width: 90%;
     max-width: 800px;
-    height: 60vh;
+    height: 100%; /* تأخذ المساحة المتبقية بأمان */
+    max-height: 55vh;
     background-color: #1e293b;
-    border: 8px solid #8b4513; /* حافة بنية خشبية */
+    border: 8px solid #8b4513; 
     border-radius: 100px;
     position: relative;
-    /* التعديل الجديد: رفع الطاولة للأعلى وتقليل التداخل مع أوراق اللاعب */
-    margin-top: -60px; 
-    margin-bottom: 120px; 
     box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* --- 3. منطقة اللاعبين والأفاتار (النيون) --- */
+/* --- 3. منطقة اللاعبين والأفاتار --- */
 .players-container {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* لتمرير الضغطات للطاولة تحتها */
+    pointer-events: none; 
 }
 
 .avatar-container {
     position: absolute;
     background-color: #334155;
-    padding: 10px 20px;
+    padding: 8px 15px;
     border-radius: 30px;
     display: flex;
     align-items: center;
     gap: 10px;
     pointer-events: auto;
     border: 2px solid #475569;
-    /* تأثير انتقال النيون */
     transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
 }
 
 .avatar-container img, .avatar-container .icon {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
 }
 
@@ -82,30 +82,30 @@ main {
     font-size: 0.9rem;
 }
 
-/* الإضاءة الديناميكية (النيون) التي اتفقنا عليها */
+/* الإضاءة الديناميكية (النيون) */
 .active-neon-player {
-    box-shadow: 0 0 20px 8px rgba(56, 189, 248, 0.7); /* أزرق */
+    box-shadow: 0 0 20px 8px rgba(56, 189, 248, 0.7); 
     border-color: #38bdf8;
     transform: scale(1.1);
     z-index: 10;
 }
 
 .active-neon-comp {
-    box-shadow: 0 0 20px 8px rgba(245, 158, 11, 0.7); /* برتقالي */
+    box-shadow: 0 0 20px 8px rgba(245, 158, 11, 0.7); 
     border-color: #f59e0b;
     transform: scale(1.1);
     z-index: 10;
 }
 
-/* أماكن اللاعبين (الزوايا) */
-#player-avatar { bottom: -20px; left: 20px; }
-#comp1-avatar { top: -20px; left: 20px; }
-#comp2-avatar { top: -20px; right: 20px; }
+/* تعديل أماكن اللاعبين لتكون داخل الشاشة تماماً */
+#player-avatar { bottom: 120px; left: 15px; } 
+#comp1-avatar { top: 15px; left: 15px; }
+#comp2-avatar { top: 15px; right: 15px; }
 
 /* --- 4. التايمر والسوق --- */
 .timer-display {
     position: absolute;
-    top: -30px; /* نرفع التايمر فوق الطاولة قليلاً */
+    top: 20px; /* تم إنزاله ليكون مرئياً */
     left: 50%;
     transform: translateX(-50%);
     font-size: 1.5rem;
@@ -123,11 +123,11 @@ main {
 
 .boneyard-btn {
     position: absolute;
-    right: -20px;
-    bottom: 20%;
+    right: 15px;
+    bottom: 120px; /* تم رفعه ليتوازى مع افتار اللاعب */
     background-color: #334155;
     border: 2px solid #475569;
-    padding: 15px;
+    padding: 10px 15px;
     border-radius: 15px;
     color: white;
     cursor: pointer;
@@ -137,7 +137,7 @@ main {
 }
 .boneyard-btn:hover { background-color: #475569; transform: scale(1.05); }
 
-/* --- 5. أوراق الدومينو والأنيميشن --- */
+/* --- 5. أوراق الدومينو --- */
 .domino-piece {
     background-color: #f8fafc;
     border-radius: 8px;
@@ -147,33 +147,44 @@ main {
     box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
     width: 28px;
     height: 56px;
-    /* التعديل الجديد: الأنيميشن والانتقالات الناعمة */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                left 0.4s ease, top 0.4s ease, box-shadow 0.3s ease;
+}
+
+/* حركة الأوراق على الطاولة (بدون التأثير على الدوران) */
+#board-chain .domino-piece {
+    transition: left 0.4s ease, top 0.4s ease, opacity 0.4s ease;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* حركة أوراق يد اللاعب (مع تأثير الصعود) */
+#player-hand .domino-piece {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     animation: popIn 0.4s ease-out backwards;
 }
 
-/* حركة عند اختيار ورقة للعب */
-.domino-piece.selected {
-    transform: translateY(-25px) scale(1.2) !important;
+#player-hand .domino-piece.selected {
+    transform: translateY(-20px) scale(1.15) !important;
     box-shadow: 0 15px 25px rgba(56, 189, 248, 0.8) !important;
     border-color: #38bdf8;
     z-index: 100;
 }
 
-/* الأوراق القابلة للعب (للاعب) */
 .domino-piece.playable {
     cursor: pointer;
     box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
 }
 .domino-piece.playable:hover {
-    transform: translateY(-10px); /* رفع خفيف عند التمرير */
+    transform: translateY(-10px);
 }
 
-/* أنيميشن دخول الأوراق للطاولة */
+/* الأنيميشن المفصول لمنع المشاكل */
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
 @keyframes popIn {
-    0% { opacity: 0; transform: scale(0.3) translateY(30px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 /* تفاصيل الورقة (النقاط والخط الفاصل) */
@@ -228,7 +239,7 @@ main {
 /* --- 6. يد اللاعب (الأوراق بالأسفل) --- */
 .player-area {
     position: absolute;
-    bottom: 20px;
+    bottom: 15px; /* تم رفعها قليلاً لتكون ظاهرة تماماً */
     width: 100%;
     display: flex;
     justify-content: center;
@@ -239,12 +250,12 @@ main {
 #player-hand {
     display: flex;
     gap: 8px;
-    padding: 15px;
-    background: rgba(30, 41, 59, 0.8);
+    padding: 10px 15px;
+    background: rgba(30, 41, 59, 0.9);
     border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     border: 1px solid #334155;
-    min-height: 90px;
+    min-height: 80px;
     align-items: flex-end;
 }
 
