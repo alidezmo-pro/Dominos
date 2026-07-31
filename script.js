@@ -266,14 +266,13 @@ function nextTurn() {
     renderGame();
     startTimer();
 
-    // تخطي التلقائي للاعب عند انتهاء السوق وعدم وجود ورق للعب
+    // التخطي التلقائي الصامت للاعب (بدون أي رسائل alert)
     if (currentTurn === 'player') {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && boneyard.length === 0) {
             setTimeout(() => {
-                alert("السوق فارغ ولا تملك ورقاً صالحاً للعب.. تم تخطي دورك تلقائياً!");
-                nextTurn();
-            }, 500);
+                nextTurn(); // ينقل الدور فوراً للمنافس التالي
+            }, 600); // تأخير بسيط لراحة العين
             return;
         }
     }
