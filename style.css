@@ -60,8 +60,8 @@ body {
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
-    padding: 4px; /* شعراية 4 بيكسل من حدود الشاشة العلوية والجانبية */
-    gap: 4px; /* شعراية 4 بيكسل بين الطاولة وشريط الأوراق السفلي */
+    padding: 4px;
+    gap: 4px;
     position: relative;
 }
 
@@ -75,14 +75,14 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     z-index: var(--z-ui);
-    pointer-events: none; /* السماح بالضغط على الطاولة من تحتهم */
+    pointer-events: none;
 }
 
 .top-bar > * {
-    pointer-events: auto; /* تفعيل الضغط للعناصر نفسها */
+    pointer-events: auto;
 }
 
-/* Timer - Transparent */
+/* Timer Display (Transparent Placeholder) */
 .timer-display {
     background: transparent;
     border: none;
@@ -90,28 +90,31 @@ body {
     font-size: 2rem;
     font-weight: bold;
     color: var(--accent-danger);
-    text-shadow: 0 2px 8px rgba(0,0,0,0.9); /* ظل قوي لضمان القراءة فوق أي خلفية */
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
     text-align: center;
 }
 
-/* Opponents Profiles */
+/* Opponents Profiles - Round, Small, Semi-Transparent */
 .profile {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    background: rgba(51, 65, 85, 0.85);
-    padding: 0.4rem 0.8rem;
-    border-radius: 30px;
-    border: 2px solid #475569;
+    justify-content: center;
+    position: relative;
+    background: rgba(30, 41, 59, 0.4);
+    padding: 2px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(4px);
     transition: all 0.3s ease;
+    width: 44px;
+    height: 44px;
 }
 
 .profile img {
-    width: 45px;
-    height: 45px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
-    background: var(--table-bg);
+    object-fit: cover;
 }
 
 .profile-info {
@@ -121,30 +124,37 @@ body {
 }
 
 .profile-name {
-    font-size: 0.85rem;
-    font-weight: 600;
+    display: none;
 }
 
+/* Card Count Badge on Top Avatars */
 .profile-count {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
     background: var(--accent-comp);
     color: #000;
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     font-weight: bold;
-    padding: 0.2rem 0.6rem;
-    border-radius: 10px;
-    margin-top: 0.2rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 /* --- 5. Table Area --- */
 .table-container {
-    flex-grow: 1; /* تمتد لأقصى مساحة ممكنة */
+    flex-grow: 1;
     position: relative;
     width: 100%;
     background-color: var(--table-bg);
-    border: 4px solid var(--table-border); /* الإطار البرتقالي/البني */
+    border: 4px solid var(--table-border);
     border-radius: 20px;
     box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
-    overflow: hidden; /* إخفاء أي ورق يخرج عن الحدود */
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -155,16 +165,14 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
-    /* تجهيز الحاوية للتصغير الديناميكي عبر الـ JS */
     transform-origin: center center;
     transition: transform 0.3s ease-in-out;
 }
 
 /* --- 6. Bottom Bar (Boneyard + Hand + Player Avatar) --- */
 .bottom-bar {
-    flex: 0 0 auto; /* ثابتة بالأسفل ولا تنضغط */
+    flex: 0 0 auto;
     display: grid;
-    /* 3 أعمدة: السوق - الأوراق (تتمدد) - الأفاتار */
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: flex-end;
     gap: 0.5rem;
@@ -175,10 +183,11 @@ body {
 
 /* Boneyard / Market Button */
 .btn-boneyard {
-    background: #334155;
-    border: 2px solid #475569;
+    background: rgba(51, 65, 85, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
     color: var(--text-light);
-    padding: 0.8rem 1rem;
+    padding: 0.6rem 0.8rem;
     border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
@@ -186,14 +195,14 @@ body {
     align-items: center;
     gap: 0.5rem;
     transition: all 0.2s ease;
-    font-size: 1rem;
+    font-size: 0.9rem;
     white-space: nowrap;
-    margin-bottom: 5px; /* رفع الزر قليلاً عن الحافة السفلية */
+    margin-bottom: 5px;
 }
 
 .btn-boneyard:hover { 
-    background: #475569; 
-    transform: translateY(-3px); 
+    background: rgba(71, 85, 105, 0.8); 
+    transform: translateY(-2px); 
 }
 
 .btn-boneyard .count { 
@@ -213,7 +222,7 @@ body {
     display: flex;
     overflow-x: auto;
     overflow-y: visible;
-    padding: 1rem 0.5rem 0.5rem 0.5rem; /* مساحة علوية لتأثير الـ Hover */
+    padding: 1rem 0.5rem 0.5rem 0.5rem;
     gap: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--accent-player) transparent;
@@ -228,25 +237,49 @@ body {
     margin: 0 auto;
 }
 
-/* Player Avatar (Right Side) */
+/* Player Avatar Container - Round, Small, Semi-Transparent */
 .player-avatar-container {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(51, 65, 85, 0.85);
-    border: 2px solid #475569;
+    background: rgba(30, 41, 59, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
     border-radius: 50%;
-    width: 55px;
-    height: 55px;
-    overflow: hidden;
+    width: 44px;
+    height: 44px;
     margin-bottom: 5px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
 .player-avatar-container img {
     width: 100%;
     height: 100%;
+    border-radius: 50%;
     object-fit: cover;
+}
+
+/* --- Overlay Timer inside Active Avatar --- */
+.avatar-timer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.75);
+    color: #ef4444;
+    font-size: 0.95rem;
+    font-weight: bold;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border: 2px solid #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+    pointer-events: none;
 }
 
 /* --- 7. Domino Pieces --- */
@@ -306,16 +339,14 @@ body {
 .p-6 .dot-6 { bottom: 15%; right: 15%; }
 
 /* --- 8. Active Turn Effects --- */
-.neon-player {
-    border-color: var(--accent-player);
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
-    transform: scale(1.05);
+.active-neon-player {
+    border-color: var(--accent-player) !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.8) !important;
 }
 
-.neon-comp {
-    border-color: var(--accent-comp);
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
-    transform: scale(1.05);
+.active-neon-comp {
+    border-color: var(--accent-comp) !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.8) !important;
 }
 
 /* --- 9. Modals --- */
@@ -329,11 +360,7 @@ body {
 
 /* --- 10. Responsive Breakpoints --- */
 @media (max-width: 768px) {
-    .profile-name { display: none; } /* إخفاء الأسماء لتوفير المساحة */
-    .profile img { width: 35px; height: 35px; }
-    .player-avatar-container { width: 45px; height: 45px; }
-    
-    .btn-boneyard { padding: 0.6rem; font-size: 0.9rem; }
+    .btn-boneyard { padding: 0.5rem; font-size: 0.85rem; }
     
     :root { 
         --domino-w: 30px; 
