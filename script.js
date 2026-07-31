@@ -1,29 +1,34 @@
 /* ==========================================================
- * لعبة الدومينو الاحترافية - ملف المحرك الأساسي (script.js)
+ * لعبة الدومينو الاحترافية - المحرك البرمجي الكامل (script.js)
  * ========================================================== */
 
-// --- المتغيرات العامة للعبة (Game State) ---
-let fullSet = [];          // الطقم الكامل للأحجار (28 حجر)
-let boneyard = [];         // أحجار السوق (البلاط المتبقي للسحب)
-let playerHand = [];       // أحجار اللاعب البشري
-let comp1Hand = [];        // أحجار الكمبيوتر 1
-let comp2Hand = [];        // أحجار الكمبيوتر 2
-let boardChain = [];       // سلسلة الأحجار الملعوبة على الطاولة
+// --- المتغيرات العامة للعبة ---
+let fullSet = [];          
+let boneyard = [];         
+let playerHand = [];       
+let comp1Hand = [];        
+let comp2Hand = [];        
+let boardChain = [];       
 
-let gameMode = 2;          // نمط اللعبة: 2 (لاعب ضد كمبيوتر) أو 3 (لاعب ضد 2 كمبيوتر)
-let currentTurn = 'player';// الدور الحالي: 'player', 'comp1', 'comp2'
-let selectedTileIndex = null; // الكارت المختار حالياً من يد اللاعب للعب على الأطراف
+let gameMode = 2;          
+let currentTurn = 'player';
+let selectedTileIndex = null; 
 
-let leftEndValue = null;   // قيمة الرقم المفتوح على الطرف الأيسر للطاولة
-let rightEndValue = null;  // قيمة الرقم المفتوح على الطرف الأيمن للطاولة
+let leftEndValue = null;   
+let rightEndValue = null;  
 let isGameOver = false;
 
-// --- عند تحميل الصفحة تلقائياً ---
+// --- عند فتح اللعبة ---
 window.onload = function() {
     showStartModal();
 };
 
-// --- 1. إنشاء طقم الدومينو (28 حجر من 0-0 إلى 6-6) ---
+// --- دالة الربط لحل خطأ ReferenceError ---
+function selectGameMode(mode) {
+    startGame(mode);
+}
+
+// 1. إنشاء طقم الدومينو (28 حجر)
 function createDominoSet() {
     let set = [];
     for (let i = 0; i <= 6; i++) {
@@ -34,7 +39,7 @@ function createDominoSet() {
     return set;
 }
 
-// --- 2. خلط الأحجار العشوائي (Shuffle) ---
+// 2. خلط الأحجار
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1));
@@ -43,7 +48,7 @@ function shuffle(array) {
     return array;
 }
 
-// --- 3. بدء لعبة جديدة (Start Game) ---
+// 3. بدء اللعبة
 function startGame(mode) {
     gameMode = mode;
     isGameOver = false;
@@ -52,10 +57,8 @@ function startGame(mode) {
     leftEndValue = null;
     rightEndValue = null;
 
-    // إخفاء النوافذ المنبثقة
     hideModals();
 
-    // إظهار أو إخفاء أفاتار الكمبيوتر 2 بناءً على عدد اللاعبين
     let comp2Avatar = document.getElementById("comp2-avatar");
     if (comp2Avatar) {
         if (gameMode === 3) {
@@ -65,30 +68,23 @@ function startGame(mode) {
         }
     }
 
-    // إنشاء وخلط الأحجار
     fullSet = shuffle(createDominoSet());
 
-    // توزيع 7 أحجار لكل لاعب
     playerHand = fullSet.splice(0, 7);
     comp1Hand = fullSet.splice(0, 7);
     comp2Hand = (gameMode === 3) ? fullSet.splice(0, 7) : [];
-    boneyard = fullSet; // المتبقي يذهب للسوق
+    boneyard = fullSet; 
 
-    // تحديد من يبدأ اللعب (صاحب أعلى حجر مزدوج)
     determineFirstTurn();
-
-    // تحديث الواجهة
     renderGame();
 
-    // إذا كان الدور للكمبيوتر، نفذ دوره تلقائياً
     if (currentTurn !== 'player') {
         setTimeout(playComputerTurn, 1000);
     }
 }
 
-// --- 4. تحديد صاحب أول دور ---
+// 4. تحديد صاحب أول دور
 function determineFirstTurn() {
-    // البحث عن أعلى حجر مزدوج (6-6 ثم 5-5 إلخ)
     for (let d = 6; d >= 0; d--) {
         if (playerHand.some(p => p.top === d && p.bottom === d)) {
             currentTurn = 'player';
@@ -103,50 +99,38 @@ function determineFirstTurn() {
             return;
         }
     }
-    // إذا لم يوجد حجر مزدوج مع أحد، يبدأ اللاعب البشري افتراضياً
     currentTurn = 'player';
 }
 
-// --- 5. فحص الأحجار القابلة للعب لدى اللاعب ---
+// 5. فحص الأحجار القابلة للعب
 function getPlayableEnds(tile) {
     if (boardChain.length === 0) return ['left', 'right'];
 
     let ends = [];
-    if (tile.top === leftEndValue || tile.bottom === leftEndValue) {
-        ends.push('left');
-    }
-    if (tile.top === rightEndValue || tile.bottom === rightEndValue) {
-        ends.push('right');
-    }
+    if (tile.top === leftEndValue || tile.bottom === leftEndValue) ends.push('left');
+    if (tile.top === rightEndValue || tile.bottom === rightEndValue) ends.push('right');
     return ends;
 }
 
-// --- 6. النقر على حجر في يد اللاعب ---
+// 6. اختيار حجر للاعب
 function onPlayerTileClick(index) {
     if (currentTurn !== 'player' || isGameOver) return;
 
     let tile = playerHand[index];
     let ends = getPlayableEnds(tile);
 
-    if (ends.length === 0 && boardChain.length > 0) return; // غير قابل للعب
+    if (ends.length === 0 && boardChain.length > 0) return;
 
-    // إذا كان الحجر يصلح للعب على الطرفين معاً وكانت الأطراف مختلفة
     if (ends.length === 2 && leftEndValue !== rightEndValue) {
-        if (selectedTileIndex === index) {
-            selectedTileIndex = null; // إلغاء التحديد عند النقر مجدداً
-        } else {
-            selectedTileIndex = index; // تحديد الحجر لإظهار أزرار الاختيار (يمين / يسار)
-        }
+        selectedTileIndex = (selectedTileIndex === index) ? null : index;
         renderGame();
         return;
     }
 
-    // إذا كان يركب على طرف واحد فقط أو كانت الطاولة فارغة
     let targetEnd = ends.length > 0 ? ends[0] : 'left';
     playPlayerTile(index, targetEnd);
 }
 
-// --- 7. لعب كارت اللاعب على طرف محدد ---
 function selectBoardEnd(end) {
     if (selectedTileIndex !== null) {
         playPlayerTile(selectedTileIndex, end);
@@ -159,17 +143,15 @@ function playPlayerTile(index, end) {
     addTileToBoard(tile, end);
     selectedTileIndex = null;
 
-    // فحص الفوز
     if (playerHand.length === 0) {
         endGame("🎉 مبروك! لقد فزت باللعبة!");
         return;
     }
 
-    // الانتقال للدور التالي
     nextTurn();
 }
 
-// --- 8. إضافة حجر إلى الطاولة وتعديل اتجاه أرقامه تلقائياً ---
+// 7. إضافة حجر للطاولة
 function addTileToBoard(tile, end) {
     if (boardChain.length === 0) {
         boardChain.push({ top: tile.top, bottom: tile.bottom });
@@ -179,31 +161,23 @@ function addTileToBoard(tile, end) {
     }
 
     if (end === 'left') {
-        let orientedTile;
-        if (tile.bottom === leftEndValue) {
-            orientedTile = { top: tile.top, bottom: tile.bottom };
-            leftEndValue = tile.top;
-        } else {
-            orientedTile = { top: tile.bottom, bottom: tile.top };
-            leftEndValue = tile.bottom;
-        }
+        let orientedTile = (tile.bottom === leftEndValue) 
+            ? { top: tile.top, bottom: tile.bottom } 
+            : { top: tile.bottom, bottom: tile.top };
+        leftEndValue = orientedTile.top;
         boardChain.unshift(orientedTile);
     } else {
-        let orientedTile;
-        if (tile.top === rightEndValue) {
-            orientedTile = { top: tile.top, bottom: tile.bottom };
-            rightEndValue = tile.bottom;
-        } else {
-            orientedTile = { top: tile.bottom, bottom: tile.top };
-            rightEndValue = tile.top;
-        }
+        let orientedTile = (tile.top === rightEndValue) 
+            ? { top: tile.top, bottom: tile.bottom } 
+            : { top: tile.bottom, bottom: tile.top };
+        rightEndValue = orientedTile.bottom;
         boardChain.push(orientedTile);
     }
 }
 
-// --- 9. إدارة الأدوار والتمرير ---
+// 8. الدور التالي
 function nextTurn() {
-    if (checkBlockGame()) return; // فحص ما إذا كانت اللعبة مغلقة (قَفْلة)
+    if (checkBlockGame()) return;
 
     if (currentTurn === 'player') {
         currentTurn = 'comp1';
@@ -220,14 +194,13 @@ function nextTurn() {
     }
 }
 
-// --- 10. ذكاء الكمبيوتر الاصطناعي (AI Turn) ---
+// 9. دور الكمبيوتر
 function playComputerTurn() {
     if (isGameOver) return;
 
     let hand = (currentTurn === 'comp1') ? comp1Hand : comp2Hand;
     let compName = (currentTurn === 'comp1') ? 'الكمبيوتر 1' : 'الكمبيوتر 2';
 
-    // البحث عن جميع الأحجار القابلة للعب
     let playableIndices = [];
     hand.forEach((tile, idx) => {
         let ends = getPlayableEnds(tile);
@@ -237,7 +210,6 @@ function playComputerTurn() {
     });
 
     if (playableIndices.length > 0) {
-        // اختيار حجر (تفضيل الأحجار المزدوجة أولاً)
         let chosen = playableIndices.find(item => hand[item.index].top === hand[item.index].bottom) || playableIndices[0];
         let tile = hand.splice(chosen.index, 1)[0];
         let endToPlay = chosen.ends.length > 0 ? chosen.ends[0] : 'right';
@@ -251,24 +223,21 @@ function playComputerTurn() {
 
         nextTurn();
     } else {
-        // إذا لم يجد حجر للعب، يسحب من السوق
         if (boneyard.length > 0) {
             let drawnTile = boneyard.pop();
             hand.push(drawnTile);
             renderGame();
             setTimeout(playComputerTurn, 600);
         } else {
-            // السوق فارغ - يتخطى دوره
             nextTurn();
         }
     }
 }
 
-// --- 11. سحب حجر من السوق للاعب البشري ---
+// 10. سحب حجر من السوق
 function drawFromBoneyard() {
     if (currentTurn !== 'player' || isGameOver) return;
 
-    // التأكد من أن اللاعب لا يملك أي حجر قابل للعب قبل السحب
     let hasPlayable = playerHand.some(tile => getPlayableEnds(tile).length > 0);
     if (hasPlayable && boardChain.length > 0) {
         alert("لديك أحجار قابلة للعب! لا يمكنك السحب من السوق.");
@@ -285,7 +254,7 @@ function drawFromBoneyard() {
     }
 }
 
-// --- 12. فحص قَفْلة اللعبة (Block Game Check) ---
+// 11. فحص قفلة اللعبة
 function checkBlockGame() {
     if (boneyard.length > 0 || boardChain.length === 0) return false;
 
@@ -293,10 +262,7 @@ function checkBlockGame() {
     let comp1CanPlay = comp1Hand.some(t => getPlayableEnds(t).length > 0);
     let comp2CanPlay = (gameMode === 3) ? comp2Hand.some(t => getPlayableEnds(t).length > 0) : false;
 
-    let nobodyCanPlay = !playerCanPlay && !comp1CanPlay && (gameMode === 2 || !comp2CanPlay);
-
-    if (nobodyCanPlay) {
-        // حساب نقاط كل لاعب (صاحب المجموع الأقل هو الفائز)
+    if (!playerCanPlay && !comp1CanPlay && (gameMode === 2 || !comp2CanPlay)) {
         let pScore = calculateScore(playerHand);
         let c1Score = calculateScore(comp1Hand);
         let c2Score = (gameMode === 3) ? calculateScore(comp2Hand) : 999;
@@ -304,13 +270,9 @@ function checkBlockGame() {
         let minScore = Math.min(pScore, c1Score, c2Score);
         let winnerMsg = "🔒 انغلقت اللعبة (قَفْلة)! ";
 
-        if (minScore === pScore) {
-            winnerMsg += `فزت بأقل عدد نقاط (${pScore})!`;
-        } else if (minScore === c1Score) {
-            winnerMsg += `فاز الكمبيوتر 1 بأقل نقاط (${c1Score})!`;
-        } else {
-            winnerMsg += `فاز الكمبيوتر 2 بأقل نقاط (${c2Score})!`;
-        }
+        if (minScore === pScore) winnerMsg += `فزت بأقل عدد نقاط (${pScore})!`;
+        else if (minScore === c1Score) winnerMsg += `فاز الكمبيوتر 1 بأقل نقاط (${c1Score})!`;
+        else winnerMsg += `فاز الكمبيوتر 2 بأقل نقاط (${c2Score})!`;
 
         endGame(winnerMsg);
         return true;
@@ -322,22 +284,17 @@ function calculateScore(hand) {
     return hand.reduce((sum, tile) => sum + tile.top + tile.bottom, 0);
 }
 
-// --- 13. دالة الرسم والعرض للعبة (Render Function) ---
+// 12. دالة عرض وتحديث الواجهة
 function renderGame() {
-    // أ. التكبير والتصغير التلقائي لأحجار الطاولة حسب العدد
     let totalBoardTiles = boardChain.length;
     let scale = 1;
 
-    if (totalBoardTiles > 8 && totalBoardTiles <= 14) {
-        scale = 0.85;
-    } else if (totalBoardTiles > 14 && totalBoardTiles <= 20) {
-        scale = 0.72;
-    } else if (totalBoardTiles > 20) {
-        scale = 0.60;
-    }
+    if (totalBoardTiles > 8 && totalBoardTiles <= 14) scale = 0.85;
+    else if (totalBoardTiles > 14 && totalBoardTiles <= 20) scale = 0.72;
+    else if (totalBoardTiles > 20) scale = 0.60;
+
     document.documentElement.style.setProperty('--board-scale', scale);
 
-    // ب. عرض أحجار يد اللاعب
     let playerArea = document.getElementById("player-hand");
     if (playerArea) {
         playerArea.innerHTML = "";
@@ -359,7 +316,6 @@ function renderGame() {
         });
     }
 
-    // ج. تحديث الأعداد في الواجهة
     let c1Count = document.getElementById("comp1-count");
     if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
 
@@ -369,15 +325,13 @@ function renderGame() {
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
-    // د. عرض رصة أحجار الطاولة (Chain Board)
     let chainArea = document.getElementById("board-chain");
     if (chainArea) {
         chainArea.innerHTML = "";
 
         if (boardChain.length === 0) {
-            chainArea.innerHTML = `<p class="empty-msg">الطاولة فارغة، اختر حجراً للبدء</p>`;
+            chainArea.innerHTML = `<p style="color:rgba(255,255,255,0.5); font-size:12px;">الطاولة فارغة، اختر حجراً للبدء</p>`;
         } else {
-            // زر اختيار الطرف الأيسر
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
@@ -385,7 +339,6 @@ function renderGame() {
                 }
             }
 
-            // عرض أحجار الطاولة
             boardChain.forEach((piece) => {
                 let isDouble = (piece.top === piece.bottom);
                 let orientationClass = isDouble ? '' : 'horizontal';
@@ -399,7 +352,6 @@ function renderGame() {
                 `;
             });
 
-            // زر اختيار الطرف الأيمن
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('right')) {
@@ -409,11 +361,9 @@ function renderGame() {
         }
     }
 
-    // هـ. تحديث نص حالة الدور العلوي
     updateTurnStatus();
 }
 
-// --- 14. توليد نقاط الحجر (Dots HTML Generator) ---
 function createDotsHTML(value) {
     let dotsHTML = '';
     for (let i = 1; i <= value; i++) {
@@ -422,12 +372,9 @@ function createDotsHTML(value) {
     return `<div class="domino-half p-${value}">${dotsHTML}</div>`;
 }
 
-// --- 15. تحديث نص حالة الدور العلوي ---
 function updateTurnStatus() {
     let statusElem = document.getElementById("turn-status");
-    if (!statusElem) return;
-
-    if (isGameOver) return;
+    if (!statusElem || isGameOver) return;
 
     if (currentTurn === 'player') {
         statusElem.innerText = "🎯 دورك للعب الآن";
@@ -441,7 +388,6 @@ function updateTurnStatus() {
     }
 }
 
-// --- 16. إدارة النوافذ المنبثقة (Modals) ---
 function showStartModal() {
     document.getElementById("start-modal")?.classList.remove("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
@@ -456,6 +402,5 @@ function endGame(message) {
     isGameOver = true;
     let endTitle = document.getElementById("end-title");
     if (endTitle) endTitle.innerText = message;
-
     document.getElementById("end-modal")?.classList.remove("hidden");
 }
