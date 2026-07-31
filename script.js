@@ -1,34 +1,39 @@
 /* ==========================================================
- * لعبة الدومينو الاحترافية - المحرك البرمجي الكامل (script.js)
+ * لعبة الدومينو الاحترافية - ملف المحرك الأساسي المكتمل (script.js)
  * ========================================================== */
 
-// --- المتغيرات العامة للعبة ---
-let fullSet = [];          
-let boneyard = [];         
-let playerHand = [];       
-let comp1Hand = [];        
-let comp2Hand = [];        
-let boardChain = [];       
+// --- 1. المتغيرات العامة للعبة (Game State) ---
+let fullSet = [];          // الطقم الكامل للأحجار (28 حجر)
+let boneyard = [];         // أحجار السوق (البلاط المتبقي)
+let playerHand = [];       // أحجار اللاعب البشري
+let comp1Hand = [];        // أحجار الكمبيوتر 1
+let comp2Hand = [];        // أحجار الكمبيوتر 2
+let boardChain = [];       // سلسلة الأحجار الملعوبة على الطاولة
 
-let gameMode = 2;          
-let currentTurn = 'player';
-let selectedTileIndex = null; 
+let gameMode = 2;          // نمط اللعبة: 2 (لاعب ضد كمبيوتر) أو 3 (لاعب ضد 2 كمبيوتر)
+let currentTurn = 'player';// الدور الحالي: 'player', 'comp1', 'comp2'
+let selectedTileIndex = null; // الكارت المختار حالياً من يد اللاعب
 
-let leftEndValue = null;   
-let rightEndValue = null;  
+let leftEndValue = null;   // الرقم المفتوح على الطرف الأيسر للطاولة
+let rightEndValue = null;  // الرقم المفتوح على الطرف الأيمن للطاولة
 let isGameOver = false;
 
-// --- عند فتح اللعبة ---
+// --- 2. ربط دالة اختيار النمط بالمتصفح عالمياً (إصلاح خطأ ReferenceError) ---
+function selectGameMode(mode) {
+    startGame(mode);
+}
+// إسناد صريح لنطاق النافذة لضمان الوصول إليها من زر HTML
+window.selectGameMode = selectGameMode;
+window.drawFromBoneyard = drawFromBoneyard;
+window.selectBoardEnd = selectBoardEnd;
+window.showStartModal = showStartModal;
+
+// --- 3. تشغيل النافذة عند تحميل الصفحة ---
 window.onload = function() {
     showStartModal();
 };
 
-// --- دالة الربط لحل خطأ ReferenceError ---
-function selectGameMode(mode) {
-    startGame(mode);
-}
-
-// 1. إنشاء طقم الدومينو (28 حجر)
+// --- 4. إنشاء طقم الدومينو (28 حجر من 0-0 إلى 6-6) ---
 function createDominoSet() {
     let set = [];
     for (let i = 0; i <= 6; i++) {
@@ -39,7 +44,7 @@ function createDominoSet() {
     return set;
 }
 
-// 2. خلط الأحجار
+// --- 5. خلط الأحجار العشوائي (Shuffle) ---
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1));
@@ -48,7 +53,7 @@ function shuffle(array) {
     return array;
 }
 
-// 3. بدء اللعبة
+// --- 6. بدء لعبة جديدة ---
 function startGame(mode) {
     gameMode = mode;
     isGameOver = false;
@@ -73,7 +78,7 @@ function startGame(mode) {
     playerHand = fullSet.splice(0, 7);
     comp1Hand = fullSet.splice(0, 7);
     comp2Hand = (gameMode === 3) ? fullSet.splice(0, 7) : [];
-    boneyard = fullSet; 
+    boneyard = fullSet;
 
     determineFirstTurn();
     renderGame();
@@ -83,7 +88,7 @@ function startGame(mode) {
     }
 }
 
-// 4. تحديد صاحب أول دور
+// --- 7. تحديد صاحب أول دور ---
 function determineFirstTurn() {
     for (let d = 6; d >= 0; d--) {
         if (playerHand.some(p => p.top === d && p.bottom === d)) {
@@ -102,7 +107,7 @@ function determineFirstTurn() {
     currentTurn = 'player';
 }
 
-// 5. فحص الأحجار القابلة للعب
+// --- 8. فحص الأطراف القابلة للعب للحجر ---
 function getPlayableEnds(tile) {
     if (boardChain.length === 0) return ['left', 'right'];
 
@@ -112,7 +117,7 @@ function getPlayableEnds(tile) {
     return ends;
 }
 
-// 6. اختيار حجر للاعب
+// --- 9. التفاعل عند النقر على حجر في يد اللاعب ---
 function onPlayerTileClick(index) {
     if (currentTurn !== 'player' || isGameOver) return;
 
@@ -151,7 +156,7 @@ function playPlayerTile(index, end) {
     nextTurn();
 }
 
-// 7. إضافة حجر للطاولة
+// --- 10. إضافة حجر إلى الطاولة وتوجيهه ---
 function addTileToBoard(tile, end) {
     if (boardChain.length === 0) {
         boardChain.push({ top: tile.top, bottom: tile.bottom });
@@ -175,7 +180,7 @@ function addTileToBoard(tile, end) {
     }
 }
 
-// 8. الدور التالي
+// --- 11. إدارة الأدوار ---
 function nextTurn() {
     if (checkBlockGame()) return;
 
@@ -194,7 +199,7 @@ function nextTurn() {
     }
 }
 
-// 9. دور الكمبيوتر
+// --- 12. ذكاء الكمبيوتر الإصطناعي ---
 function playComputerTurn() {
     if (isGameOver) return;
 
@@ -234,7 +239,7 @@ function playComputerTurn() {
     }
 }
 
-// 10. سحب حجر من السوق
+// --- 13. السحب من السوق ---
 function drawFromBoneyard() {
     if (currentTurn !== 'player' || isGameOver) return;
 
@@ -254,7 +259,7 @@ function drawFromBoneyard() {
     }
 }
 
-// 11. فحص قفلة اللعبة
+// --- 14. فحص القفلة وحساب النقاط ---
 function checkBlockGame() {
     if (boneyard.length > 0 || boardChain.length === 0) return false;
 
@@ -284,7 +289,7 @@ function calculateScore(hand) {
     return hand.reduce((sum, tile) => sum + tile.top + tile.bottom, 0);
 }
 
-// 12. دالة عرض وتحديث الواجهة
+// --- 15. رسم وتحديث الشاشة (Render Engine) ---
 function renderGame() {
     let totalBoardTiles = boardChain.length;
     let scale = 1;
