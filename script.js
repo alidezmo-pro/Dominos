@@ -1,5 +1,5 @@
 /* ==========================================================
- * script.js - محرك اللعب والشكل الثعباني المطور
+ * script.js - محرك اللعب والشكل الثعباني المطور (النزول بحجرين)
  * ========================================================== */
 
 // --- المتغيرات العامة للعبة ---
@@ -135,7 +135,7 @@ function playPlayerTile(index, end) {
     nextTurn();
 }
 
-// 🎯 محرك الإضافة: يحافظ على اتجاه الحجر برمجياً بشكل سليم ومطابق للأطراف
+// 🎯 محرك الإضافة: ضَبْط الاتجاهات بحسب أطراف اللعب
 function addTileToBoard(tile, end) {
     if (boardChain.length === 0) {
         boardChain.push({ top: tile.top, bottom: tile.bottom });
@@ -145,14 +145,12 @@ function addTileToBoard(tile, end) {
     }
 
     if (end === 'left') {
-        // إذا أضفنا لليسار، يجب أن يكون الطرف المتلامس (bottom للحجر الجديد) مساوياً لليسار القديم
         let orientedTile = (tile.bottom === leftEndValue) 
             ? { top: tile.top, bottom: tile.bottom } 
             : { top: tile.bottom, bottom: tile.top };
         leftEndValue = orientedTile.top;
         boardChain.unshift(orientedTile);
     } else {
-        // إذا أضفنا لليمين، يجب أن يكون الطرف المتلامس (top للحجر الجديد) مساوياً لليمين القديم
         let orientedTile = (tile.top === rightEndValue) 
             ? { top: tile.top, bottom: tile.bottom } 
             : { top: tile.bottom, bottom: tile.top };
@@ -260,7 +258,7 @@ function calculateScore(hand) {
 }
 
 // =========================================================================
-// 🚀 محرك الرسم الثنائي الأبعاد الاحترافي (2D Snake Layout Engine)
+// 🚀 محرك الـ Snake الجديد (نزول بحجرين في اللفة)
 // =========================================================================
 function calculateSnakeLayout(chain) {
     if (!chain || chain.length === 0) return [];
@@ -269,18 +267,21 @@ function calculateSnakeLayout(chain) {
     let current_x = 0, current_y = 0;
     let dir = 'RIGHT'; 
     let next_dir = null;
-    const ROW_LIMIT = 200; // أقصى مسافة لليمين أو اليسار قبل الالتفاف
+    let down_count = 0; // عداد للنزول بحجرين
+    const ROW_LIMIT = 180; // حدود السطر قبل اللفة
 
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
         let isDouble = (piece.top === piece.bottom);
         
-        // حساب متى نقوم بالالتفاف
+        // عند الوصول للحد الأقصى للسطر، نبدأ بالنزول بحجرين عموديين
         if (dir === 'RIGHT' && current_x > ROW_LIMIT && !isDouble) {
             dir = 'DOWN';
+            down_count = 2; // النزول بحجرين لترك مسافة كافية بين السطور
             next_dir = 'LEFT';
         } else if (dir === 'LEFT' && current_x < -ROW_LIMIT && !isDouble) {
             dir = 'DOWN';
+            down_count = 2; // النزول بحجرين لترك مسافة كافية بين السطور
             next_dir = 'RIGHT';
         }
 
@@ -288,7 +289,6 @@ function calculateSnakeLayout(chain) {
         let step = isDouble ? 28 : 56;
         let w, h, cx, cy, entry_x, entry_y, exit_x, exit_y;
 
-        // الحجر في الأصل عمودي (28x56) نستخدم الدوران لتحديد اتجاهه بدقة
         if (dir === 'RIGHT') {
             rotation = isDouble ? 0 : -90;
             w = isDouble ? 28 : 56;
@@ -317,8 +317,9 @@ function calculateSnakeLayout(chain) {
             exit_x = cx; exit_y = cy + h / 2;
             current_y += step;
             
-            // العودة للاتجاه الأفقي بعد حجر واحد لأسفل
-            if (next_dir) {
+            down_count--;
+            // بعد النزول بحجرين، يتم التحول للاتجاه الأفقي الجديد
+            if (down_count === 0 && next_dir) {
                 dir = next_dir;
                 next_dir = null;
             }
@@ -333,7 +334,7 @@ function calculateSnakeLayout(chain) {
     return layout;
 }
 
-// --- تحديث واجهة المستخدم والرسم ---
+// --- تحديث واجهة اللعبة واحتساب الحجم لتجنب التداخل ---
 function renderGame() {
     let playerArea = document.getElementById("player-hand");
     if (playerArea) {
@@ -363,7 +364,7 @@ function renderGame() {
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
-    // 🎯 رسم الطاولة وحساب Bounding Box والتصغير التلقائي
+    // 🎯 رسم الطاولة وحساب التصغير التلقائي لمنع وصول الأحجار إلى يد اللاعب
     let chainArea = document.getElementById("board-chain");
     if (chainArea) {
         chainArea.innerHTML = "";
@@ -373,7 +374,6 @@ function renderGame() {
         } else {
             let layout = calculateSnakeLayout(boardChain);
 
-            // حساب الإطار المحيط (Bounding Box) لتوسيط الثعبان برمجياً دون تداخل
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             layout.forEach(item => {
                 if (item.cx - item.w / 2 < minX) minX = item.cx - item.w / 2;
@@ -390,17 +390,16 @@ function renderGame() {
             let offsetX = -bboxCenterX;
             let offsetY = -bboxCenterY;
 
-            // حساب نسبة التصغير بناءً على حجم الشاشة لتجنب التغطية
+            // تم تقليل الارتفاع المتاح محلياً لضمان عدم خروج الأحجار عن الحدود الزرقاء للطاولة
             let scale = 1;
-            let maxAvailableWidth = 600; // مساحة الطاولة التقريبية
-            let maxAvailableHeight = 350;
+            let maxAvailableWidth = 520; 
+            let maxAvailableHeight = 200; 
             
             if (totalW > maxAvailableWidth || totalH > maxAvailableHeight) {
                 scale = Math.min(maxAvailableWidth / totalW, maxAvailableHeight / totalH);
-                scale = Math.max(scale, 0.5); // لا يصغر أقل من النصف (0.5)
+                scale = Math.max(scale, 0.45);
             }
 
-            // رسم الأزرار الخاصة باختيار الأطراف بطريقة احترافية
             let first = layout[0];
             let last = layout[layout.length - 1];
 
@@ -424,12 +423,10 @@ function renderGame() {
                 }
             }
 
-            // رسم الأحجار
             layout.forEach(item => {
                 let px = (item.cx + offsetX) * scale;
                 let py = (item.cy + offsetY) * scale;
 
-                // جميع الأحجار ترسم بهيكلية واحدة والدوران هو المسؤول عن التوجيه البصري (بدون if Left اقلب الصور)
                 chainArea.innerHTML += `
                     <div class="domino-piece"
                          style="position: absolute; left: calc(50% + ${px}px); top: calc(50% + ${py}px); transform: translate(-50%, -50%) scale(${scale}) rotate(${item.rotation}deg);">
