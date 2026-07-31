@@ -266,13 +266,13 @@ function nextTurn() {
     renderGame();
     startTimer();
 
-    // التخطي التلقائي الصامت للاعب (بدون أي رسائل alert)
+    // تخطي تلقائي وسلس للاعب بدون ظهور أي رسائل alert
     if (currentTurn === 'player') {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && boneyard.length === 0) {
             setTimeout(() => {
-                nextTurn(); // ينقل الدور فوراً للمنافس التالي
-            }, 600); // تأخير بسيط لراحة العين
+                nextTurn();
+            }, 600);
             return;
         }
     }
