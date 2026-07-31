@@ -1,31 +1,35 @@
-لقد قمت بإعادة كتابة محرك اللعبة بالكامل (The Board Layout Engine) ليتوافق مع متطلباتك الاحترافية، مع معالجة منطق اتجاه الأحجار، وحركة الثعبان (Snake Path)، ونظام التصغير التلقائي، ودوران الأحجار المزدوجة، مع الحفاظ على القواعد الأصلية.
-إليك الملفات الكاملة الجاهزة للاستبدال:
-1. ملف script.js
 /* ==========================================================
- * لعبة الدومينو الاحترافية - المحرك المحدث (script.js)
+ * script.js - محرك اللعب والشكل الثعباني المطور
  * ========================================================== */
 
-let fullSet = [];
-let boneyard = [];
-let playerHand = [];
-let comp1Hand = [];
-let comp2Hand = [];
-let boardChain = []; // يخزن الأحجار باتجاهات صحيحة ومنطقية
+// --- المتغيرات العامة للعبة ---
+let fullSet = [];          
+let boneyard = [];         
+let playerHand = [];       
+let comp1Hand = [];        
+let comp2Hand = [];        
+let boardChain = [];       // سلسلة الأحجار الملعوبة
 
-let gameMode = 2;
+let gameMode = 2;          
 let currentTurn = 'player';
-let selectedTileIndex = null;
-let leftEndValue = null;
-let rightEndValue = null;
+let selectedTileIndex = null; 
+
+let leftEndValue = null;   
+let rightEndValue = null;  
 let isGameOver = false;
 
-// --- إعدادات المحرك ---
-const TILE_WIDTH = 60;
-const TILE_HEIGHT = 30;
-const DOUBLE_SIZE = 30; // الحجم المربع للحجر المزدوج
+window.selectGameMode = selectGameMode;
+window.drawFromBoneyard = drawFromBoneyard;
+window.selectBoardEnd = selectBoardEnd;
+window.showStartModal = showStartModal;
 
-// --- تهيئة اللعبة ---
-window.onload = () => showStartModal();
+window.onload = function() {
+    showStartModal();
+};
+
+function selectGameMode(mode) {
+    startGame(mode);
+}
 
 function createDominoSet() {
     let set = [];
@@ -56,7 +60,14 @@ function startGame(mode) {
     document.getElementById("start-modal")?.classList.add("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
 
+    let comp2Avatar = document.getElementById("comp2-avatar");
+    if (comp2Avatar) {
+        if (gameMode === 3) comp2Avatar.classList.remove("hidden");
+        else comp2Avatar.classList.add("hidden");
+    }
+
     fullSet = shuffle(createDominoSet());
+
     playerHand = fullSet.splice(0, 7);
     comp1Hand = fullSet.splice(0, 7);
     comp2Hand = (gameMode === 3) ? fullSet.splice(0, 7) : [];
@@ -64,11 +75,68 @@ function startGame(mode) {
 
     determineFirstTurn();
     renderGame();
+
+    if (currentTurn !== 'player') {
+        setTimeout(playComputerTurn, 1000);
+    }
 }
 
-// --- محرك الإضافة والاتجاهات (تم إعادة كتابته) ---
+function determineFirstTurn() {
+    for (let d = 6; d >= 0; d--) {
+        if (playerHand.some(p => p.top === d && p.bottom === d)) { currentTurn = 'player'; return; }
+        if (comp1Hand.some(p => p.top === d && p.bottom === d)) { currentTurn = 'comp1'; return; }
+        if (gameMode === 3 && comp2Hand.some(p => p.top === d && p.bottom === d)) { currentTurn = 'comp2'; return; }
+    }
+    currentTurn = 'player';
+}
+
+function getPlayableEnds(tile) {
+    if (boardChain.length === 0) return ['left', 'right'];
+    let ends = [];
+    if (tile.top === leftEndValue || tile.bottom === leftEndValue) ends.push('left');
+    if (tile.top === rightEndValue || tile.bottom === rightEndValue) ends.push('right');
+    return ends;
+}
+
+function onPlayerTileClick(index) {
+    if (currentTurn !== 'player' || isGameOver) return;
+
+    let tile = playerHand[index];
+    let ends = getPlayableEnds(tile);
+
+    if (ends.length === 0 && boardChain.length > 0) return;
+
+    if (ends.length === 2 && leftEndValue !== rightEndValue) {
+        selectedTileIndex = (selectedTileIndex === index) ? null : index;
+        renderGame();
+        return;
+    }
+
+    let targetEnd = ends.length > 0 ? ends[0] : 'left';
+    playPlayerTile(index, targetEnd);
+}
+
+function selectBoardEnd(end) {
+    if (selectedTileIndex !== null) {
+        playPlayerTile(selectedTileIndex, end);
+        selectedTileIndex = null;
+    }
+}
+
+function playPlayerTile(index, end) {
+    let tile = playerHand.splice(index, 1)[0];
+    addTileToBoard(tile, end);
+    selectedTileIndex = null;
+
+    if (playerHand.length === 0) {
+        endGame("🎉 مبروك! لقد فزت باللعبة!");
+        return;
+    }
+    nextTurn();
+}
+
+// 🎯 محرك الإضافة: يحافظ على اتجاه الحجر برمجياً بشكل سليم ومطابق للأطراف
 function addTileToBoard(tile, end) {
-    // إذا كانت الطاولة فارغة
     if (boardChain.length === 0) {
         boardChain.push({ top: tile.top, bottom: tile.bottom });
         leftEndValue = tile.top;
@@ -76,229 +144,338 @@ function addTileToBoard(tile, end) {
         return;
     }
 
-    // إضافة لليسار: يجب أن يتطابق bottom الحجر الجديد مع leftEndValue
     if (end === 'left') {
-        if (tile.top === leftEndValue) {
-            // الحجر حالياً {top, bottom}، نحتاج قلبه ليصبح {bottom, top} ليتصل الـ bottom بـ leftEnd
-            let newTile = { top: tile.bottom, bottom: tile.top };
-            boardChain.unshift(newTile);
-            leftEndValue = newTile.top;
-        } else {
-            // الحجر متطابق بالفعل
-            boardChain.unshift(tile);
-            leftEndValue = tile.top;
+        // إذا أضفنا لليسار، يجب أن يكون الطرف المتلامس (bottom للحجر الجديد) مساوياً لليسار القديم
+        let orientedTile = (tile.bottom === leftEndValue) 
+            ? { top: tile.top, bottom: tile.bottom } 
+            : { top: tile.bottom, bottom: tile.top };
+        leftEndValue = orientedTile.top;
+        boardChain.unshift(orientedTile);
+    } else {
+        // إذا أضفنا لليمين، يجب أن يكون الطرف المتلامس (top للحجر الجديد) مساوياً لليمين القديم
+        let orientedTile = (tile.top === rightEndValue) 
+            ? { top: tile.top, bottom: tile.bottom } 
+            : { top: tile.bottom, bottom: tile.top };
+        rightEndValue = orientedTile.bottom;
+        boardChain.push(orientedTile);
+    }
+}
+
+function nextTurn() {
+    if (checkBlockGame()) return;
+
+    if (currentTurn === 'player') currentTurn = 'comp1';
+    else if (currentTurn === 'comp1') currentTurn = (gameMode === 3) ? 'comp2' : 'player';
+    else currentTurn = 'player';
+
+    renderGame();
+
+    if (currentTurn !== 'player' && !isGameOver) {
+        setTimeout(playComputerTurn, 900);
+    }
+}
+
+function playComputerTurn() {
+    if (isGameOver) return;
+
+    let hand = (currentTurn === 'comp1') ? comp1Hand : comp2Hand;
+    let compName = (currentTurn === 'comp1') ? 'الكمبيوتر 1' : 'الكمبيوتر 2';
+
+    let playableIndices = [];
+    hand.forEach((tile, idx) => {
+        let ends = getPlayableEnds(tile);
+        if (ends.length > 0 || boardChain.length === 0) {
+            playableIndices.push({ index: idx, ends: ends });
         }
-    } 
-    // إضافة لليمين: يجب أن يتطابق top الحجر الجديد مع rightEndValue
-    else {
-        if (tile.bottom === rightEndValue) {
-            // الحجر حالياً {top, bottom}، نحتاج قلبه ليصبح {bottom, top} ليتصل الـ top بـ rightEnd
-            let newTile = { top: tile.bottom, bottom: tile.top };
-            boardChain.push(newTile);
-            rightEndValue = newTile.bottom;
+    });
+
+    if (playableIndices.length > 0) {
+        let chosen = playableIndices.find(item => hand[item.index].top === hand[item.index].bottom) || playableIndices[0];
+        let tile = hand.splice(chosen.index, 1)[0];
+        let endToPlay = chosen.ends.length > 0 ? chosen.ends[0] : 'right';
+
+        addTileToBoard(tile, endToPlay);
+
+        if (hand.length === 0) {
+            endGame(`❌ للأسف، فاز ${compName} باللعبة!`);
+            return;
+        }
+        nextTurn();
+    } else {
+        if (boneyard.length > 0) {
+            let drawnTile = boneyard.pop();
+            hand.push(drawnTile);
+            renderGame();
+            setTimeout(playComputerTurn, 600);
         } else {
-            // الحجر متطابق بالفعل
-            boardChain.push(tile);
-            rightEndValue = tile.bottom;
+            nextTurn();
         }
     }
 }
 
-// --- محرك الثعبان الجديد (Snake Engine) ---
+function drawFromBoneyard() {
+    if (currentTurn !== 'player' || isGameOver) return;
+    let hasPlayable = playerHand.some(tile => getPlayableEnds(tile).length > 0);
+    if (hasPlayable && boardChain.length > 0) {
+        alert("لديك أحجار قابلة للعب! لا يمكنك السحب من السوق.");
+        return;
+    }
+    if (boneyard.length > 0) {
+        let tile = boneyard.pop();
+        playerHand.push(tile);
+        renderGame();
+    } else {
+        alert("السوق فارغ! تم نقل الدور.");
+        nextTurn();
+    }
+}
+
+function checkBlockGame() {
+    if (boneyard.length > 0 || boardChain.length === 0) return false;
+
+    let playerCanPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
+    let comp1CanPlay = comp1Hand.some(t => getPlayableEnds(t).length > 0);
+    let comp2CanPlay = (gameMode === 3) ? comp2Hand.some(t => getPlayableEnds(t).length > 0) : false;
+
+    if (!playerCanPlay && !comp1CanPlay && (gameMode === 2 || !comp2CanPlay)) {
+        let pScore = calculateScore(playerHand);
+        let c1Score = calculateScore(comp1Hand);
+        let c2Score = (gameMode === 3) ? calculateScore(comp2Hand) : 999;
+
+        let minScore = Math.min(pScore, c1Score, c2Score);
+        let winnerMsg = "🔒 انغلقت اللعبة (قَفْلة)! ";
+
+        if (minScore === pScore) winnerMsg += `فزت بأقل عدد نقاط (${pScore})!`;
+        else if (minScore === c1Score) winnerMsg += `فاز الكمبيوتر 1 بأقل نقاط (${c1Score})!`;
+        else winnerMsg += `فاز الكمبيوتر 2 بأقل نقاط (${c2Score})!`;
+
+        endGame(winnerMsg);
+        return true;
+    }
+    return false;
+}
+
+function calculateScore(hand) {
+    return hand.reduce((sum, tile) => sum + tile.top + tile.bottom, 0);
+}
+
+// =========================================================================
+// 🚀 محرك الرسم الثنائي الأبعاد الاحترافي (2D Snake Layout Engine)
+// =========================================================================
 function calculateSnakeLayout(chain) {
-    let layout = [];
-    let x = 0, y = 0;
+    if (!chain || chain.length === 0) return [];
     
-    // إعدادات المسار
-    let direction = 'RIGHT'; 
-    let rowCount = 0; 
-    const MAX_IN_ROW = 7; 
+    let layout = [];
+    let current_x = 0, current_y = 0;
+    let dir = 'RIGHT'; 
+    let next_dir = null;
+    const ROW_LIMIT = 200; // أقصى مسافة لليمين أو اليسار قبل الالتفاف
 
-    chain.forEach((tile, index) => {
-        let isDouble = (tile.top === tile.bottom);
-        let rotation = 0;
-        let w = isDouble ? DOUBLE_SIZE : TILE_WIDTH;
-        let h = isDouble ? TILE_WIDTH : TILE_HEIGHT;
-
-        if (index === 0) {
-            x = 0; y = 0;
-        } else {
-            // حساب الموقع بناءً على الاتجاه
-            switch(direction) {
-                case 'RIGHT':
-                    x += (w / 2) + (isDouble ? 35 : 65);
-                    rowCount++;
-                    if (rowCount >= MAX_IN_ROW) direction = 'DOWN_1';
-                    break;
-                case 'DOWN_1':
-                    y += 80;
-                    direction = 'LEFT';
-                    rowCount = 0;
-                    break;
-                case 'LEFT':
-                    x -= (w / 2) + (isDouble ? 35 : 65);
-                    rowCount++;
-                    if (rowCount >= MAX_IN_ROW) direction = 'DOWN_2';
-                    break;
-                case 'DOWN_2':
-                    y += 80;
-                    direction = 'RIGHT';
-                    rowCount = 0;
-                    break;
-            }
+    for (let i = 0; i < chain.length; i++) {
+        let piece = chain[i];
+        let isDouble = (piece.top === piece.bottom);
+        
+        // حساب متى نقوم بالالتفاف
+        if (dir === 'RIGHT' && current_x > ROW_LIMIT && !isDouble) {
+            dir = 'DOWN';
+            next_dir = 'LEFT';
+        } else if (dir === 'LEFT' && current_x < -ROW_LIMIT && !isDouble) {
+            dir = 'DOWN';
+            next_dir = 'RIGHT';
         }
 
-        if (isDouble) rotation = 90;
+        let rotation = 0;
+        let step = isDouble ? 28 : 56;
+        let w, h, cx, cy, entry_x, entry_y, exit_x, exit_y;
 
-        layout.push({ ...tile, x, y, rotation, w, h });
-    });
-
+        // الحجر في الأصل عمودي (28x56) نستخدم الدوران لتحديد اتجاهه بدقة
+        if (dir === 'RIGHT') {
+            rotation = isDouble ? 0 : -90;
+            w = isDouble ? 28 : 56;
+            h = isDouble ? 56 : 28;
+            cx = current_x + step / 2;
+            cy = current_y;
+            entry_x = cx - w / 2; entry_y = cy;
+            exit_x = cx + w / 2; exit_y = cy;
+            current_x += step;
+        } else if (dir === 'LEFT') {
+            rotation = isDouble ? 0 : 90;
+            w = isDouble ? 28 : 56;
+            h = isDouble ? 56 : 28;
+            cx = current_x - step / 2;
+            cy = current_y;
+            entry_x = cx + w / 2; entry_y = cy;
+            exit_x = cx - w / 2; exit_y = cy;
+            current_x -= step;
+        } else if (dir === 'DOWN') {
+            rotation = isDouble ? 90 : 0;
+            w = isDouble ? 56 : 28;
+            h = isDouble ? 28 : 56;
+            cx = current_x;
+            cy = current_y + step / 2;
+            entry_x = cx; entry_y = cy - h / 2;
+            exit_x = cx; exit_y = cy + h / 2;
+            current_y += step;
+            
+            // العودة للاتجاه الأفقي بعد حجر واحد لأسفل
+            if (next_dir) {
+                dir = next_dir;
+                next_dir = null;
+            }
+        }
+        
+        layout.push({
+            ...piece,
+            cx, cy, w, h, rotation, dir,
+            entry_x, entry_y, exit_x, exit_y
+        });
+    }
     return layout;
 }
 
-// --- محرك الرسم (Render Engine) ---
+// --- تحديث واجهة المستخدم والرسم ---
 function renderGame() {
-    // 1. تحديث يد اللاعب
     let playerArea = document.getElementById("player-hand");
-    playerArea.innerHTML = "";
-    playerHand.forEach((tile, index) => {
-        let isPlayable = (currentTurn === 'player' && (getPlayableEnds(tile).length > 0 || boardChain.length === 0));
-        playerArea.innerHTML += `
-            <div class="domino-piece ${isPlayable ? 'playable' : ''}" 
-                 onclick="${isPlayable ? `playPlayerTile(${index}, '${getPlayableEnds(tile)[0]}')` : ''}">
-                ${createDotsHTML(tile.top)}<div class="divider"></div>${createDotsHTML(tile.bottom)}
-            </div>
-        `;
-    });
+    if (playerArea) {
+        playerArea.innerHTML = "";
+        let canPlayerPlay = (currentTurn === 'player');
 
-    // 2. رسم الطاولة (Snake)
-    let board = document.getElementById("board-chain");
-    board.innerHTML = "";
+        playerHand.forEach((piece, index) => {
+            let ends = getPlayableEnds(piece);
+            let isPlayable = canPlayerPlay && (ends.length > 0 || boardChain.length === 0);
+            let isSelected = (selectedTileIndex === index);
 
-    if (boardChain.length > 0) {
-        let layout = calculateSnakeLayout(boardChain);
-        
-        // حساب نسبة التصغير (Scale)
-        let scale = 1.0;
-        if (boardChain.length > 8) scale = Math.max(0.5, 1 - (boardChain.length - 8) * 0.05);
-
-        layout.forEach((item) => {
-            let tileDiv = document.createElement("div");
-            tileDiv.className = `domino-piece ${item.top === item.bottom ? 'double' : ''}`;
-            tileDiv.style.position = "absolute";
-            tileDiv.style.left = `calc(50% + ${item.x * scale}px)`;
-            tileDiv.style.top = `calc(50% + ${item.y * scale}px)`;
-            tileDiv.style.transform = `translate(-50%, -50%) rotate(${item.rotation}deg) scale(${scale})`;
-            
-            tileDiv.innerHTML = `${createDotsHTML(item.top)}<div class="divider"></div>${createDotsHTML(item.bottom)}`;
-            board.appendChild(tileDiv);
+            playerArea.innerHTML += `
+                <div class="domino-piece ${isPlayable ? 'playable' : ''} ${isSelected ? 'selected' : ''}" 
+                     onclick="${isPlayable ? `onPlayerTileClick(${index})` : ''}">
+                    ${createDotsHTML(piece.top)}
+                    <div class="divider"></div>
+                    ${createDotsHTML(piece.bottom)}
+                </div>
+            `;
         });
     }
+
+    let c1Count = document.getElementById("comp1-count");
+    if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
+    let c2Count = document.getElementById("comp2-count");
+    if (c2Count && gameMode === 3) c2Count.innerText = `🂠 ${comp2Hand.length}`;
+    let bCount = document.getElementById("boneyard-count");
+    if (bCount) bCount.innerText = boneyard.length;
+
+    // 🎯 رسم الطاولة وحساب Bounding Box والتصغير التلقائي
+    let chainArea = document.getElementById("board-chain");
+    if (chainArea) {
+        chainArea.innerHTML = "";
+
+        if (boardChain.length === 0) {
+            chainArea.innerHTML = `<p style="color:rgba(255,255,255,0.5); font-size:12px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">الطاولة فارغة، اختر حجراً للبدء</p>`;
+        } else {
+            let layout = calculateSnakeLayout(boardChain);
+
+            // حساب الإطار المحيط (Bounding Box) لتوسيط الثعبان برمجياً دون تداخل
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            layout.forEach(item => {
+                if (item.cx - item.w / 2 < minX) minX = item.cx - item.w / 2;
+                if (item.cx + item.w / 2 > maxX) maxX = item.cx + item.w / 2;
+                if (item.cy - item.h / 2 < minY) minY = item.cy - item.h / 2;
+                if (item.cy + item.h / 2 > maxY) maxY = item.cy + item.h / 2;
+            });
+
+            let totalW = maxX - minX;
+            let totalH = maxY - minY;
+            
+            let bboxCenterX = minX + totalW / 2;
+            let bboxCenterY = minY + totalH / 2;
+            let offsetX = -bboxCenterX;
+            let offsetY = -bboxCenterY;
+
+            // حساب نسبة التصغير بناءً على حجم الشاشة لتجنب التغطية
+            let scale = 1;
+            let maxAvailableWidth = 600; // مساحة الطاولة التقريبية
+            let maxAvailableHeight = 350;
+            
+            if (totalW > maxAvailableWidth || totalH > maxAvailableHeight) {
+                scale = Math.min(maxAvailableWidth / totalW, maxAvailableHeight / totalH);
+                scale = Math.max(scale, 0.5); // لا يصغر أقل من النصف (0.5)
+            }
+
+            // رسم الأزرار الخاصة باختيار الأطراف بطريقة احترافية
+            let first = layout[0];
+            let last = layout[layout.length - 1];
+
+            if (selectedTileIndex !== null) {
+                let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
+                if (playableEnds.includes('left')) {
+                    let sx = (first.entry_x + offsetX) * scale - (40 * scale);
+                    let sy = (first.entry_y + offsetY) * scale;
+                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">◀ هنا</div>`;
+                }
+                if (playableEnds.includes('right')) {
+                    let sx = (last.exit_x + offsetX) * scale;
+                    let sy = (last.exit_y + offsetY) * scale;
+                    
+                    if (last.exit_x > last.cx) sx += (40 * scale);
+                    else if (last.exit_x < last.cx) sx -= (40 * scale);
+                    else if (last.exit_y > last.cy) sy += (40 * scale);
+                    else if (last.exit_y < last.cy) sy -= (40 * scale);
+
+                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">هنا ▶</div>`;
+                }
+            }
+
+            // رسم الأحجار
+            layout.forEach(item => {
+                let px = (item.cx + offsetX) * scale;
+                let py = (item.cy + offsetY) * scale;
+
+                // جميع الأحجار ترسم بهيكلية واحدة والدوران هو المسؤول عن التوجيه البصري (بدون if Left اقلب الصور)
+                chainArea.innerHTML += `
+                    <div class="domino-piece"
+                         style="position: absolute; left: calc(50% + ${px}px); top: calc(50% + ${py}px); transform: translate(-50%, -50%) scale(${scale}) rotate(${item.rotation}deg);">
+                        ${createDotsHTML(item.top)}
+                        <div class="divider"></div>
+                        ${createDotsHTML(item.bottom)}
+                    </div>
+                `;
+            });
+        }
+    }
+    updateTurnStatus();
 }
 
 function createDotsHTML(value) {
-    let dots = '';
-    for (let i = 1; i <= value; i++) dots += `<div class="dot dot-${i}"></div>`;
-    return `<div class="domino-half p-${value}">${dots}</div>`;
+    let dotsHTML = '';
+    for (let i = 1; i <= value; i++) {
+        dotsHTML += `<div class="dot dot-${i}"></div>`;
+    }
+    return `<div class="domino-half p-${value}">${dotsHTML}</div>`;
 }
 
-function getPlayableEnds(tile) {
-    if (boardChain.length === 0) return ['right'];
-    let ends = [];
-    if (tile.top === leftEndValue || tile.bottom === leftEndValue) ends.push('left');
-    if (tile.top === rightEndValue || tile.bottom === rightEndValue) ends.push('right');
-    return ends;
+function updateTurnStatus() {
+    let statusElem = document.getElementById("turn-status");
+    if (!statusElem || isGameOver) return;
+
+    if (currentTurn === 'player') {
+        statusElem.innerText = "🎯 دورك للعب الآن";
+        statusElem.style.color = "#38bdf8";
+    } else if (currentTurn === 'comp1') {
+        statusElem.innerText = "🤖 يفكر الكمبيوتر 1...";
+        statusElem.style.color = "#f59e0b";
+    } else if (currentTurn === 'comp2') {
+        statusElem.innerText = "🤖 يفكر الكمبيوتر 2...";
+        statusElem.style.color = "#f59e0b";
+    }
 }
 
-function playPlayerTile(index, end) {
-    let tile = playerHand.splice(index, 1)[0];
-    addTileToBoard(tile, end);
-    renderGame();
-    // ... باقي منطق اللعبة (nextTurn, AI, إلخ) ...
+function showStartModal() {
+    document.getElementById("start-modal")?.classList.remove("hidden");
+    document.getElementById("end-modal")?.classList.add("hidden");
 }
 
-function showStartModal() { document.getElementById("start-modal")?.classList.remove("hidden"); }
-
-2. ملف style.css
-/* ==========================================================
- * ستايل لعبة الدومينو - المحرك المحدث (style.css)
- * ========================================================== */
-
-:root {
-    --bg-color: #1e293b;
-    --tile-bg: #f8fafc;
-    --dot-color: #0f172a;
+function endGame(message) {
+    isGameOver = true;
+    let endTitle = document.getElementById("end-title");
+    if (endTitle) endTitle.innerText = message;
+    document.getElementById("end-modal")?.classList.remove("hidden");
 }
-
-body { background: var(--bg-color); font-family: sans-serif; }
-
-/* حاوية الطاولة */
-#board-chain {
-    position: relative;
-    width: 100%;
-    height: 500px;
-    margin: 50px auto;
-    overflow: hidden;
-    background: rgba(0,0,0,0.2);
-    border-radius: 12px;
-}
-
-/* شكل حجر الدومينو */
-.domino-piece {
-    width: 60px;
-    height: 30px;
-    background: var(--tile-bg);
-    border: 1px solid #94a3b8;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease;
-    cursor: pointer;
-}
-
-.domino-piece.double {
-    width: 30px;
-    height: 60px;
-    flex-direction: column;
-}
-
-.domino-half {
-    width: 50%;
-    height: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    padding: 2px;
-}
-
-.double .domino-half {
-    width: 100%;
-    height: 50%;
-}
-
-.divider {
-    width: 1px;
-    height: 80%;
-    background: #cbd5e1;
-}
-
-.dot {
-    width: 6px;
-    height: 6px;
-    background: var(--dot-color);
-    border-radius: 50%;
-    margin: 1px;
-}
-
-/* تفعيل الأحجار */
-.playable {
-    border: 2px solid #38bdf8;
-    box-shadow: 0 0 10px #38bdf8;
-}
-
-.hidden { display: none !important; }
-
