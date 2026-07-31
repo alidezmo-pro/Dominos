@@ -1,5 +1,5 @@
 /* ==========================================================
- * script.js - محرك اللعب المطور (مع التايمر، النيون، وحل تداخل الدومينو)
+ * script.js - محرك اللعب المطور (مع التايمر، النيون، وانحناء S المزدوج)
  * ========================================================== */
 
 /* ----------------------------------------------------------
@@ -20,7 +20,10 @@ let leftEndValue = null;
 let rightEndValue = null;  
 let isGameOver = false;
 
-// متغيرات التايمر
+// متغير جديد لتتبع ورقة المركز (نقطة الانطلاق)[span_0](start_span)[span_0](end_span)
+let centerTileIndex = 0;
+
+// متغيرات التايمر[span_1](start_span)[span_1](end_span)
 let turnTimerInterval;
 let timeLeft = 25;
 
@@ -68,6 +71,7 @@ function startGame(mode) {
     isGameOver = false;
     selectedTileIndex = null;
     boardChain = [];
+    centerTileIndex = 0; // تصفير المركز[span_2](start_span)[span_2](end_span)
     leftEndValue = null;
     rightEndValue = null;
     clearInterval(turnTimerInterval);
@@ -148,7 +152,6 @@ function handleTimeOut() {
             playPlayerTile(chosen.index, chosen.ends[0]);
         } else if (boneyard.length > 0) {
             drawFromBoneyard();
-            // بعد السحب نمرر الدور إذا لم يلعب تلقائيا
             setTimeout(nextTurn, 500); 
         } else {
             nextTurn();
@@ -229,6 +232,7 @@ function playPlayerTile(index, end) {
 function addTileToBoard(tile, end) {
     if (boardChain.length === 0) {
         boardChain.push({ top: tile.top, bottom: tile.bottom });
+        centerTileIndex = 0; // تعيين المركز لأول ورقة[span_3](start_span)[span_3](end_span)
         leftEndValue = tile.top;
         rightEndValue = tile.bottom;
         return;
@@ -240,12 +244,15 @@ function addTileToBoard(tile, end) {
             : { top: tile.bottom, bottom: tile.top };
         leftEndValue = orientedTile.top;
         boardChain.unshift(orientedTile);
+        // تم إضافة ورقة على اليسار، لذا فهرس المركز يتزحزح يميناً خطوة[span_4](start_span)[span_4](end_span)
+        centerTileIndex++; 
     } else {
         let orientedTile = (tile.top === rightEndValue) 
             ? { top: tile.top, bottom: tile.bottom } 
             : { top: tile.bottom, bottom: tile.top };
         rightEndValue = orientedTile.bottom;
         boardChain.push(orientedTile);
+        // تم الإضافة لليمين، المركز لا يتغير مكانه[span_5](start_span)[span_5](end_span)
     }
 }
 
@@ -353,19 +360,102 @@ function calculateScore(hand) {
 }
 
 /* ==========================================================
- * 6. محرك الـ Snake (الرسم والتخطيط على الطاولة)
+ * 6. محرك الـ S المزدوج (الرسم والتخطيط على الطاولة)
  * ========================================================== */
-function calculateSnakeLayout(chain) {
+
+// دالة مساعدة لحساب إحداثيات قطعة واحدة بناءً على الاتجاه[span_6](start_span)[span_6](end_span)
+function plotTilePiece(piece, dir, attach_x, attach_y, isDouble) {
+    let cx, cy, visualW, visualH, rotation, next_attach_x, next_attach_y, entry_x, entry_y, exit_x, exit_y;
+    
+    if (dir === 'RIGHT') {
+        if (!isDouble) {
+            cx = attach_x + 14; cy = attach_y;
+            visualW = 56; visualH = 28; rotation = -90;
+            next_attach_x = attach_x + 56; next_attach_y = attach_y;
+            entry_x = cx - 28; entry_y = cy; exit_x = cx + 28; exit_y = cy;
+        } else {
+            cx = attach_x; cy = attach_y;
+            visualW = 28; visualH = 56; rotation = 0;
+            next_attach_x = attach_x + 28; next_attach_y = attach_y;
+            entry_x = cx - 14; entry_y = cy; exit_x = cx + 14; exit_y = cy;
+        }
+    } else if (dir === 'LEFT') {
+        if (!isDouble) {
+            cx = attach_x - 14; cy = attach_y;
+            visualW = 56; visualH = 28; rotation = 90;
+            next_attach_x = attach_x - 56; next_attach_y = attach_y;
+            entry_x = cx + 28; entry_y = cy; exit_x = cx - 28; exit_y = cy;
+        } else {
+            cx = attach_x; cy = attach_y;
+            visualW = 28; visualH = 56; rotation = 0;
+            next_attach_x = attach_x - 28; next_attach_y = attach_y;
+            entry_x = cx + 14; entry_y = cy; exit_x = cx - 14; exit_y = cy;
+        }
+    } else if (dir === 'DOWN') {
+        if (!isDouble) {
+            cx = attach_x; cy = attach_y + 14;
+            visualW = 28; visualH = 56; rotation = 0;
+            next_attach_x = attach_x; next_attach_y = attach_y + 56;
+            entry_x = cx; entry_y = cy - 28; exit_x = cx; exit_y = cy + 28;
+        } else {
+            cx = attach_x; cy = attach_y;
+            visualW = 56; visualH = 28; rotation = 90;
+            next_attach_x = attach_x; next_attach_y = attach_y + 28;
+            entry_x = cx; entry_y = cy - 14; exit_x = cx; exit_y = cy + 14;
+        }
+    } else if (dir === 'UP') { // اتجاه جديد مخصص للجانب الأيسر
+        if (!isDouble) {
+            cx = attach_x; cy = attach_y - 14;
+            visualW = 28; visualH = 56; rotation = 0; 
+            next_attach_x = attach_x; next_attach_y = attach_y - 56;
+            entry_x = cx; entry_y = cy + 28; exit_x = cx; exit_y = cy - 28;
+        } else {
+            cx = attach_x; cy = attach_y;
+            visualW = 56; visualH = 28; rotation = 90; 
+            next_attach_x = attach_x; next_attach_y = attach_y - 28;
+            entry_x = cx; entry_y = cy + 14; exit_x = cx; exit_y = cy - 14;
+        }
+    }
+    
+    return {
+        ...piece, cx, cy, visualW, visualH, rotation, dir,
+        entry_x, entry_y, exit_x, exit_y, next_attach_x, next_attach_y
+    };
+}
+
+function calculateSnakeLayout(chain, centerIdx) {
     if (!chain || chain.length === 0) return [];
     
-    let layout = [];
-    let attach_x = 0, attach_y = 0; 
-    let dir = 'RIGHT'; 
-    let next_dir = null;
-    let down_count = 0; 
-    let ROW_LIMIT = 320; 
+    let layout = new Array(chain.length);
+    let ROW_LIMIT = 250; // تقليل المسافة قليلاً ليناسب انحناء S المزدوج للشاشات
+    
+    // 1. وضع حجر المركز
+    let centerPiece = chain[centerIdx];
+    let isCenterDouble = (centerPiece.top === centerPiece.bottom);
+    
+    let cx = 0, cy = 0;
+    let rotation = isCenterDouble ? 0 : -90;
+    let visualW = isCenterDouble ? 28 : 56;
+    let visualH = isCenterDouble ? 56 : 28;
+    
+    let right_attach_x = isCenterDouble ? 14 : 28;
+    let left_attach_x = isCenterDouble ? -14 : -28;
 
-    for (let i = 0; i < chain.length; i++) {
+    layout[centerIdx] = {
+        ...centerPiece, cx, cy, visualW, visualH, rotation,
+        entry_x: left_attach_x, entry_y: 0,
+        exit_x: right_attach_x, exit_y: 0,
+        dir: 'CENTER'
+    };
+
+    // 2. رسم الجانب الأيمن (ينحني للأسفل DOWN)
+    let dir = 'RIGHT';
+    let attach_x = right_attach_x;
+    let attach_y = 0;
+    let down_count = 0;
+    let next_dir = null;
+
+    for (let i = centerIdx + 1; i < chain.length; i++) {
         let piece = chain[i];
         let isDouble = (piece.top === piece.bottom);
         
@@ -375,64 +465,56 @@ function calculateSnakeLayout(chain) {
             dir = 'DOWN'; down_count = 2; next_dir = 'RIGHT';
         }
 
-        let rotation = 0;
-        let cx, cy, visualW, visualH, next_attach_x, next_attach_y;
-        let entry_x, entry_y, exit_x, exit_y;
+        let result = plotTilePiece(piece, dir, attach_x, attach_y, isDouble);
+        layout[i] = result;
+        attach_x = result.next_attach_x;
+        attach_y = result.next_attach_y;
 
-        if (dir === 'RIGHT') {
-            if (!isDouble) {
-                cx = attach_x + 14; cy = attach_y;
-                visualW = 56; visualH = 28; rotation = -90;
-                next_attach_x = attach_x + 56; next_attach_y = attach_y;
-                entry_x = cx - 28; entry_y = cy; exit_x = cx + 28; exit_y = cy;
-            } else {
-                cx = attach_x; cy = attach_y;
-                visualW = 28; visualH = 56; rotation = 0;
-                next_attach_x = attach_x + 28; next_attach_y = attach_y;
-                entry_x = cx - 14; entry_y = cy; exit_x = cx + 14; exit_y = cy;
-            }
-        } else if (dir === 'LEFT') {
-            if (!isDouble) {
-                cx = attach_x - 14; cy = attach_y;
-                visualW = 56; visualH = 28; rotation = 90;
-                next_attach_x = attach_x - 56; next_attach_y = attach_y;
-                entry_x = cx + 28; entry_y = cy; exit_x = cx - 28; exit_y = cy;
-            } else {
-                cx = attach_x; cy = attach_y;
-                visualW = 28; visualH = 56; rotation = 0;
-                next_attach_x = attach_x - 28; next_attach_y = attach_y;
-                entry_x = cx + 14; entry_y = cy; exit_x = cx - 14; exit_y = cy;
-            }
-        } else if (dir === 'DOWN') {
-            if (!isDouble) {
-                cx = attach_x; cy = attach_y + 14;
-                visualW = 28; visualH = 56; rotation = 0;
-                next_attach_x = attach_x; next_attach_y = attach_y + 56;
-                entry_x = cx; entry_y = cy - 28; exit_x = cx; exit_y = cy + 28;
-            } else {
-                cx = attach_x; cy = attach_y;
-                visualW = 56; visualH = 28; rotation = 90;
-                next_attach_x = attach_x; next_attach_y = attach_y + 28;
-                entry_x = cx; entry_y = cy - 14; exit_x = cx; exit_y = cy + 14;
-            }
-            
-            if (!isDouble) {
-                down_count--;
-                if (down_count <= 0 && next_dir) {
-                    dir = next_dir; next_dir = null;
-                }
+        if (dir === 'DOWN' && !isDouble) {
+            down_count--;
+            if (down_count <= 0 && next_dir) {
+                dir = next_dir; next_dir = null;
             }
         }
-        
-        layout.push({
-            ...piece,
-            cx, cy, visualW, visualH, rotation, dir,
-            entry_x, entry_y, exit_x, exit_y
-        });
-
-        attach_x = next_attach_x;
-        attach_y = next_attach_y;
     }
+
+    // 3. رسم الجانب الأيسر (ينحني للأعلى UP لتجنب التداخل)
+    dir = 'LEFT';
+    attach_x = left_attach_x;
+    attach_y = 0;
+    let up_count = 0;
+    next_dir = null;
+
+    for (let i = centerIdx - 1; i >= 0; i--) {
+        let piece = chain[i];
+        let isDouble = (piece.top === piece.bottom);
+
+        // هنا نراقب الحدود ولكن بالاتجاه المعاكس[span_7](start_span)[span_7](end_span)
+        if (dir === 'LEFT' && attach_x < -ROW_LIMIT && !isDouble) {
+            dir = 'UP'; up_count = 2; next_dir = 'RIGHT';
+        } else if (dir === 'RIGHT' && attach_x > ROW_LIMIT && !isDouble) {
+            dir = 'UP'; up_count = 2; next_dir = 'LEFT';
+        }
+
+        let result = plotTilePiece(piece, dir, attach_x, attach_y, isDouble);
+        
+        // بما أننا نبني للخلف، نقطة الدخول تصبح خروج والعكس صحيح
+        let tempX = result.entry_x; let tempY = result.entry_y;
+        result.entry_x = result.exit_x; result.entry_y = result.exit_y;
+        result.exit_x = tempX; result.exit_y = tempY;
+
+        layout[i] = result;
+        attach_x = result.next_attach_x;
+        attach_y = result.next_attach_y;
+
+        if (dir === 'UP' && !isDouble) {
+            up_count--;
+            if (up_count <= 0 && next_dir) {
+                dir = next_dir; next_dir = null;
+            }
+        }
+    }
+
     return layout;
 }
 
@@ -477,7 +559,8 @@ function renderGame() {
         if (boardChain.length === 0) {
             chainArea.innerHTML = `<p style="color:rgba(255,255,255,0.3); font-size:12px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">الطاولة فارغة</p>`;
         } else {
-            let layout = calculateSnakeLayout(boardChain);
+            // إرسال المصفوفة مع مؤشر المركز[span_8](start_span)[span_8](end_span)
+            let layout = calculateSnakeLayout(boardChain, centerTileIndex);
 
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             layout.forEach(item => {
@@ -511,19 +594,23 @@ function renderGame() {
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
-                    let sx = (first.entry_x + offsetX) * scale;
-                    let sy = (first.entry_y + offsetY) * scale;
-                    if (first.dir === 'RIGHT') sx -= (40 * scale);
-                    else if (first.dir === 'LEFT') sx += (40 * scale);
-                    else if (first.dir === 'DOWN') sy -= (40 * scale);
+                    // الاعتماد على نقطة الخروج للجهة اليسرى[span_9](start_span)[span_9](end_span)
+                    let sx = (first.exit_x + offsetX) * scale;
+                    let sy = (first.exit_y + offsetY) * scale;
+                    if (first.dir === 'LEFT') sx -= (40 * scale);
+                    else if (first.dir === 'RIGHT') sx += (40 * scale);
+                    else if (first.dir === 'UP') sy -= (40 * scale);
+                    else if (first.dir === 'DOWN') sy += (40 * scale);
                     
                     chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">◀ هنا</div>`;
                 }
                 if (playableEnds.includes('right')) {
+                    // الاعتماد على نقطة الخروج للجهة اليمنى[span_10](start_span)[span_10](end_span)
                     let sx = (last.exit_x + offsetX) * scale;
                     let sy = (last.exit_y + offsetY) * scale;
                     if (last.dir === 'RIGHT') sx += (40 * scale);
                     else if (last.dir === 'LEFT') sx -= (40 * scale);
+                    else if (last.dir === 'UP') sy -= (40 * scale);
                     else if (last.dir === 'DOWN') sy += (40 * scale);
 
                     chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">هنا ▶</div>`;
@@ -558,8 +645,8 @@ function createDotsHTML(value) {
 
 function endGame(message) {
     isGameOver = true;
-    clearInterval(turnTimerInterval); // إيقاف التايمر عند نهاية اللعبة
-    document.getElementById("turn-timer")?.classList.add("hidden"); // إخفاء التايمر
+    clearInterval(turnTimerInterval); 
+    document.getElementById("turn-timer")?.classList.add("hidden"); 
 
     let endTitle = document.getElementById("end-title");
     if (endTitle) endTitle.innerText = message;
