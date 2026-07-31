@@ -1,5 +1,6 @@
 /* ==========================================================
  * script.js - محرك اللعب المطور (خوارزمية مراكز المربعات - دقة 100%)
+ * التحديثات: انحناء بعد 9 أوراق، تقليل الفواصل، وتصغير تناسبي مريح للعين
  * ========================================================== */
 
 let fullSet = [];          
@@ -312,40 +313,42 @@ function checkBlockGame() {
 /* ----------------------------------------------------------
  * خوارزمية مراكز المربعات لرسم الطاولة (Solid Logic)
  * ---------------------------------------------------------- */
-// بتحدد دوران ومقاسات مربعات الورقة لضمان التركيب الدقيق بدون تداخل
+// تم تقليل المسافات من 18 إلى 17 لتضييق الفواصل بين الأوراق
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
+    const HALF_SIZE = 17; // المسافة المخفضة للمربعات 
+    
     if (in_dir === 'RIGHT') {
-        if (!isDouble) { rot = -90; sq1 = {x:-18, y:0}; sq2 = {x:18, y:0}; }
+        if (!isDouble) { rot = -90; sq1 = {x: -HALF_SIZE, y:0}; sq2 = {x: HALF_SIZE, y:0}; }
         else { 
             rot = 0; sq1 = {x:0, y:0}; 
             if (out_dir === 'RIGHT') sq2 = {x:0, y:0};
-            else if (out_dir === 'DOWN') sq2 = {x:0, y:18};
-            else if (out_dir === 'UP') sq2 = {x:0, y:-18};
+            else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE};
+            else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
         }
     } else if (in_dir === 'LEFT') {
-        if (!isDouble) { rot = 90; sq1 = {x:18, y:0}; sq2 = {x:-18, y:0}; }
+        if (!isDouble) { rot = 90; sq1 = {x: HALF_SIZE, y:0}; sq2 = {x: -HALF_SIZE, y:0}; }
         else { 
             rot = 0; sq1 = {x:0, y:0}; 
             if (out_dir === 'LEFT') sq2 = {x:0, y:0};
-            else if (out_dir === 'DOWN') sq2 = {x:0, y:18};
-            else if (out_dir === 'UP') sq2 = {x:0, y:-18};
+            else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE};
+            else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
         }
     } else if (in_dir === 'DOWN') {
-        if (!isDouble) { rot = 0; sq1 = {x:0, y:-18}; sq2 = {x:0, y:18}; }
+        if (!isDouble) { rot = 0; sq1 = {x:0, y: -HALF_SIZE}; sq2 = {x:0, y: HALF_SIZE}; }
         else { 
             rot = -90; sq1 = {x:0, y:0}; 
             if (out_dir === 'DOWN') sq2 = {x:0, y:0};
-            else if (out_dir === 'RIGHT') sq2 = {x:18, y:0};
-            else if (out_dir === 'LEFT') sq2 = {x:-18, y:0};
+            else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0};
+            else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
         }
     } else if (in_dir === 'UP') {
-        if (!isDouble) { rot = 180; sq1 = {x:0, y:18}; sq2 = {x:0, y:-18}; }
+        if (!isDouble) { rot = 180; sq1 = {x:0, y: HALF_SIZE}; sq2 = {x:0, y: -HALF_SIZE}; }
         else { 
             rot = -90; sq1 = {x:0, y:0}; 
             if (out_dir === 'UP') sq2 = {x:0, y:0};
-            else if (out_dir === 'RIGHT') sq2 = {x:18, y:0};
-            else if (out_dir === 'LEFT') sq2 = {x:-18, y:0};
+            else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0};
+            else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
         }
     }
     return { rot, sq1, sq2 };
@@ -354,9 +357,8 @@ function getPieceSquares(in_dir, out_dir, isDouble) {
 function calculateSnakeLayout(chain, centerIdx) {
     if (!chain || chain.length === 0) return [];
     
-    // بناء مسار التوجيهات لتفادي الخروج عن الشاشة
     let dirs = new Array(chain.length - 1);
-    const MAX_ROW = 4;
+    const MAX_ROW = 9; // تم زيادة عدد الأوراق الأفقية إلى 9
     
     // الجزء الأيمن
     let travel = 'RIGHT'; let len = 0;
@@ -380,6 +382,7 @@ function calculateSnakeLayout(chain, centerIdx) {
     let layout = [];
     let cx = 0, cy = 0;
     let p_sq2_abs = { x: 0, y: 0 }; 
+    const STEP_SIZE = 34; // المسافة الكلية للقطعة الواحدة مخفضة لتجنب الفواصل
 
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
@@ -394,10 +397,10 @@ function calculateSnakeLayout(chain, centerIdx) {
             cx = 0; cy = 0;
         } else {
             let vec = {x:0, y:0};
-            if (dirs[i-1] === 'RIGHT') vec = {x: 36, y: 0};
-            else if (dirs[i-1] === 'LEFT') vec = {x: -36, y: 0};
-            else if (dirs[i-1] === 'DOWN') vec = {x: 0, y: 36};
-            else if (dirs[i-1] === 'UP') vec = {x: 0, y: -36};
+            if (dirs[i-1] === 'RIGHT') vec = {x: STEP_SIZE, y: 0};
+            else if (dirs[i-1] === 'LEFT') vec = {x: -STEP_SIZE, y: 0};
+            else if (dirs[i-1] === 'DOWN') vec = {x: 0, y: STEP_SIZE};
+            else if (dirs[i-1] === 'UP') vec = {x: 0, y: -STEP_SIZE};
 
             let target_sq1_abs = { x: p_sq2_abs.x + vec.x, y: p_sq2_abs.y + vec.y };
             cx = target_sq1_abs.x - trans.sq1.x;
@@ -409,8 +412,8 @@ function calculateSnakeLayout(chain, centerIdx) {
         layout.push({
             ...piece,
             cx: cx, cy: cy, rotation: trans.rot,
-            visualW: (trans.rot === 0 || trans.rot === 180) ? 36 : 72,
-            visualH: (trans.rot === 0 || trans.rot === 180) ? 72 : 36,
+            visualW: (trans.rot === 0 || trans.rot === 180) ? STEP_SIZE : (STEP_SIZE * 2),
+            visualH: (trans.rot === 0 || trans.rot === 180) ? (STEP_SIZE * 2) : STEP_SIZE,
             start_x: cx + trans.sq1.x, start_y: cy + trans.sq1.y,
             end_x: p_sq2_abs.x, end_y: p_sq2_abs.y,
             in_dir: in_dir, out_dir: out_dir
@@ -474,10 +477,12 @@ function renderGame() {
             let offsetY = -(minY + totalH / 2);
 
             let tableElem = document.querySelector('.poker-table') || document.querySelector('.table-container');
-            let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; // تم زيادة مسافة الأمان هنا
+            let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; 
             let maxAvailableHeight = tableElem ? tableElem.clientHeight - 80 : 200;
 
-            let scale = Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1);
+            // حساب الحجم مع حد أدنى (0.65) لضمان عدم تصغير الأوراق بشكل مبالغ فيه
+            let calcScale = Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1);
+            let scale = Math.max(calcScale, 0.65);
 
             let first = layout[0];
             let last = layout[layout.length - 1];
