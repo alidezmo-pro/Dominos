@@ -1,12 +1,11 @@
 /* ==========================================================
  * Dominoes Game - Senior Refactor
  * File: style.css
- * Architecture: Floating UI, Max Table Area
+ * Architecture: Max Table + Floating Top Bar (Hairline Gaps)
  * ========================================================== */
 
-/* --- 1. CSS Variables (Design Tokens) --- */
+/* --- 1. CSS Variables --- */
 :root {
-    /* Colors */
     --bg-main: #0f172a;
     --table-bg: #1e293b;
     --table-border: #8b4513;
@@ -22,12 +21,10 @@
     --domino-border: #cbd5e1;
     --domino-divider: #334155;
 
-    /* Sizes */
     --domino-w: 36px;
     --domino-h: 72px;
     --dot-size: 8px;
 
-    /* Z-Index Layers */
     --z-base: 1;
     --z-table: 10;
     --z-domino: 50;
@@ -47,52 +44,50 @@ body {
     background-color: var(--bg-main);
     color: var(--text-light);
     width: 100vw;
-    height: 100dvh; /* dvh ensures it respects mobile browser bars */
-    overflow: hidden; 
+    height: 100dvh;
+    overflow: hidden;
     user-select: none;
 }
 
 /* --- 3. Main Layout Structure --- */
 .game-layout {
-    position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
     width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 4px; /* فاصل 4 بيكسل من حدود الشاشة */
-    gap: 4px; /* فاصل 4 بيكسل بين الطاولة وأوراقك */
+    padding: 4px; /* شعراية 4 بيكسل من حدود الشاشة */
+    gap: 4px; /* شعراية 4 بيكسل بين الطاولة وأوراقك */
+    position: relative;
 }
 
-/* --- 4. Floating Top Bar (Comps & Timer Over the Table) --- */
+/* --- 4. Floating Top Bar (Over the Table) --- */
 .top-bar {
     position: absolute;
-    top: 20px;
-    left: 0;
-    right: 0;
+    top: 12px; /* مسافة بسيطة من أعلى الطاولة */
+    left: 12px;
+    right: 12px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 0 20px;
     z-index: var(--z-ui);
-    pointer-events: none; /* للسماح بالضغط على الطاولة من تحتهم */
+    pointer-events: none; /* عشان تقدر تلمس الطاولة من تحتهم */
 }
 
 .top-bar > * {
-    pointer-events: auto; /* إعادة تفعيل الضغط للعناصر نفسها */
+    pointer-events: auto; /* تفعيل اللمس للأفاتار والتايمر */
 }
 
 /* Timer - Transparent */
 .timer-display {
     background: transparent;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0;
     font-size: 2rem;
     font-weight: bold;
     color: var(--accent-danger);
+    text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    box-shadow: none;
     text-align: center;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
 }
 
 /* Player/Comp Profiles */
@@ -100,8 +95,8 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: rgba(51, 65, 85, 0.9); /* شفافية خفيفة */
-    padding: 0.5rem 1rem;
+    background: rgba(51, 65, 85, 0.85); /* شفافية خفيفة */
+    padding: 0.4rem 0.8rem;
     border-radius: 30px;
     border: 2px solid #475569;
     backdrop-filter: blur(4px);
@@ -109,8 +104,8 @@ body {
 }
 
 .profile img {
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: var(--table-bg);
 }
@@ -122,21 +117,20 @@ body {
 }
 
 .profile-name {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
 }
 
 .profile-count {
     background: var(--accent-comp);
     color: #000;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: bold;
-    padding: 0.2rem 0.6rem;
+    padding: 0.2rem 0.5rem;
     border-radius: 10px;
     margin-top: 0.2rem;
 }
 
-/* Active Turn Neon Effect */
 .neon-player {
     border-color: var(--accent-player);
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
@@ -149,16 +143,16 @@ body {
     transform: scale(1.05);
 }
 
-/* --- 5. Table Area (Takes Maximum Space) --- */
+/* --- 5. Table Area --- */
 .table-container {
-    flex: 1; /* تمتد الطاولة لأقصى مساحة ممكنة */
+    flex-grow: 1; /* تمتد لأقصى مساحة من فوق لتحت */
     position: relative;
     width: 100%;
     background-color: var(--table-bg);
-    border: 6px solid var(--table-border);
-    border-radius: 30px;
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.3);
-    overflow: hidden; 
+    border: 4px solid var(--table-border);
+    border-radius: 20px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -171,7 +165,6 @@ body {
     height: 100%;
 }
 
-/* Board Connectors / Selectors */
 .board-selector {
     position: absolute;
     background: var(--accent-player);
@@ -194,16 +187,16 @@ body {
     100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
 }
 
-/* --- 6. Bottom Bar (Player Hand & Boneyard) --- */
+/* --- 6. Bottom Bar --- */
 .bottom-bar {
-    flex: 0 0 auto; /* ثابتة بالأسفل لا تنضغط */
+    flex: 0 0 auto; /* ثابتة بالأسفل */
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: flex-end;
-    gap: 1rem;
+    gap: 0.5rem;
     z-index: var(--z-ui);
     width: 100%;
-    padding: 0 4px; /* لضمان عدم ملامسة الحواف الجانبية */
+    padding-bottom: 4px;
 }
 
 /* Player Hand Container */
@@ -216,7 +209,7 @@ body {
     display: flex;
     overflow-x: auto;
     overflow-y: visible;
-    padding: 1.5rem 0.5rem;
+    padding: 1rem 0.5rem;
     gap: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--accent-player) transparent;
@@ -227,16 +220,15 @@ body {
 
 #player-hand {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     margin: 0 auto;
 }
 
-/* Boneyard Button */
 .btn-boneyard {
     background: #334155;
     border: 2px solid #475569;
     color: var(--text-light);
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
     border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
@@ -244,20 +236,11 @@ body {
     align-items: center;
     gap: 0.5rem;
     transition: all 0.2s ease;
-    will-change: transform;
-    font-size: 1.1rem;
+    font-size: 1rem;
     white-space: nowrap;
 }
-.btn-boneyard:hover {
-    background: #475569;
-    transform: translateY(-5px);
-}
-.btn-boneyard .count {
-    background: var(--text-light);
-    color: #000;
-    padding: 0.1rem 0.5rem;
-    border-radius: 5px;
-}
+.btn-boneyard:hover { background: #475569; transform: translateY(-5px); }
+.btn-boneyard .count { background: var(--text-light); color: #000; padding: 0.1rem 0.4rem; border-radius: 5px; }
 
 /* --- 7. Domino Pieces --- */
 .domino-piece {
@@ -273,14 +256,12 @@ body {
     will-change: transform, opacity;
 }
 
-/* Board specific domino overrides */
 #board-chain .domino-piece {
     position: absolute;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: var(--z-domino);
 }
 
-/* حركة الورقة الجديدة فقط */
 #board-chain .domino-piece.new-piece {
     animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -290,53 +271,20 @@ body {
     100% { opacity: 1; }
 }
 
-/* Player Hand specific domino overrides */
 #player-hand .domino-piece {
     cursor: grab;
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-#player-hand .domino-piece:hover {
-    transform: translateY(-20px);
-}
+#player-hand .domino-piece:hover { transform: translateY(-20px); }
+#player-hand .domino-piece.playable { cursor: pointer; box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); }
+#player-hand .domino-piece.selected { transform: translateY(-25px) scale(1.15); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.9); border: 2px solid var(--accent-player); z-index: 10; }
 
-#player-hand .domino-piece.playable {
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-}
+.domino-half { width: 100%; flex: 1; display: flex; flex-wrap: wrap; position: relative; padding: 4px; }
+.divider { width: 100%; height: 1px; background-color: var(--domino-divider); }
+.dot { width: var(--dot-size); height: var(--dot-size); background-color: var(--domino-dot); border-radius: 50%; position: absolute; }
 
-#player-hand .domino-piece.selected {
-    transform: translateY(-25px) scale(1.15);
-    box-shadow: 0 10px 25px rgba(56, 189, 248, 0.9);
-    border: 2px solid var(--accent-player);
-    z-index: 10;
-}
-
-/* Domino Dots Internal Layout */
-.domino-half {
-    width: 100%;
-    flex: 1;
-    display: flex;
-    flex-wrap: wrap;
-    position: relative;
-    padding: 4px;
-}
-
-.divider {
-    width: 100%;
-    height: 1px;
-    background-color: var(--domino-divider);
-}
-
-.dot {
-    width: var(--dot-size);
-    height: var(--dot-size);
-    background-color: var(--domino-dot);
-    border-radius: 50%;
-    position: absolute;
-}
-
-/* Pre-calculated dot positions */
+/* Dot positions */
 .p-1 .dot-1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .p-2 .dot-1 { top: 15%; left: 15%; }
 .p-2 .dot-2 { bottom: 15%; right: 15%; }
@@ -359,70 +307,22 @@ body {
 .p-6 .dot-5 { top: 50%; right: 15%; transform: translateY(-50%); }
 .p-6 .dot-6 { bottom: 15%; right: 15%; }
 
-/* --- 8. Modals (Overlays) --- */
+/* --- 8. Modals --- */
 .hidden { display: none !important; }
-
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100dvh;
-    background: rgba(15, 23, 42, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: var(--z-modal);
-    backdrop-filter: blur(4px);
-}
-
-.modal-box {
-    background: var(--table-bg);
-    padding: 2.5rem;
-    border-radius: 20px;
-    text-align: center;
-    border: 2px solid var(--accent-player);
-    box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
-    max-width: 400px;
-    width: 90%;
-}
-
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: center; align-items: center; z-index: var(--z-modal); backdrop-filter: blur(4px); }
+.modal-box { background: var(--table-bg); padding: 2.5rem; border-radius: 20px; text-align: center; border: 2px solid var(--accent-player); box-shadow: 0 0 30px rgba(56, 189, 248, 0.3); max-width: 400px; width: 90%; }
 .modal-box h2 { margin-bottom: 1rem; font-size: 1.8rem; }
-ولا تزعل نفسك يا معلم، بسيطة وهنظبطها وتيجي على الفرازة زي ما أنت عايز بالظبط! 
+.modal-box p { margin-bottom: 1.5rem; color: var(--text-muted); }
+.btn-primary { background: var(--accent-player); color: #000; border: none; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 0.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); }
 
-فهمت قصدك من الصورة `IMG_20260731_211041.jpg`. الفكرة كلها إننا محتاجين ندي الطاولة مساحة تتمدد فيها (Flex-grow)، ونخلي العناصر التانية (الافتارات والتايمر) عايمة فوقها (Absolute Positioning) عشان نستغل المساحة المهملة دي، مع تثبيت الورق تحت.
-
-إليك الكود اللي هيعملك السحر ده. تقدر تعدل أسماء الكلاسات (Classes) بناءً على اللي مكتوب عندك في الـ HTML:
-
-### أولاً: كود الـ CSS الأساسي (الهيكلة)
-
-```css
-/* حاوية اللعبة بالكامل (عشان تملى الشاشة وتظبط المسافات) */
-.game-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100vh; /* تملى الشاشة من فوق لتحت */
-  overflow: hidden;
-  position: relative;
+/* --- 9. Responsive --- */
+@media (max-width: 768px) {
+    .profile-name { display: none; }
+    .bottom-bar { grid-template-columns: 1fr auto; }
+    #player-avatar { display: none; } 
+    :root { --domino-w: 30px; --domino-h: 60px; --dot-size: 6px; }
 }
-
-/* الطاولة */
-.table-area {
-  margin-top: 4px;    /* فاصل 4 من فوق */
-  margin-bottom: 4px; /* فاصل 4 من تحت قبل الأوراق */
-  flex-grow: 1;       /* تمتد عشان تاخد كل المساحة الفاضية */
-  position: relative; /* مهم جداً عشان الافتارات تترص فوقها صح */
-  
-  /* تنسيقات شكل الطاولة اللي عندك (الحدود البرتقالي والخلفية) */
-  border: 2px solid #d38b36;
-  border-radius: 20px;
-  background-color: #1e293b; 
-}
-
-/* منطقة الأوراق (في إيدك تحت) */
-.cards-area {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  z-index: 20; /* عشان تفضل دايماً ظاهرة فوق أي حاجة */
+@media (max-height: 600px) {
+    :root { --domino-w: 26px; --domino-h: 52px; }
 }
