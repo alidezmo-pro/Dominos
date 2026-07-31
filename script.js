@@ -278,78 +278,99 @@ function calculateScore(hand) {
     return hand.reduce((sum, tile) => sum + tile.top + tile.bottom, 0);
 }
 
-/* ----------------------------------------------------------
- * 5. محرك الـ Snake (الرسم والتخطيط على الطاولة)
- * ---------------------------------------------------------- */
+/* ==========================================================
+ * 5. محرك الـ Snake (الرسم والتخطيط على الطاولة) - معدل
+ * ========================================================== */
 function calculateSnakeLayout(chain) {
     if (!chain || chain.length === 0) return [];
     
     let layout = [];
-    let current_x = 0, current_y = 0;
+    let attach_x = 0, attach_y = 0; // نقطة الالتحام الدقيقة بين الأحجار
     let dir = 'RIGHT'; 
     let next_dir = null;
     let down_count = 0; 
-    const ROW_LIMIT = 180; 
+    let ROW_LIMIT = 320; // زيادة المساحة الأفقية قبل الالتفاف
 
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
         let isDouble = (piece.top === piece.bottom);
         
-        // الانعطاف ونزول حجرين عند الوصول للحد
-        if (dir === 'RIGHT' && current_x > ROW_LIMIT && !isDouble) {
+        // الانعطاف ونزول حجرين عند الوصول للحد الأقصى
+        if (dir === 'RIGHT' && attach_x > ROW_LIMIT && !isDouble) {
             dir = 'DOWN';
             down_count = 2; 
             next_dir = 'LEFT';
-        } else if (dir === 'LEFT' && current_x < -ROW_LIMIT && !isDouble) {
+        } else if (dir === 'LEFT' && attach_x < -ROW_LIMIT && !isDouble) {
             dir = 'DOWN';
             down_count = 2; 
             next_dir = 'RIGHT';
         }
 
         let rotation = 0;
-        let step = isDouble ? 28 : 56;
-        let w, h, cx, cy, entry_x, entry_y, exit_x, exit_y;
+        let cx, cy, visualW, visualH, next_attach_x, next_attach_y;
+        let entry_x, entry_y, exit_x, exit_y;
 
+        // حساب الأبعاد بدقة لمنع أي تداخل (Overlap)
         if (dir === 'RIGHT') {
-            rotation = isDouble ? 0 : -90;
-            w = isDouble ? 28 : 56; h = isDouble ? 56 : 28;
-            cx = current_x + step / 2; cy = current_y;
-            entry_x = cx - w / 2; entry_y = cy;
-            exit_x = cx + w / 2; exit_y = cy;
-            current_x += step;
+            if (!isDouble) {
+                cx = attach_x + 14; cy = attach_y;
+                visualW = 56; visualH = 28; rotation = -90;
+                next_attach_x = attach_x + 56; next_attach_y = attach_y;
+                entry_x = cx - 28; entry_y = cy; exit_x = cx + 28; exit_y = cy;
+            } else {
+                cx = attach_x; cy = attach_y;
+                visualW = 28; visualH = 56; rotation = 0;
+                next_attach_x = attach_x + 28; next_attach_y = attach_y;
+                entry_x = cx - 14; entry_y = cy; exit_x = cx + 14; exit_y = cy;
+            }
         } else if (dir === 'LEFT') {
-            rotation = isDouble ? 0 : 90;
-            w = isDouble ? 28 : 56; h = isDouble ? 56 : 28;
-            cx = current_x - step / 2; cy = current_y;
-            entry_x = cx + w / 2; entry_y = cy;
-            exit_x = cx - w / 2; exit_y = cy;
-            current_x -= step;
+            if (!isDouble) {
+                cx = attach_x - 14; cy = attach_y;
+                visualW = 56; visualH = 28; rotation = 90;
+                next_attach_x = attach_x - 56; next_attach_y = attach_y;
+                entry_x = cx + 28; entry_y = cy; exit_x = cx - 28; exit_y = cy;
+            } else {
+                cx = attach_x; cy = attach_y;
+                visualW = 28; visualH = 56; rotation = 0;
+                next_attach_x = attach_x - 28; next_attach_y = attach_y;
+                entry_x = cx + 14; entry_y = cy; exit_x = cx - 14; exit_y = cy;
+            }
         } else if (dir === 'DOWN') {
-            rotation = isDouble ? 90 : 0;
-            w = isDouble ? 56 : 28; h = isDouble ? 28 : 56;
-            cx = current_x; cy = current_y + step / 2;
-            entry_x = cx; entry_y = cy - h / 2;
-            exit_x = cx; exit_y = cy + h / 2;
-            current_y += step;
+            if (!isDouble) {
+                cx = attach_x; cy = attach_y + 14;
+                visualW = 28; visualH = 56; rotation = 0;
+                next_attach_x = attach_x; next_attach_y = attach_y + 56;
+                entry_x = cx; entry_y = cy - 28; exit_x = cx; exit_y = cy + 28;
+            } else {
+                cx = attach_x; cy = attach_y;
+                visualW = 56; visualH = 28; rotation = 90;
+                next_attach_x = attach_x; next_attach_y = attach_y + 28;
+                entry_x = cx; entry_y = cy - 14; exit_x = cx; exit_y = cy + 14;
+            }
             
-            down_count--;
-            if (down_count === 0 && next_dir) {
-                dir = next_dir;
-                next_dir = null;
+            if (!isDouble) {
+                down_count--;
+                if (down_count <= 0 && next_dir) {
+                    dir = next_dir;
+                    next_dir = null;
+                }
             }
         }
         
         layout.push({
             ...piece,
-            cx, cy, w, h, rotation, dir,
+            cx, cy, visualW, visualH, rotation, dir,
             entry_x, entry_y, exit_x, exit_y
         });
+
+        attach_x = next_attach_x;
+        attach_y = next_attach_y;
     }
     return layout;
 }
 
 /* ----------------------------------------------------------
- * 6. واجهة المستخدم وتحديث الشاشة (Rendering)
+ * 6. واجهة المستخدم وتحديث الشاشة (Rendering) - معدل
  * ---------------------------------------------------------- */
 function renderGame() {
     let playerArea = document.getElementById("player-hand");
@@ -382,7 +403,6 @@ function renderGame() {
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
-    // حساب تصغير الطاولة التلقائي لمنع التداخل
     let chainArea = document.getElementById("board-chain");
     if (chainArea) {
         chainArea.innerHTML = "";
@@ -394,10 +414,10 @@ function renderGame() {
 
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             layout.forEach(item => {
-                if (item.cx - item.w / 2 < minX) minX = item.cx - item.w / 2;
-                if (item.cx + item.w / 2 > maxX) maxX = item.cx + item.w / 2;
-                if (item.cy - item.h / 2 < minY) minY = item.cy - item.h / 2;
-                if (item.cy + item.h / 2 > maxY) maxY = item.cy + item.h / 2;
+                if (item.cx - item.visualW / 2 < minX) minX = item.cx - item.visualW / 2;
+                if (item.cx + item.visualW / 2 > maxX) maxX = item.cx + item.visualW / 2;
+                if (item.cy - item.visualH / 2 < minY) minY = item.cy - item.visualH / 2;
+                if (item.cy + item.visualH / 2 > maxY) maxY = item.cy + item.visualH / 2;
             });
 
             let totalW = maxX - minX;
@@ -408,34 +428,38 @@ function renderGame() {
             let offsetX = -bboxCenterX;
             let offsetY = -bboxCenterY;
 
+            // حساب أبعاد الطاولة ديناميكياً لمنع القص (Cut-off)
+            let tableElem = document.querySelector('.poker-table');
+            let maxAvailableWidth = tableElem ? tableElem.clientWidth - 40 : 520; 
+            let maxAvailableHeight = tableElem ? tableElem.clientHeight - 40 : 200; 
+
             let scale = 1;
-            let maxAvailableWidth = 520; 
-            let maxAvailableHeight = 200; 
-            
             if (totalW > maxAvailableWidth || totalH > maxAvailableHeight) {
                 scale = Math.min(maxAvailableWidth / totalW, maxAvailableHeight / totalH);
-                scale = Math.max(scale, 0.45);
+                scale = Math.max(scale, 0.25); // السماح بتصغير أكبر لمنع خروج الأحجار
             }
 
             let first = layout[0];
             let last = layout[layout.length - 1];
 
-            // رسم أزرار تحديد الأطراف
+            // رسم أزرار تحديد الأطراف ديناميكياً بدون تداخل
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
-                    let sx = (first.entry_x + offsetX) * scale - (40 * scale);
+                    let sx = (first.entry_x + offsetX) * scale;
                     let sy = (first.entry_y + offsetY) * scale;
+                    if (first.dir === 'RIGHT') sx -= (40 * scale);
+                    else if (first.dir === 'LEFT') sx += (40 * scale);
+                    else if (first.dir === 'DOWN') sy -= (40 * scale);
+                    
                     chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">◀ هنا</div>`;
                 }
                 if (playableEnds.includes('right')) {
                     let sx = (last.exit_x + offsetX) * scale;
                     let sy = (last.exit_y + offsetY) * scale;
-                    
-                    if (last.exit_x > last.cx) sx += (40 * scale);
-                    else if (last.exit_x < last.cx) sx -= (40 * scale);
-                    else if (last.exit_y > last.cy) sy += (40 * scale);
-                    else if (last.exit_y < last.cy) sy -= (40 * scale);
+                    if (last.dir === 'RIGHT') sx += (40 * scale);
+                    else if (last.dir === 'LEFT') sx -= (40 * scale);
+                    else if (last.dir === 'DOWN') sy += (40 * scale);
 
                     chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">هنا ▶</div>`;
                 }
