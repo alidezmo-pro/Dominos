@@ -1,9 +1,5 @@
 /* ==========================================================
- * script.js - محرك اللعب المطور
- * التحديثات:
- * 1. تخصيص وضع 3 لاعبين (9 أوراق لكل لاعب وإلغاء ورقة 0-0).
- * 2. دمج التايمر بالكامل داخل أفاتار اللاعب النشط.
- * 3. التخطي التلقائي للدور عند استنفاذ السوق وعدم وجود خيارات لعب.
+ * script.js - محرك وضع 3 لاعبين وتثبيت التايمر
  * ========================================================== */
 
 let fullSet = [];          
@@ -34,9 +30,6 @@ window.onload = function() {
     showStartModal();
 };
 
-/* ----------------------------------------------------------
- * إعداد اللعبة والتايمر
- * ---------------------------------------------------------- */
 function showStartModal() {
     document.getElementById("start-modal")?.classList.remove("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
@@ -46,13 +39,14 @@ function selectGameMode(mode) {
     startGame(mode);
 }
 
-// إنشاء طقم الدومينو (استبعاد 0-0 إذا كان وضع 3 لاعبين)
+// إنشاء طقم الأوراق (مع إلغاء 0-0 إذا كان وضع 3 لاعبين)
 function createDominoSet(mode) {
     let set = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
+            // إلغاء قطعة البلاطة (0-0) نهائياً في وضع 3 لاعبين
             if (mode === 3 && i === 0 && j === 0) {
-                continue; // إلغاء البلاطة 0-0 في وضع 3 لاعبين
+                continue; 
             }
             set.push({ top: i, bottom: j });
         }
@@ -89,13 +83,13 @@ function startGame(mode) {
 
     fullSet = shuffle(createDominoSet(gameMode));
 
-    // توزيع الكروت حسب الوضع
+    // تحديد عدد الأوراق: 9 أوراق لكل لاعب في وضع الـ 3 لاعبين، و 7 في وضع الـ 2 لاعبين
     let handSize = (gameMode === 3) ? 9 : 7;
 
     playerHand = fullSet.splice(0, handSize);
     comp1Hand = fullSet.splice(0, handSize);
     comp2Hand = (gameMode === 3) ? fullSet.splice(0, handSize) : [];
-    boneyard = fullSet;
+    boneyard = fullSet; // في وضع 3 لاعبين ستكون 0
 
     determineFirstTurn();
     renderGame();
@@ -196,9 +190,6 @@ function updateTurnStatus() {
     else if (currentTurn === 'comp2') document.getElementById("comp2-avatar")?.classList.add("active-neon-comp");
 }
 
-/* ----------------------------------------------------------
- * منطق اللعب
- * ---------------------------------------------------------- */
 function getPlayableEnds(tile) {
     if (boardChain.length === 0) return ['left', 'right'];
     let ends = [];
@@ -275,14 +266,14 @@ function nextTurn() {
     renderGame();
     startTimer();
 
-    // فحص التخطي التلقائي للاعب إذا كان السوق فارغاً ولا يملك ورقاً للعب
+    // تخطي التلقائي للاعب عند انتهاء السوق وعدم وجود ورق للعب
     if (currentTurn === 'player') {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && boneyard.length === 0) {
             setTimeout(() => {
-                alert("السوق فارغ ولا تملك ورقاً صالاحاً للعب.. تم تخطي دورك تلقائياً!");
+                alert("السوق فارغ ولا تملك ورقاً صالحاً للعب.. تم تخطي دورك تلقائياً!");
                 nextTurn();
-            }, 600);
+            }, 500);
             return;
         }
     }
@@ -356,9 +347,6 @@ function checkBlockGame() {
     return false;
 }
 
-/* ----------------------------------------------------------
- * خوارزمية رسم الطاولة Snake Layout
- * ---------------------------------------------------------- */
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
     const HALF_SIZE = 14;
@@ -465,9 +453,6 @@ function calculateSnakeLayout(chain, centerIdx) {
     return layout;
 }
 
-/* ----------------------------------------------------------
- * تحديث الشاشة
- * ---------------------------------------------------------- */
 function renderGame() {
     let playerArea = document.getElementById("player-hand");
     if (playerArea) {
@@ -560,9 +545,9 @@ function renderGame() {
                 chainArea.innerHTML += `
                     <div class="domino-piece"
                          style="position: absolute; left: calc(50% + ${px}px); top: calc(50% + ${py}px); transform: translate(-50%, -50%) scale(${scale}) rotate(${item.rotation}deg);">
-                        ${createDotsHTML(item.top)}
+                        ${createDotsHTML(piece.top)}
                         <div class="divider"></div>
-                        ${createDotsHTML(item.bottom)}
+                        ${createDotsHTML(piece.bottom)}
                     </div>
                 `;
             });
