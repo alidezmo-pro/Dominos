@@ -10,24 +10,19 @@
     <!-- الهيكل الرئيسي للعبة (Grid Layout) -->
     <main class="game-layout">
         
-        <!-- الشريط العلوي: الكمبيوتر 1، التايمر، الكمبيوتر 2 -->
+        <!-- الشريط العلوي: الكمبيوتر 1، الكمبيوتر 2 -->
         <header class="top-bar">
             <!-- الكمبيوتر 1 -->
             <div id="comp1-avatar" class="profile top-left">
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الكمبيوتر 1">
                 <div class="profile-info">
-                    <span class="profile-name">الكمبيوتر 1</span>
                     <span id="comp1-count" class="profile-count">🂠 7</span>
                 </div>
             </div>
 
-            <!-- التايمر -->
-            <div id="turn-timer" class="timer-display top-center hidden">⏳ 25</div>
-
             <!-- الكمبيوتر 2 (يظهر في وضع 3 لاعبين) -->
             <div id="comp2-avatar" class="profile top-right hidden">
                 <div class="profile-info">
-                    <span class="profile-name">الكمبيوتر 2</span>
                     <span id="comp2-count" class="profile-count">🂠 7</span>
                 </div>
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="الكمبيوتر 2">
@@ -44,9 +39,6 @@
             <!-- اللاعب -->
             <div id="player-avatar" class="profile bottom-left">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="اللاعب">
-                <div class="profile-info">
-                    <span class="profile-name">أنت (اللاعب)</span>
-                </div>
             </div>
 
             <!-- يد اللاعب -->
@@ -70,8 +62,8 @@
         <div class="modal-box">
             <h2>أهلاً بك في الدومينو! 🎲</h2>
             <p>اختر عدد اللاعبين للبدء:</p>
-            <button class="btn-primary" onclick="selectGameMode(2)">👤 ضد لاعب واحد</button>
-            <button class="btn-primary" onclick="selectGameMode(3)">👥 ضد لاعبين اثنين</button>
+            <button class="btn-primary" onclick="selectGameMode(2)">👤 ضد لاعب واحد (7 كروت)</button>
+            <button class="btn-primary" onclick="selectGameMode(3)">👥 3 لاعبين (9 كروت / بدون 0-0)</button>
         </div>
     </div>
 
@@ -82,6 +74,6 @@
         </div>
     </div>
 
-    <script src="script.js?v=9.48"></script>
+    <script src="script.js?v=10.0"></script>
 </body>
 </html>
