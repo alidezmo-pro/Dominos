@@ -2,22 +2,21 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لعبة الدومينو الاحترافية</title>
     
-    <!-- 1. ربط ملف التنسيقات الخارجية CSS -->
+    <!-- ربط ملف التنسيقات -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- الحاوية الرئيسية الواسعة لجميع عناصر اللعبة -->
+    <!-- الحاوية الرئيسية -->
     <div class="main-screen">
 
-        <!-- 2. شريط حالة الدور العلوي (تنبيه من عليه الدور) -->
+        <!-- شريط حالة الدور -->
         <div id="turn-status" class="turn-status">🎯 جاري إعداد اللعبة...</div>
 
-        <!-- 3. بطاقات معلومات اللاعبين (الأفاتارات) -->
-        <!-- الكمبيوتر 1 (أعلى اليسار) -->
+        <!-- الأفاتارات -->
         <div class="avatar-badge top-left">
             <div class="avatar-circle">🤖</div>
             <div class="badge-info">
@@ -26,7 +25,6 @@
             </div>
         </div>
 
-        <!-- الكمبيوتر 2 (أعلى اليمين - يظهر فقط عند اختيار نظام 3 لاعبين) -->
         <div id="comp2-avatar" class="avatar-badge top-right hidden">
             <div class="avatar-circle">🤖</div>
             <div class="badge-info">
@@ -35,7 +33,6 @@
             </div>
         </div>
 
-        <!-- اللاعب البشري (أسفل اليسار) -->
         <div class="avatar-badge bottom-left">
             <div class="avatar-circle">👨‍💻</div>
             <div class="badge-info">
@@ -43,48 +40,43 @@
             </div>
         </div>
 
-        <!-- 4. طاولة اللعب البيضاوية الرئيسية -->
+        <!-- طاولة اللعب (هنا يتم رسم شكل الثعبان برمجياً) -->
         <div class="poker-table">
-            <!-- مسار رص وسلسلة أحجار الدومينو الملعوبة -->
             <div id="board-chain" class="domino-chain">
-                <!-- يتم توليد ورص الأحجار هنا ديناميكياً برمجياً -->
+                <!-- المحرك البرمجي سيقوم بالرسم داخل هذا الديف -->
             </div>
         </div>
 
-        <!-- 5. أيقونة السوق (للسحب عند عدم وجود أحجار قابلة للعب) -->
+        <!-- أيقونة السوق -->
         <div id="boneyard-box" class="market-icon-box" onclick="drawFromBoneyard()">
             <div style="font-size: 18px;">🂠</div>
             <div style="font-size: 11px; margin-top: 2px;">السوق: <span id="boneyard-count">0</span></div>
         </div>
 
-        <!-- 6. حاوية أحجار يد اللاعب (أسفل الشاشة) -->
+        <!-- حاوية أحجار اللاعب -->
         <div id="player-hand" class="player-hand-container">
-            <!-- يتم توليد الأحجار الخاصة باللاعب هنا برمجياً -->
+            <!-- سيتم ملؤها برمجياً -->
         </div>
 
     </div>
 
-    <!-- 7. النافذة المنبثقة لاختيار نمط اللعب عند البداية -->
+    <!-- نوافذ التفاعل -->
     <div id="start-modal" class="modal-overlay">
         <div class="modal-card">
-            <h2>🀄 مرحباً بك في لعبة الدومينو</h2>
-            <p style="margin: 15px 0; color: #cbd5e1; font-size: 14px;">اختر نمط اللعب للبدء:</p>
-            
-            <!-- أزرار اختيار نمط اللعب واستدعاء الدالة البرمجية -->
+            <h2>🀄 لعبة الدومينو</h2>
             <button class="btn-primary" onclick="selectGameMode(2)">لاعب ضد الكمبيوتر (1v1)</button>
             <button class="btn-secondary" onclick="selectGameMode(3)">لاعب ضد 2 كمبيوتر (1v2)</button>
         </div>
     </div>
 
-    <!-- 8. النافذة المنبثقة لإعلان الفائز ونهاية اللعبة -->
     <div id="end-modal" class="modal-overlay hidden">
         <div class="modal-card">
-            <h2 id="end-title">🎉 انتهاء اللعبة</h2>
+            <h2 id="end-title">انتهت اللعبة</h2>
             <button class="btn-primary" onclick="showStartModal()">لعبة جديدة 🔄</button>
         </div>
     </div>
 
-    <!-- 9. استدعاء ملف الجافاسكربت الأساسي (في النهاية لضمان اكتمال بناء عناصر الـ DOM أولاً) -->
-    <script src="script.js?v=7.9"></script>
+    <!-- استدعاء المحرك البرمجي -->
+    <script src="script.js?v=8.0"></script>
 </body>
 </html>
