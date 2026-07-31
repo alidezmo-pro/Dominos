@@ -255,7 +255,6 @@ function addTileToBoard(tile, end) {
         boardChain.push(orientedTile);
     }
 }
-
 function nextTurn() {
     if (checkBlockGame()) return;
 
@@ -280,6 +279,7 @@ function nextTurn() {
     if (currentTurn !== 'player' && !isGameOver) setTimeout(playComputerTurn, 900);
 }
 
+  
 function playComputerTurn() {
     if (isGameOver) return;
     let hand = (currentTurn === 'comp1') ? comp1Hand : comp2Hand;
