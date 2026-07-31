@@ -1,6 +1,6 @@
 /* ==========================================================
- * script.js - محرك اللعب المطور (خوارزمية مراكز المربعات - دقة 100%)
- * التحديثات: انحناء بعد 9 أوراق، تقليل الفواصل، وتصغير تناسبي مريح للعين
+ * script.js - محرك اللعب المطور
+ * التحديثات: تايمر مدمج في الأفاتار + عدم إعادة العداد عند السحب من السوق
  * ========================================================== */
 
 let fullSet = [];          
@@ -88,6 +88,7 @@ function startGame(mode) {
 
     determineFirstTurn();
     renderGame();
+    startTimer();
 
     if (currentTurn !== 'player') {
         setTimeout(playComputerTurn, 1000);
@@ -106,19 +107,18 @@ function determineFirstTurn() {
 function startTimer() {
     clearInterval(turnTimerInterval);
     timeLeft = 25;
-    let timerElem = document.getElementById("turn-timer");
     
-    if(timerElem) {
-        timerElem.classList.remove("hidden");
-        timerElem.innerText = `⏳ ${timeLeft}`;
-        timerElem.style.color = "#ef4444";
-    }
+    // تجديد عنصر التايمر وتعيينه فوق الأفاتار الحالي
+    renderAvatarTimer();
 
     turnTimerInterval = setInterval(() => {
         timeLeft--;
-        if(timerElem) {
-            timerElem.innerText = `⏳ ${timeLeft}`;
-            if (timeLeft <= 5) timerElem.style.color = (timeLeft % 2 === 0) ? "#ffffff" : "#ef4444";
+        let timerElem = document.querySelector(".avatar-timer");
+        if (timerElem) {
+            timerElem.innerText = timeLeft;
+            if (timeLeft <= 5) {
+                timerElem.style.color = (timeLeft % 2 === 0) ? "#ffffff" : "#ef4444";
+            }
         }
         
         if (timeLeft <= 0) {
@@ -126,6 +126,29 @@ function startTimer() {
             handleTimeOut();
         }
     }, 1000);
+}
+
+function renderAvatarTimer() {
+    // إزالة أي تايمر قديم من الأفاتارات
+    document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
+
+    if (isGameOver) return;
+
+    let activeAvatarContainer = null;
+    if (currentTurn === 'player') {
+        activeAvatarContainer = document.querySelector(".player-avatar-container") || document.getElementById("player-avatar");
+    } else if (currentTurn === 'comp1') {
+        activeAvatarContainer = document.getElementById("comp1-avatar");
+    } else if (currentTurn === 'comp2') {
+        activeAvatarContainer = document.getElementById("comp2-avatar");
+    }
+
+    if (activeAvatarContainer) {
+        let timerElem = document.createElement("div");
+        timerElem.className = "avatar-timer";
+        timerElem.innerText = timeLeft;
+        activeAvatarContainer.appendChild(timerElem);
+    }
 }
 
 function handleTimeOut() {
@@ -151,7 +174,7 @@ function handleTimeOut() {
 function updateTurnStatus() {
     if (isGameOver) {
         clearInterval(turnTimerInterval);
-        document.getElementById("turn-timer")?.classList.add("hidden");
+        document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
         return;
     }
 
@@ -162,8 +185,6 @@ function updateTurnStatus() {
     if (currentTurn === 'player') document.getElementById("player-avatar")?.classList.add("active-neon-player");
     else if (currentTurn === 'comp1') document.getElementById("comp1-avatar")?.classList.add("active-neon-comp");
     else if (currentTurn === 'comp2') document.getElementById("comp2-avatar")?.classList.add("active-neon-comp");
-
-    startTimer();
 }
 
 /* ----------------------------------------------------------
@@ -240,7 +261,10 @@ function nextTurn() {
     if (currentTurn === 'player') currentTurn = 'comp1';
     else if (currentTurn === 'comp1') currentTurn = (gameMode === 3) ? 'comp2' : 'player';
     else currentTurn = 'player';
+    
     renderGame();
+    startTimer(); // إشعار التايمر بإعادة البدء فقط عند انتقال الدور للاعب آخَر
+
     if (currentTurn !== 'player' && !isGameOver) setTimeout(playComputerTurn, 900);
 }
 
@@ -282,7 +306,7 @@ function drawFromBoneyard() {
     
     if (boneyard.length > 0) {
         playerHand.push(boneyard.pop());
-        renderGame();
+        renderGame(); // إعادة رسم الأوراق بدون ريستارت للتايمر
     } else {
         alert("السوق فارغ!");
         nextTurn();
@@ -311,12 +335,11 @@ function checkBlockGame() {
 }
 
 /* ----------------------------------------------------------
- * خوارزمية مراكز المربعات لرسم الطاولة (Solid Logic)
+ * خوارزمية مراكز المربعات لرسم الطاولة
  * ---------------------------------------------------------- */
-// تم ضبط HALF_SIZE و STEP_SIZE لتلتصق الأوراق تماماً بدون أي فراغات
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
-    const HALF_SIZE = 14; // نصف طول الورقة العادية (14px)
+    const HALF_SIZE = 14;
     
     if (in_dir === 'RIGHT') {
         if (!isDouble) { rot = -90; sq1 = {x: -HALF_SIZE, y:0}; sq2 = {x: HALF_SIZE, y:0}; }
@@ -360,7 +383,6 @@ function calculateSnakeLayout(chain, centerIdx) {
     let dirs = new Array(chain.length - 1);
     const MAX_ROW = 9; 
     
-    // الجزء الأيمن
     let travel = 'RIGHT'; let len = 0;
     for (let i = centerIdx; i < chain.length - 1; i++) {
         dirs[i] = travel; len++;
@@ -369,7 +391,6 @@ function calculateSnakeLayout(chain, centerIdx) {
         else if (travel === 'LEFT' && len >= MAX_ROW) { travel = 'DOWN'; len = 0; }
     }
     
-    // الجزء الأيسر
     travel = 'LEFT'; len = 0;
     for (let i = centerIdx - 1; i >= 0; i--) {
         dirs[i] = (travel === 'LEFT') ? 'RIGHT' : (travel === 'RIGHT') ? 'LEFT' : (travel === 'UP') ? 'DOWN' : 'UP';
@@ -382,7 +403,7 @@ function calculateSnakeLayout(chain, centerIdx) {
     let layout = [];
     let cx = 0, cy = 0;
     let p_sq2_abs = { x: 0, y: 0 }; 
-    const STEP_SIZE = 28; // مسافة الإزاحة للقطعة الكاملة (28px) لعدم ترك فواصل
+    const STEP_SIZE = 28;
 
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
@@ -448,9 +469,9 @@ function renderGame() {
     }
 
     let c1Count = document.getElementById("comp1-count");
-    if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
+    if (c1Count) c1Count.innerText = `${comp1Hand.length}`;
     let c2Count = document.getElementById("comp2-count");
-    if (c2Count && gameMode === 3) c2Count.innerText = `🂠 ${comp2Hand.length}`;
+    if (c2Count && gameMode === 3) c2Count.innerText = `${comp2Hand.length}`;
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
@@ -480,7 +501,6 @@ function renderGame() {
             let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; 
             let maxAvailableHeight = tableElem ? tableElem.clientHeight - 80 : 200;
 
-            // حساب الحجم مع حد أدنى (0.65) لضمان عدم تصغير الأوراق بشكل مبالغ فيه
             let calcScale = Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1);
             let scale = Math.max(calcScale, 0.65);
 
@@ -527,6 +547,7 @@ function renderGame() {
         }
     }
     updateTurnStatus();
+    renderAvatarTimer(); // الحفاظ على ظهور عنصر التايمر داخل الأفاتار دون عمل reset للعداد
 }
 
 function createDotsHTML(value) {
@@ -540,7 +561,7 @@ function createDotsHTML(value) {
 function endGame(message) {
     isGameOver = true;
     clearInterval(turnTimerInterval); 
-    document.getElementById("turn-timer")?.classList.add("hidden"); 
+    document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
 
     let endTitle = document.getElementById("end-title");
     if (endTitle) endTitle.innerText = message;
