@@ -2,7 +2,9 @@
  * script.js - محرك اللعب والشكل الثعباني المطور (النزول بحجرين)
  * ========================================================== */
 
-// --- المتغيرات العامة للعبة ---
+/* ----------------------------------------------------------
+ * 1. المتغيرات العامة للعبة
+ * ---------------------------------------------------------- */
 let fullSet = [];          
 let boneyard = [];         
 let playerHand = [];       
@@ -18,6 +20,7 @@ let leftEndValue = null;
 let rightEndValue = null;  
 let isGameOver = false;
 
+// ربط الدوال بالنافذة لتكون متاحة في HTML
 window.selectGameMode = selectGameMode;
 window.drawFromBoneyard = drawFromBoneyard;
 window.selectBoardEnd = selectBoardEnd;
@@ -26,6 +29,14 @@ window.showStartModal = showStartModal;
 window.onload = function() {
     showStartModal();
 };
+
+/* ----------------------------------------------------------
+ * 2. إعداد وبدء اللعبة
+ * ---------------------------------------------------------- */
+function showStartModal() {
+    document.getElementById("start-modal")?.classList.remove("hidden");
+    document.getElementById("end-modal")?.classList.add("hidden");
+}
 
 function selectGameMode(mode) {
     startGame(mode);
@@ -57,9 +68,11 @@ function startGame(mode) {
     leftEndValue = null;
     rightEndValue = null;
 
+    // إخفاء النوافذ المنبثقة
     document.getElementById("start-modal")?.classList.add("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
 
+    // إعداد لاعب الكمبيوتر الثاني إذا كان النمط 3 لاعبين
     let comp2Avatar = document.getElementById("comp2-avatar");
     if (comp2Avatar) {
         if (gameMode === 3) comp2Avatar.classList.remove("hidden");
@@ -87,9 +100,12 @@ function determineFirstTurn() {
         if (comp1Hand.some(p => p.top === d && p.bottom === d)) { currentTurn = 'comp1'; return; }
         if (gameMode === 3 && comp2Hand.some(p => p.top === d && p.bottom === d)) { currentTurn = 'comp2'; return; }
     }
-    currentTurn = 'player';
+    currentTurn = 'player'; // افتراضي
 }
 
+/* ----------------------------------------------------------
+ * 3. منطق اللعب للأطراف وحركة اللاعب
+ * ---------------------------------------------------------- */
 function getPlayableEnds(tile) {
     if (boardChain.length === 0) return ['left', 'right'];
     let ends = [];
@@ -106,6 +122,7 @@ function onPlayerTileClick(index) {
 
     if (ends.length === 0 && boardChain.length > 0) return;
 
+    // إذا كان الحجر قابلاً للعب على كلا الطرفين
     if (ends.length === 2 && leftEndValue !== rightEndValue) {
         selectedTileIndex = (selectedTileIndex === index) ? null : index;
         renderGame();
@@ -135,7 +152,6 @@ function playPlayerTile(index, end) {
     nextTurn();
 }
 
-// 🎯 محرك الإضافة: ضَبْط الاتجاهات بحسب أطراف اللعب
 function addTileToBoard(tile, end) {
     if (boardChain.length === 0) {
         boardChain.push({ top: tile.top, bottom: tile.bottom });
@@ -159,6 +175,9 @@ function addTileToBoard(tile, end) {
     }
 }
 
+/* ----------------------------------------------------------
+ * 4. إدارة الأدوار والذكاء الاصطناعي والسوق
+ * ---------------------------------------------------------- */
 function nextTurn() {
     if (checkBlockGame()) return;
 
@@ -213,11 +232,13 @@ function playComputerTurn() {
 
 function drawFromBoneyard() {
     if (currentTurn !== 'player' || isGameOver) return;
+    
     let hasPlayable = playerHand.some(tile => getPlayableEnds(tile).length > 0);
     if (hasPlayable && boardChain.length > 0) {
         alert("لديك أحجار قابلة للعب! لا يمكنك السحب من السوق.");
         return;
     }
+    
     if (boneyard.length > 0) {
         let tile = boneyard.pop();
         playerHand.push(tile);
@@ -257,9 +278,9 @@ function calculateScore(hand) {
     return hand.reduce((sum, tile) => sum + tile.top + tile.bottom, 0);
 }
 
-// =========================================================================
-// 🚀 محرك الـ Snake الجديد (نزول بحجرين في اللفة)
-// =========================================================================
+/* ----------------------------------------------------------
+ * 5. محرك الـ Snake (الرسم والتخطيط على الطاولة)
+ * ---------------------------------------------------------- */
 function calculateSnakeLayout(chain) {
     if (!chain || chain.length === 0) return [];
     
@@ -267,21 +288,21 @@ function calculateSnakeLayout(chain) {
     let current_x = 0, current_y = 0;
     let dir = 'RIGHT'; 
     let next_dir = null;
-    let down_count = 0; // عداد للنزول بحجرين
-    const ROW_LIMIT = 180; // حدود السطر قبل اللفة
+    let down_count = 0; 
+    const ROW_LIMIT = 180; 
 
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
         let isDouble = (piece.top === piece.bottom);
         
-        // عند الوصول للحد الأقصى للسطر، نبدأ بالنزول بحجرين عموديين
+        // الانعطاف ونزول حجرين عند الوصول للحد
         if (dir === 'RIGHT' && current_x > ROW_LIMIT && !isDouble) {
             dir = 'DOWN';
-            down_count = 2; // النزول بحجرين لترك مسافة كافية بين السطور
+            down_count = 2; 
             next_dir = 'LEFT';
         } else if (dir === 'LEFT' && current_x < -ROW_LIMIT && !isDouble) {
             dir = 'DOWN';
-            down_count = 2; // النزول بحجرين لترك مسافة كافية بين السطور
+            down_count = 2; 
             next_dir = 'RIGHT';
         }
 
@@ -291,34 +312,27 @@ function calculateSnakeLayout(chain) {
 
         if (dir === 'RIGHT') {
             rotation = isDouble ? 0 : -90;
-            w = isDouble ? 28 : 56;
-            h = isDouble ? 56 : 28;
-            cx = current_x + step / 2;
-            cy = current_y;
+            w = isDouble ? 28 : 56; h = isDouble ? 56 : 28;
+            cx = current_x + step / 2; cy = current_y;
             entry_x = cx - w / 2; entry_y = cy;
             exit_x = cx + w / 2; exit_y = cy;
             current_x += step;
         } else if (dir === 'LEFT') {
             rotation = isDouble ? 0 : 90;
-            w = isDouble ? 28 : 56;
-            h = isDouble ? 56 : 28;
-            cx = current_x - step / 2;
-            cy = current_y;
+            w = isDouble ? 28 : 56; h = isDouble ? 56 : 28;
+            cx = current_x - step / 2; cy = current_y;
             entry_x = cx + w / 2; entry_y = cy;
             exit_x = cx - w / 2; exit_y = cy;
             current_x -= step;
         } else if (dir === 'DOWN') {
             rotation = isDouble ? 90 : 0;
-            w = isDouble ? 56 : 28;
-            h = isDouble ? 28 : 56;
-            cx = current_x;
-            cy = current_y + step / 2;
+            w = isDouble ? 56 : 28; h = isDouble ? 28 : 56;
+            cx = current_x; cy = current_y + step / 2;
             entry_x = cx; entry_y = cy - h / 2;
             exit_x = cx; exit_y = cy + h / 2;
             current_y += step;
             
             down_count--;
-            // بعد النزول بحجرين، يتم التحول للاتجاه الأفقي الجديد
             if (down_count === 0 && next_dir) {
                 dir = next_dir;
                 next_dir = null;
@@ -334,7 +348,9 @@ function calculateSnakeLayout(chain) {
     return layout;
 }
 
-// --- تحديث واجهة اللعبة واحتساب الحجم لتجنب التداخل ---
+/* ----------------------------------------------------------
+ * 6. واجهة المستخدم وتحديث الشاشة (Rendering)
+ * ---------------------------------------------------------- */
 function renderGame() {
     let playerArea = document.getElementById("player-hand");
     if (playerArea) {
@@ -359,12 +375,14 @@ function renderGame() {
 
     let c1Count = document.getElementById("comp1-count");
     if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
+    
     let c2Count = document.getElementById("comp2-count");
     if (c2Count && gameMode === 3) c2Count.innerText = `🂠 ${comp2Hand.length}`;
+    
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
-    // 🎯 رسم الطاولة وحساب التصغير التلقائي لمنع وصول الأحجار إلى يد اللاعب
+    // حساب تصغير الطاولة التلقائي لمنع التداخل
     let chainArea = document.getElementById("board-chain");
     if (chainArea) {
         chainArea.innerHTML = "";
@@ -390,7 +408,6 @@ function renderGame() {
             let offsetX = -bboxCenterX;
             let offsetY = -bboxCenterY;
 
-            // تم تقليل الارتفاع المتاح محلياً لضمان عدم خروج الأحجار عن الحدود الزرقاء للطاولة
             let scale = 1;
             let maxAvailableWidth = 520; 
             let maxAvailableHeight = 200; 
@@ -403,6 +420,7 @@ function renderGame() {
             let first = layout[0];
             let last = layout[layout.length - 1];
 
+            // رسم أزرار تحديد الأطراف
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
@@ -423,6 +441,7 @@ function renderGame() {
                 }
             }
 
+            // رسم الأحجار
             layout.forEach(item => {
                 let px = (item.cx + offsetX) * scale;
                 let py = (item.cy + offsetY) * scale;
@@ -463,11 +482,6 @@ function updateTurnStatus() {
         statusElem.innerText = "🤖 يفكر الكمبيوتر 2...";
         statusElem.style.color = "#f59e0b";
     }
-}
-
-function showStartModal() {
-    document.getElementById("start-modal")?.classList.remove("hidden");
-    document.getElementById("end-modal")?.classList.add("hidden");
 }
 
 function endGame(message) {
