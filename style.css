@@ -1,29 +1,35 @@
 /* ==========================================================
- * لعبة الدومينو الاحترافية - Dominoes Styling File (V2)
+ * لعبة الدومينو الاحترافية - ملف التنسيقات الشامل (style.css)
  * ========================================================== */
 
+/* 
+ * 1. المتغيرات الأساسية (Variables)
+ * يتم تعديل هذا المتغير من خلال الجافاسكريبت لتصغير الأحجار 
+ * تلقائياً كلما زاد عددها على الطاولة.
+ */
 :root {
-    /* متغير ديناميكي لحجم أحجار الطاولة - يتم تعديله بالجافاسكربت تلقائياً */
     --board-scale: 1;
 }
 
+/* 2. تصفير التنسيقات الافتراضية للمتصفح */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    user-select: none;
+    user-select: none; /* منع تحديد النصوص أثناء اللعب */
 }
 
+/* إعدادات الشاشة الأساسية والخلفية */
 body {
-    background-color: #0b0f19;
+    background-color: #0b0f19; /* لون خلفية داكن */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     height: 100vh;
     width: 100vw;
-    overflow: hidden;
+    overflow: hidden; /* منع ظهور شريط التمرير (Scrollbar) */
     display: flex;
     justify-content: center;
     align-items: center;
-    direction: rtl;
+    direction: rtl; /* دعم الاتجاه من اليمين لليسار */
 }
 
 .main-screen {
@@ -35,7 +41,10 @@ body {
     align-items: center;
 }
 
-/* 1. الطاولة البيضاوية (مساحة واسعة وواضحة) */
+/* 
+ * 3. تصميم طاولة اللعب (Poker Table) 
+ * تم تقليل حجمها قليلاً لمنح مساحة للأفاتارات في الزوايا
+ */
 .poker-table {
     width: 90%;
     height: 75vh;
@@ -49,7 +58,7 @@ body {
     align-items: center;
 }
 
-/* 2. شريط حالة الدور العلوي */
+/* 4. شريط حالة الدور (موجود أعلى منتصف الشاشة) */
 .turn-status {
     position: absolute;
     top: 15px;
@@ -66,9 +75,12 @@ body {
     text-align: center;
 }
 
-/* 3. نقل الأفاتارات إلى زوايا الصفحة الخارجية تماماً بعيداً عن الطاولة */
+/* 
+ * 5. تصميم بطاقات اللاعبين (الأفاتار)
+ * استخدام position: fixed لنقلها إلى الزوايا الخارجية تماماً
+ */
 .avatar-badge {
-    position: fixed; /* تثبيت في زوايا الشاشة */
+    position: fixed; /* التثبيت بالنسبة للشاشة ككل وليس الطاولة */
     display: flex;
     align-items: center;
     gap: 8px;
@@ -80,6 +92,7 @@ body {
     z-index: 100;
 }
 
+/* تحديد أماكن الأفاتارات في الزوايا */
 .top-left { top: 15px; left: 15px; }
 .top-right { top: 15px; right: 15px; }
 .bottom-left { bottom: 15px; left: 15px; }
@@ -112,12 +125,15 @@ body {
     width: fit-content;
 }
 
-/* 4. رصة الطاولة والتصغير التلقائي (Snake Chain Layout) */
+/* 
+ * 6. حاوية أحجار الطاولة (Domino Chain) 
+ * استخدام flex-wrap للسماح للأحجار بالنزول لسطر جديد بشكل متصل (Snake Path)
+ */
 .domino-chain {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap; /* يلتف المسار بمرونة */
+    flex-wrap: wrap; /* التفاف مرن */
     gap: 4px;
     width: 95%;
     max-height: 80%;
@@ -125,13 +141,14 @@ body {
     transition: all 0.3s ease;
 }
 
-/* 5. أحجار الطاولة (تتأثر بالمقياس التلقائي) */
+/* تطبيق التكبير/التصغير التلقائي على حاوية الطاولة بأكملها */
 .domino-chain .domino-piece {
     transform: scale(var(--board-scale));
     transform-origin: center center;
     transition: transform 0.3s ease;
 }
 
+/* 7. التصميم الأساسي لحجر الدومينو */
 .domino-piece {
     width: 28px;
     height: 56px;
@@ -144,9 +161,10 @@ body {
     padding: 2px 0;
     box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.4);
     cursor: pointer;
-    flex-shrink: 0;
+    flex-shrink: 0; /* يمنع انكماش الحجر عن حجمه الطبيعي */
 }
 
+/* الوضع الأفقي للحجر (للأحجار غير المزدوجة) */
 .domino-piece.horizontal {
     width: 56px;
     height: 28px;
@@ -154,7 +172,10 @@ body {
     padding: 0 2px;
 }
 
-/* 6. أحجار يد اللاعب (حجم أصغر لتفادي التغطية على الطاولة) */
+/* 
+ * 8. حاوية أحجار اللاعب أسفل الشاشة
+ * تم تصغير حجم الأحجار هنا حتى لا تغطي على مساحة اللعب
+ */
 .player-hand-container {
     position: fixed;
     bottom: 10px;
@@ -169,24 +190,27 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* أحجام مخصصة (أصغر) لأحجار اللاعب فقط */
 .player-hand-container .domino-piece {
-    width: 24px; /* حجم أصغر مدمج */
+    width: 24px;
     height: 48px;
 }
 
+/* تمييز الحجر القابل للعب بضوء برتقالي */
 .player-hand-container .domino-piece.playable {
     border: 2px solid #f59e0b;
     box-shadow: 0 0 8px #f59e0b;
     transform: translateY(-5px);
 }
 
+/* تمييز الحجر المختار بضوء أزرق */
 .player-hand-container .domino-piece.selected {
     border: 2px solid #38bdf8;
     box-shadow: 0 0 12px #38bdf8;
     transform: translateY(-8px);
 }
 
-/* 7. تفاصيل النقاط والفاصل */
+/* 9. تفاصيل الحجر من الداخل (الخط الفاصل والنقاط) */
 .divider {
     width: 100%;
     height: 1px;
@@ -198,6 +222,7 @@ body {
     height: 100%;
 }
 
+/* شبكة توزيع النقاط (Grid System) */
 .domino-half {
     width: 100%;
     height: 22px;
@@ -221,7 +246,7 @@ body {
     align-self: center;
 }
 
-/* أماكن النقاط داخل الحجر */
+/* إحداثيات النقاط من 1 إلى 6 */
 .p-1 .dot-1 { grid-area: 2 / 2; }
 .p-2 .dot-1 { grid-area: 1 / 1; }
 .p-2 .dot-2 { grid-area: 3 / 3; }
@@ -244,7 +269,7 @@ body {
 .p-6 .dot-5 { grid-area: 3 / 1; }
 .p-6 .dot-6 { grid-area: 3 / 3; }
 
-/* 8. زر اختيار الطرف والآيقونات */
+/* 10. زر اختيار الطرف (يمين/يسار) عند وجود خيارات متعددة */
 .end-selector {
     background: #f59e0b;
     color: #000;
@@ -257,6 +282,7 @@ body {
     margin: 0 4px;
 }
 
+/* 11. صندوق أيقونة السوق (السحب) */
 .market-icon-box {
     position: fixed;
     right: 15px;
@@ -270,6 +296,7 @@ body {
     z-index: 100;
 }
 
+/* 12. النوافذ المنبثقة (Modals) للقوائم ورسائل النهاية */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -287,4 +314,22 @@ body {
     color: #fff;
 }
 
+/* زر إعادة التشغيل أو الأزرار العامة */
+.btn-primary, .btn-secondary {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    transition: transform 0.15s, background-color 0.2s;
+}
+
+.btn-primary { background: #f59e0b; color: #000; }
+.btn-secondary { background: #3b82f6; color: #fff; }
+.btn-primary:active, .btn-secondary:active { transform: scale(0.96); }
+
+/* فئة الإخفاء العامة */
 .hidden { display: none !important; }
