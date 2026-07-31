@@ -1,5 +1,5 @@
 /* ==========================================================
- * script.js - محرك وضع 3 لاعبين وتثبيت التايمر
+ * script.js - النسخة المحسنة كاملة بدون أخطاء اختفاء الكروت
  * ========================================================== */
 
 let fullSet = [];          
@@ -39,14 +39,13 @@ function selectGameMode(mode) {
     startGame(mode);
 }
 
-// إنشاء طقم الأوراق (مع إلغاء 0-0 إذا كان وضع 3 لاعبين)
+// إنشاء طقم الأوراق (مع إلغاء 0-0 في وضع 3 لاعبين)
 function createDominoSet(mode) {
     let set = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
-            // إلغاء قطعة البلاطة (0-0) نهائياً في وضع 3 لاعبين
             if (mode === 3 && i === 0 && j === 0) {
-                continue; 
+                continue; // إلغاء البلاطة 0-0
             }
             set.push({ top: i, bottom: j });
         }
@@ -83,13 +82,12 @@ function startGame(mode) {
 
     fullSet = shuffle(createDominoSet(gameMode));
 
-    // تحديد عدد الأوراق: 9 أوراق لكل لاعب في وضع الـ 3 لاعبين، و 7 في وضع الـ 2 لاعبين
     let handSize = (gameMode === 3) ? 9 : 7;
 
     playerHand = fullSet.splice(0, handSize);
     comp1Hand = fullSet.splice(0, handSize);
     comp2Hand = (gameMode === 3) ? fullSet.splice(0, handSize) : [];
-    boneyard = fullSet; // في وضع 3 لاعبين ستكون 0
+    boneyard = fullSet; 
 
     determineFirstTurn();
     renderGame();
@@ -255,6 +253,7 @@ function addTileToBoard(tile, end) {
         boardChain.push(orientedTile);
     }
 }
+
 function nextTurn() {
     if (checkBlockGame()) return;
 
@@ -265,7 +264,7 @@ function nextTurn() {
     renderGame();
     startTimer();
 
-    // تخطي تلقائي وسلس للاعب بدون ظهور أي رسائل alert
+    // التخطي التلقائي بدون رسائل وبدون مشاكل في الرندر
     if (currentTurn === 'player') {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && boneyard.length === 0) {
@@ -279,7 +278,6 @@ function nextTurn() {
     if (currentTurn !== 'player' && !isGameOver) setTimeout(playComputerTurn, 900);
 }
 
-  
 function playComputerTurn() {
     if (isGameOver) return;
     let hand = (currentTurn === 'comp1') ? comp1Hand : comp2Hand;
@@ -314,13 +312,12 @@ function playComputerTurn() {
 function drawFromBoneyard() {
     if (currentTurn !== 'player' || isGameOver) return;
     let hasPlayable = playerHand.some(tile => getPlayableEnds(tile).length > 0);
-    if (hasPlayable && boardChain.length > 0) { alert("لديك أحجار قابلة للعب!"); return; }
+    if (hasPlayable && boardChain.length > 0) return;
     
     if (boneyard.length > 0) {
         playerHand.push(boneyard.pop());
         renderGame();
     } else {
-        alert("السوق فارغ!");
         nextTurn();
     }
 }
@@ -544,9 +541,9 @@ function renderGame() {
                 chainArea.innerHTML += `
                     <div class="domino-piece"
                          style="position: absolute; left: calc(50% + ${px}px); top: calc(50% + ${py}px); transform: translate(-50%, -50%) scale(${scale}) rotate(${item.rotation}deg);">
-                        ${createDotsHTML(piece.top)}
+                        ${createDotsHTML(item.top)}
                         <div class="divider"></div>
-                        ${createDotsHTML(piece.bottom)}
+                        ${createDotsHTML(item.bottom)}
                     </div>
                 `;
             });
