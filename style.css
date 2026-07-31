@@ -34,7 +34,7 @@ body {
     align-items: center;
 }
 
-/* 1. الطاولة البيضاوية */
+/* 1. الطاولة البيضاوية الاحترافية */
 .poker-table {
     width: 90%;
     height: 72vh;
@@ -130,7 +130,7 @@ body {
     transition: transform 0.3s ease;
 }
 
-/* 5. تصميم الأحجار */
+/* 5. تصميم أحجار الدومينو */
 .domino-piece {
     width: 28px;
     height: 56px;
@@ -185,7 +185,7 @@ body {
     transform: translateY(-8px);
 }
 
-/* 7. التفاصيل الداخلية للحجر */
+/* 7. الخط الفاصل ونقاط أحجار الدومينو */
 .divider {
     width: 100%;
     height: 1px;
@@ -220,6 +220,7 @@ body {
     align-self: center;
 }
 
+/* شبكة النقاط من 1 إلى 6 */
 .p-1 .dot-1 { grid-area: 2 / 2; }
 .p-2 .dot-1 { grid-area: 1 / 1; }
 .p-2 .dot-2 { grid-area: 3 / 3; }
