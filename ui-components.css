@@ -19,7 +19,7 @@
     pointer-events: auto;
 }
 
-/* Timer Display */
+/* Timer Display (التايمر الرقمي في منتصف الشاشة من أعلى) */
 .timer-display {
     background: transparent;
     border: none;
@@ -62,7 +62,7 @@
     background: rgba(0,0,0,0.2);
 }
 
-/* كلاس مقترح لضبط التايمر الدائري (الأزرق) حول الأفاتار */
+/* التايمر الدائري (الأزرق) حول الأفاتار */
 .timer-ring {
     position: absolute;
     top: 50%;
@@ -70,7 +70,7 @@
     transform: translate(-50%, -50%);
     width: 110%;
     height: 110%;
-    z-index: 1; /* عشان يبقى تحت الاسم والنقاط */
+    z-index: 1;
     pointer-events: none;
 }
 
@@ -85,10 +85,10 @@
     z-index: 10;
 }
 
-/* اسم اللاعب */
+/* اسم اللاعب (أعلى الأفاتار) */
 .player-label {
     position: absolute;
-    top: -4px; /* التعديل الأخير للاسم */
+    top: -4px; 
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
@@ -103,12 +103,14 @@
     z-index: 20; 
 }
 
-/* النقاط (كأس على يسار الأفاتار) */
+/* النقاط (كأس أسفل الأفاتار) */
 .profile-score {
     position: absolute;
-    bottom: -2px;
-    right: 36px; 
-    left: auto;
+    top: calc(100% + 4px); /* لإنزال المربع تحت الأفاتار بمسافة 4 بيكسل */
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%); /* لضبط المربع في المنتصف تماماً */
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #fff;
     font-size: 0.75rem;
@@ -148,28 +150,7 @@
 
 /* --- 5. Floating Scoreboard (Premium Horizontal Pill) --- */
 #scoreboard-container {
-    position: absolute;
-    top: 65px; 
-    left: 50%;
-    transform: translateX(-50%); 
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px; 
-    padding: 6px 16px;
-    display: flex; 
-    flex-direction: row;
-    flex-wrap: wrap; 
-    justify-content: center;
-    align-items: center;
-    gap: 12px; 
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    color: var(--text-light);
-    z-index: var(--z-ui);
-    width: max-content; 
-    max-width: 95vw; 
-    pointer-events: auto;
+    display: none !important; /* مخفية بالكامل */
 }
 
 .score-header {
