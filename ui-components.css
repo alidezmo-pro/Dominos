@@ -352,13 +352,18 @@
     background: rgba(255, 255, 255, 0.05);
 }
 
+/* --- التعديل الجديد: وضع الحقل والزر تحت بعضهما وتقليل العرض --- */
 .join-box {
     display: flex;
-    gap: 8px;
+    flex-direction: column; /* ترتيب العناصر بشكل عمودي */
+    align-items: center; /* توسيط الحقل والزر */
+    gap: 12px; /* مسافة أوسع قليلاً لراحة العين */
+    width: 100%;
 }
 
 .join-box input {
-    flex: 1;
+    width: 70%; /* تقليل العرض */
+    max-width: 250px; /* أقصى عرض حتى لا يكبر جداً في الشاشات الكبيرة */
     padding: 12px 16px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -378,6 +383,12 @@
     box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.3);
     background: rgba(15, 23, 42, 0.8);
 }
+
+.join-box button {
+    width: 70%; /* جعل الزر بنفس عرض حقل الإدخال */
+    max-width: 250px;
+}
+/* ----------------------------------------------------------- */
 
 .code-display {
     background: rgba(14, 165, 233, 0.05);
