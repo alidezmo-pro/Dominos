@@ -1,0 +1,41 @@
+/* --- 1. CSS Variables (Design Tokens) --- */
+:root {
+    /* Premium Colors */
+    --bg-main: #020617; 
+    --table-center: #1e293b;
+    --table-edge: #0f172a;
+    --table-border: rgba(255, 255, 255, 0.1);
+    
+    --text-light: #f8fafc;
+    --text-muted: #94a3b8;
+    
+    /* Vibrant Neon Accents */
+    --accent-player: #0ea5e9; 
+    --accent-player-glow: rgba(14, 165, 233, 0.5);
+    
+    --accent-comp: #f59e0b; 
+    --accent-comp-glow: rgba(245, 158, 11, 0.5);
+    
+    --accent-danger: #ef4444;
+    --accent-score: #10b981; 
+    
+    /* Realistic Domino 3D Look */
+    --domino-bg-1: #ffffff;
+    --domino-bg-2: #e2e8f0;
+    --domino-dot: #0f172a;
+    --domino-border: #94a3b8;
+    --domino-divider: rgba(15, 23, 42, 0.2);
+
+    /* Sizes */
+    --domino-w: 38px;
+    --domino-h: 76px;
+    --dot-size: 8px;
+
+    /* Z-Index Layers */
+    --z-base: 1;
+    --z-table: 10;
+    --z-domino: 50;
+    --z-ui: 100;
+    --z-toast: 500;
+    --z-modal: 1000;
+}
