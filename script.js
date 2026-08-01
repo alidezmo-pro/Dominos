@@ -115,13 +115,18 @@ function listenToRoomUpdates() {
             syncGameState(data.gameState);
             
             if (playerRole === 'host') {
+                // حماية ضد تحويل المصفوفات الفارغة إلى undefined في Firebase
+                const hHand = data.gameState.hostHand || [];
+                const g1Hand = data.gameState.guest1Hand || [];
+                const g2Hand = data.gameState.guest2Hand || [];
+
                 if (data.gameState.isBlocked) {
                     processHostRoundEnd('block', data.gameState);
-                } else if (data.gameState.hostHand && data.gameState.hostHand.length === 0) {
+                } else if (hHand.length === 0) {
                     processHostRoundEnd('host', data.gameState);
-                } else if (data.gameState.guest1Hand && data.gameState.guest1Hand.length === 0) {
+                } else if (g1Hand.length === 0) {
                     processHostRoundEnd('guest1', data.gameState);
-                } else if (roomMaxPlayers === 3 && data.gameState.guest2Hand && data.gameState.guest2Hand.length === 0) {
+                } else if (roomMaxPlayers === 3 && g2Hand.length === 0) {
                     processHostRoundEnd('guest2', data.gameState);
                 }
             }
@@ -159,9 +164,13 @@ function updateScoreUI() {
 
 // دالة حساب النقاط وإعلان الجولات (الهوست فقط ينفذها لضمان المزامنة)
 function processHostRoundEnd(type, state) {
-    let hScore = state.hostHand.reduce((s, t) => s + t.top + t.bottom, 0);
-    let g1Score = state.guest1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
-    let g2Score = state.guest2Hand ? state.guest2Hand.reduce((s, t) => s + t.top + t.bottom, 0) : 0;
+    let hHand = state.hostHand || [];
+    let g1Hand = state.guest1Hand || [];
+    let g2Hand = state.guest2Hand || [];
+
+    let hScore = hHand.reduce((s, t) => s + t.top + t.bottom, 0);
+    let g1Score = g1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
+    let g2Score = g2Hand.reduce((s, t) => s + t.top + t.bottom, 0);
     
     let winner = null;
     let points = 0;
@@ -285,16 +294,19 @@ function syncGameState(onlineState) {
     startTimer();
 }
 
-function sendMoveToFirebase(isBlocked = false) {
+function sendMoveToFirebase(isBlocked = false, passTurn = true) {
     if (!isOnline) return;
     
-    let nextTurnRole;
-    if (roomMaxPlayers === 2) {
-        nextTurnRole = (playerRole === 'host') ? 'guest1' : 'host';
-    } else {
-        if (playerRole === 'host') nextTurnRole = 'guest1';
-        else if (playerRole === 'guest1') nextTurnRole = 'guest2';
-        else if (playerRole === 'guest2') nextTurnRole = 'host';
+    let nextTurnRole = playerRole;
+
+    if (passTurn) {
+        if (roomMaxPlayers === 2) {
+            nextTurnRole = (playerRole === 'host') ? 'guest1' : 'host';
+        } else {
+            if (playerRole === 'host') nextTurnRole = 'guest1';
+            else if (playerRole === 'guest1') nextTurnRole = 'guest2';
+            else if (playerRole === 'guest2') nextTurnRole = 'host';
+        }
     }
 
     let hHand, g1Hand, g2Hand;
@@ -618,9 +630,12 @@ function drawFromBoneyard() {
     if (boneyard.length > 0) {
         playerHand.push(boneyard.pop());
         renderGame();
-        if (isOnline) sendMoveToFirebase(); 
+        
+        if (isOnline) {
+            sendMoveToFirebase(false, false); // عدم نقل الدور عند السحب
+        }
     } else {
-        if (isOnline) sendMoveToFirebase();
+        if (isOnline) sendMoveToFirebase(false, true); // نقل الدور إذا كان السوق فارغاً
         else nextTurn();
     }
 }
