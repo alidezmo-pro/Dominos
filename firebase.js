@@ -17,6 +17,7 @@ export function createRoom() {
         maxPlayers: state.roomMaxPlayers,
         targetScore: state.targetScore,
         scores: { host: 0, guest1: 0, guest2: 0 },
+        names: { host: state.playerName, guest1: "", guest2: "" },
         host: true,
         guest1: false,
         guest2: false
@@ -42,20 +43,23 @@ export function joinRoom() {
             state.roomMaxPlayers = data.maxPlayers || 2;
             state.targetScore = data.targetScore || 100;
             
-            if (state.roomMaxPlayers === 2) {
+                      if (state.roomMaxPlayers === 2) {
                 state.playerRole = 'guest1';
                 state.isOnline = true;
-                window.update(roomRef, { guest1: true, status: 'playing' });
+                // إرسال الاسم للضيف الأول
+                window.update(roomRef, { guest1: true, status: 'playing', 'names/guest1': state.playerName });
             } else if (state.roomMaxPlayers === 3) {
                 if (!data.guest1) {
                     state.playerRole = 'guest1';
                     state.isOnline = true;
-                    window.update(roomRef, { guest1: true });
+                    // إرسال الاسم للضيف الأول
+                    window.update(roomRef, { guest1: true, 'names/guest1': state.playerName });
                     showToast("تم الانضمام! ننتظر اللاعب الثالث...");
                 } else if (!data.guest2) {
                     state.playerRole = 'guest2';
                     state.isOnline = true;
-                    window.update(roomRef, { guest2: true, status: 'playing' });
+                    // إرسال الاسم للضيف الثاني
+                    window.update(roomRef, { guest2: true, status: 'playing', 'names/guest2': state.playerName });
                 }
             }
             
