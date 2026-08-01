@@ -33,6 +33,7 @@
     --z-table: 10;
     --z-domino: 50;
     --z-ui: 100;
+    --z-toast: 500;
     --z-modal: 1000;
 }
 
@@ -83,7 +84,7 @@ body {
     pointer-events: auto;
 }
 
-/* Timer Display (Transparent Placeholder) */
+/* Timer Display */
 .timer-display {
     background: transparent;
     border: none;
@@ -91,7 +92,7 @@ body {
     font-size: 2rem;
     font-weight: bold;
     color: var(--accent-danger);
-    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
     text-align: center;
 }
 
@@ -143,7 +144,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* --- 5. Floating Scoreboard Container (Left Side) --- */
@@ -206,7 +207,7 @@ body {
     background-color: var(--table-bg);
     border: 4px solid var(--table-border);
     border-radius: 20px;
-    box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -281,8 +282,14 @@ body {
     scrollbar-color: var(--accent-player) transparent;
 }
 
-.player-hand-wrapper::-webkit-scrollbar { height: 4px; }
-.player-hand-wrapper::-webkit-scrollbar-thumb { background: var(--accent-player); border-radius: 10px; }
+.player-hand-wrapper::-webkit-scrollbar { 
+    height: 4px; 
+}
+
+.player-hand-wrapper::-webkit-scrollbar-thumb { 
+    background: var(--accent-player); 
+    border-radius: 10px; 
+}
 
 #player-hand {
     display: flex;
@@ -303,7 +310,7 @@ body {
     width: 44px;
     height: 44px;
     margin-bottom: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .player-avatar-container img {
@@ -313,14 +320,14 @@ body {
     object-fit: cover;
 }
 
-/* --- Overlay Timer inside Active Avatar --- */
+/* Overlay Timer inside Active Avatar */
 .avatar-timer {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     background: rgba(0, 0, 0, 0.75);
-    color: #ef4444;
+    color: var(--accent-danger);
     font-size: 0.95rem;
     font-weight: bold;
     width: 100%;
@@ -330,7 +337,7 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 10;
-    border: 2px solid #ef4444;
+    border: 2px solid var(--accent-danger);
     box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
     pointer-events: none;
 }
@@ -344,7 +351,7 @@ body {
     border-radius: 6px;
     display: flex;
     flex-direction: column;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
     flex-shrink: 0;
     will-change: transform, opacity;
 }
@@ -360,30 +367,66 @@ body {
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-#player-hand .domino-piece:hover { transform: translateY(-15px); }
-#player-hand .domino-piece.playable { cursor: pointer; box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); }
-#player-hand .domino-piece.selected { transform: translateY(-20px) scale(1.1); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.9); border: 2px solid var(--accent-player); z-index: 10; }
+#player-hand .domino-piece:hover { 
+    transform: translateY(-15px); 
+}
 
-.domino-half { width: 100%; flex: 1; display: flex; flex-wrap: wrap; position: relative; padding: 4px; }
-.divider { width: 100%; height: 1px; background-color: var(--domino-divider); }
-.dot { width: var(--dot-size); height: var(--dot-size); background-color: var(--domino-dot); border-radius: 50%; position: absolute; }
+#player-hand .domino-piece.playable { 
+    cursor: pointer; 
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); 
+}
 
-/* Dot positions */
+#player-hand .domino-piece.selected { 
+    transform: translateY(-20px) scale(1.1); 
+    box-shadow: 0 10px 25px rgba(56, 189, 248, 0.9); 
+    border: 2px solid var(--accent-player); 
+    z-index: 10; 
+}
+
+.domino-half { 
+    width: 100%; 
+    flex: 1; 
+    display: flex; 
+    flex-wrap: wrap; 
+    position: relative; 
+    padding: 4px; 
+}
+
+.divider { 
+    width: 100%; 
+    height: 1px; 
+    background-color: var(--domino-divider); 
+}
+
+.dot { 
+    width: var(--dot-size); 
+    height: var(--dot-size); 
+    background-color: var(--domino-dot); 
+    border-radius: 50%; 
+    position: absolute; 
+}
+
+/* Dot Positions */
 .p-1 .dot-1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
 .p-2 .dot-1 { top: 15%; left: 15%; }
 .p-2 .dot-2 { bottom: 15%; right: 15%; }
+
 .p-3 .dot-1 { top: 15%; left: 15%; }
 .p-3 .dot-2 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .p-3 .dot-3 { bottom: 15%; right: 15%; }
+
 .p-4 .dot-1 { top: 15%; left: 15%; }
 .p-4 .dot-2 { top: 15%; right: 15%; }
 .p-4 .dot-3 { bottom: 15%; left: 15%; }
 .p-4 .dot-4 { bottom: 15%; right: 15%; }
+
 .p-5 .dot-1 { top: 15%; left: 15%; }
 .p-5 .dot-2 { top: 15%; right: 15%; }
 .p-5 .dot-3 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .p-5 .dot-4 { bottom: 15%; left: 15%; }
 .p-5 .dot-5 { bottom: 15%; right: 15%; }
+
 .p-6 .dot-1 { top: 15%; left: 15%; }
 .p-6 .dot-2 { top: 50%; left: 15%; transform: translateY(-50%); }
 .p-6 .dot-3 { bottom: 15%; left: 15%; }
@@ -402,36 +445,65 @@ body {
     box-shadow: 0 0 12px rgba(245, 158, 11, 0.8) !important;
 }
 
-/* --- 10. Modals --- */
-.hidden { display: none !important; }
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: center; align-items: center; z-index: var(--z-modal); backdrop-filter: blur(4px); }
-.modal-box { background: var(--table-bg); padding: 2.5rem; border-radius: 20px; text-align: center; border: 2px solid var(--accent-player); box-shadow: 0 0 30px rgba(56, 189, 248, 0.3); max-width: 400px; width: 90%; }
-.modal-box h2 { margin-bottom: 1rem; font-size: 1.8rem; }
-.modal-box p { margin-bottom: 1.5rem; color: var(--text-muted); }
-.btn-primary { background: var(--accent-player); color: #000; border: none; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 0.5rem; transition: transform 0.2s ease; }
-.btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); }
-
-/* --- 11. Responsive Breakpoints --- */
-@media (max-width: 768px) {
-    .btn-boneyard { padding: 0.5rem; font-size: 0.85rem; }
-    #scoreboard-container { top: 60px; left: 8px; padding: 8px; min-width: 100px; }
-    .score-target { font-size: 0.75rem; }
-    .score-box { font-size: 0.7rem; padding: 4px 6px; }
-    
-    :root { 
-        --domino-w: 30px; 
-        --domino-h: 60px; 
-        --dot-size: 6px; 
-    }
+/* --- 10. Modals & Dialogs --- */
+.hidden { 
+    display: none !important; 
 }
 
-@media (max-height: 600px) {
-    :root { 
-        --domino-w: 26px; 
-        --domino-h: 52px; 
-    }
+.modal-overlay { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100dvh; 
+    background: rgba(15, 23, 42, 0.9); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: var(--z-modal); 
+    backdrop-filter: blur(4px); 
 }
-/* --- الأشكال الجديدة للواجهة بدون Prompts --- */
+
+.modal-box { 
+    background: var(--table-bg); 
+    padding: 2.5rem; 
+    border-radius: 20px; 
+    text-align: center; 
+    border: 2px solid var(--accent-player); 
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.3); 
+    max-width: 400px; 
+    width: 90%; 
+}
+
+.modal-box h2 { 
+    margin-bottom: 1rem; 
+    font-size: 1.8rem; 
+}
+
+.modal-box p { 
+    margin-bottom: 1.5rem; 
+    color: var(--text-muted); 
+}
+
+.btn-primary { 
+    background: var(--accent-player); 
+    color: #000; 
+    border: none; 
+    padding: 0.75rem 1.5rem; 
+    font-size: 1.1rem; 
+    border-radius: 10px; 
+    cursor: pointer; 
+    font-weight: bold; 
+    margin: 0.5rem; 
+    transition: transform 0.2s ease, box-shadow 0.2s ease; 
+}
+
+.btn-primary:hover { 
+    transform: scale(1.05); 
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); 
+}
+
+/* --- 11. Room Setup & Lobby UI --- */
 .room-setup {
     display: flex;
     flex-direction: column;
@@ -493,6 +565,11 @@ body {
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.btn-secondary:hover {
+    transform: scale(1.03);
 }
 
 .btn-offline {
@@ -503,6 +580,12 @@ body {
     border-radius: 8px;
     width: 100%;
     cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-offline:hover {
+    border-color: #fff;
+    color: #fff;
 }
 
 .divider-text {
@@ -525,6 +608,11 @@ body {
     background: rgba(0, 0, 0, 0.3);
     color: #fff;
     text-align: center;
+    outline: none;
+}
+
+.join-box input:focus {
+    border-color: var(--accent-player);
 }
 
 .code-display {
@@ -544,7 +632,7 @@ body {
     color: var(--accent-player);
 }
 
-/* التنبيهات السريعة (Toast) */
+/* --- 12. Notifications (Toast System) --- */
 .toast-notification {
     position: absolute;
     top: 20px;
@@ -555,15 +643,56 @@ body {
     color: #fff;
     padding: 8px 20px;
     border-radius: 20px;
-    z-index: 500;
+    z-index: var(--z-toast);
     font-size: 0.9rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -10px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+    from { 
+        opacity: 0; 
+        transform: translate(-50%, -10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translate(-50%, 0); 
+    }
 }
 
+/* --- 13. Responsive Breakpoints --- */
+@media (max-width: 768px) {
+    .btn-boneyard { 
+        padding: 0.5rem; 
+        font-size: 0.85rem; 
+    }
+    
+    #scoreboard-container { 
+        top: 60px; 
+        left: 8px; 
+        padding: 8px; 
+        min-width: 100px; 
+    }
+    
+    .score-target { 
+        font-size: 0.75rem; 
+    }
+    
+    .score-box { 
+        font-size: 0.7rem; 
+        padding: 4px 6px; 
+    }
+    
+    :root { 
+        --domino-w: 30px; 
+        --domino-h: 60px; 
+        --dot-size: 6px; 
+    }
+}
 
+@media (max-height: 600px) {
+    :root { 
+        --domino-w: 26px; 
+        --domino-h: 52px; 
+    }
+}
