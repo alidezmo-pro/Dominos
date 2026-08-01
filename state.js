@@ -30,7 +30,7 @@ export const state = {
     
     // Timer
     turnTimerInterval: null, 
-    timeLeft: 20
+    timeLeft: 20,
 
     // أضف هذه السطور داخل كائن export const state = { ... }
     playerName: localStorage.getItem("dominoPlayerName") || "لاعب",
