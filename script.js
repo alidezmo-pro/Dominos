@@ -1,30 +1,43 @@
 /* ==========================================================
- * script.js - النسخة النهائية (مزامنة الأونلاين + إيقاف الكمبيوتر)
- * ========================================================== */
-/* ==========================================================
- * script.js - النسخة النهائية (مزامنة الأونلاين + إيقاف الكمبيوتر + 3 لاعبين)
+ * script.js - النسخة الاحترافية (2 أو 3 لاعبين + نظام نقاط وجولات)
  * ========================================================== */
 
 // ==========================================
-// 1. أكواد اللعب الأونلاين (الغرف عبر Firebase) - 3 لاعبين
+// 1. أكواد اللعب الأونلاين (غرف، جولات، نقاط)
 // ==========================================
 let roomId = null;
 let playerRole = null; 
 let isOnline = false; 
+let roomMaxPlayers = 2;
+let targetScore = 100;
+let roomScores = { host: 0, guest1: 0, guest2: 0 };
+window.lastAlert = null;
 
 window.createRoom = function() {
+    let pCount = prompt("هل تريد إنشاء الغرفة لـ 2 أم 3 لاعبين؟", "2");
+    if (pCount !== "2" && pCount !== "3") return alert("اختيار غير صحيح!");
+    
+    let tScore = prompt("ما هو عدد النقاط المطلوب للفوز بالمباراة؟ (مثلاً 50 أو 100)", "100");
+    let target = parseInt(tScore);
+    if (isNaN(target) || target < 10) target = 100;
+
     roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
     playerRole = 'host';
     isOnline = true;
+    roomMaxPlayers = parseInt(pCount);
+    targetScore = target;
 
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
     window.set(roomRef, {
         status: 'waiting',
+        maxPlayers: roomMaxPlayers,
+        targetScore: targetScore,
+        scores: { host: 0, guest1: 0, guest2: 0 },
         host: true,
         guest1: false,
         guest2: false
     }).then(() => {
-        alert("تم إنشاء الغرفة بنجاح! 🎲\nكود الغرفة: " + roomId + "\nأرسله لصديقيك (ننتظر دخول لاعبين اثنين).");
+        alert(`تم إنشاء الغرفة! 🎲\nالكود: ${roomId}\nاللاعبين: ${roomMaxPlayers}\nنقاط الفوز: ${targetScore}`);
         document.getElementById("start-modal").classList.add("hidden");
         listenToRoomUpdates(); 
     });
@@ -38,25 +51,33 @@ window.joinRoom = function() {
     window.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         if (data && data.status === 'waiting') {
-            if (!data.guest1) {
-                // أنا اللاعب الثاني الذي دخل الغرفة
+            roomMaxPlayers = data.maxPlayers || 2;
+            targetScore = data.targetScore || 100;
+            
+            if (roomMaxPlayers === 2) {
                 playerRole = 'guest1';
                 isOnline = true;
-                window.update(roomRef, { guest1: true });
-                alert("تم الانضمام كلاعب ثاني! ننتظر دخول اللاعب الثالث...");
-            } else if (!data.guest2) {
-                // أنا اللاعب الثالث الذي دخل الغرفة (اكتمل العدد)
-                playerRole = 'guest2';
-                isOnline = true;
-                window.update(roomRef, { guest2: true, status: 'playing' });
-                alert("تم الانضمام كلاعب ثالث! اكتمل العدد وستبدأ اللعبة الآن 🔥");
+                window.update(roomRef, { guest1: true, status: 'playing' });
+                alert("تم الانضمام للغرفة! اللعبة ستبدأ الآن 🔥");
+            } else if (roomMaxPlayers === 3) {
+                if (!data.guest1) {
+                    playerRole = 'guest1';
+                    isOnline = true;
+                    window.update(roomRef, { guest1: true });
+                    alert("تم الانضمام كلاعب ثاني! ننتظر دخول اللاعب الثالث...");
+                } else if (!data.guest2) {
+                    playerRole = 'guest2';
+                    isOnline = true;
+                    window.update(roomRef, { guest2: true, status: 'playing' });
+                    alert("تم الانضمام كلاعب ثالث! ستبدأ اللعبة الآن 🔥");
+                }
             }
             
             roomId = inputCode;
             document.getElementById("start-modal").classList.add("hidden");
             listenToRoomUpdates();
         } else if (data && data.status === 'playing') {
-            alert("هذه الغرفة ممتلئة (يوجد 3 لاعبين بالفعل)!");
+            alert("هذه الغرفة ممتلئة وتلعب حالياً!");
         } else {
             alert("الكود غير صحيح!");
         }
@@ -67,24 +88,125 @@ function listenToRoomUpdates() {
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
     window.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
+        if (!data) return;
+
+        roomMaxPlayers = data.maxPlayers || 2;
+        targetScore = data.targetScore || 100;
+
+        if (data.scores) {
+            roomScores = data.scores;
+            updateScoreUI();
+        }
+
+        // إشعارات نهاية الجولة
+        if (data.roundAlert && data.roundAlert !== window.lastAlert) {
+            window.lastAlert = data.roundAlert;
+            alert(data.roundAlert);
+        }
         
-        // إذا اكتمل العدد (3 لاعبين) ولم تتوزع الأوراق، صاحب الغرفة يوزعها
-        if (data && data.status === 'playing' && !data.gameState && playerRole === 'host') {
+        // التحقق من بدء جولة جديدة
+        let isFull = (roomMaxPlayers === 2 && data.guest1) || (roomMaxPlayers === 3 && data.guest1 && data.guest2);
+        if (isFull && data.status === 'playing' && !data.gameState && playerRole === 'host' && !data.roundAlert) {
             startOnlineGame(); 
         }
         
-        // استقبال تحديثات الطاولة باستمرار (للجميع)
-        if (data && data.gameState) {
+        // استقبال تحديثات الطاولة ومعالجة نهايات الجولة (للهوست فقط)
+        if (data.gameState) {
             syncGameState(data.gameState);
+            
+            if (playerRole === 'host') {
+                if (data.gameState.isBlocked) {
+                    processHostRoundEnd('block', data.gameState);
+                } else if (data.gameState.hostHand && data.gameState.hostHand.length === 0) {
+                    processHostRoundEnd('host', data.gameState);
+                } else if (data.gameState.guest1Hand && data.gameState.guest1Hand.length === 0) {
+                    processHostRoundEnd('guest1', data.gameState);
+                } else if (roomMaxPlayers === 3 && data.gameState.guest2Hand && data.gameState.guest2Hand.length === 0) {
+                    processHostRoundEnd('guest2', data.gameState);
+                }
+            }
         }
     });
+}
+
+// إنشاء لوحة نتائج ديناميكية
+function updateScoreUI() {
+    let sb = document.getElementById("score-board");
+    if (!sb) {
+        sb = document.createElement("div");
+        sb.id = "score-board";
+        sb.style.cssText = "position:absolute; top:5px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#4ade80; padding:8px 15px; border-radius:20px; z-index:100; font-size:14px; display:flex; gap:15px; border: 1px solid #4ade80; flex-wrap: wrap; justify-content: center;";
+        document.body.appendChild(sb);
+    }
+    
+    let p1Name = "أنت";
+    let p2Name = (playerRole === 'host') ? "الخصم 1" : "صاحب الغرفة";
+    
+    let myScore = roomScores[playerRole];
+    let p2Score = (playerRole === 'host') ? roomScores.guest1 : roomScores.host;
+    
+    let html = `<span>الهدف: <b>${targetScore}</b>🏆</span>`;
+    html += `<span>${p1Name}: <b>${myScore}</b></span>`;
+    html += `<span>${p2Name}: <b>${p2Score}</b></span>`;
+    
+    if (roomMaxPlayers === 3) {
+        let p3Name = (playerRole === 'guest2') ? "الخصم 1" : "الخصم 2";
+        let p3Score = (playerRole === 'host') ? roomScores.guest2 : (playerRole === 'guest1' ? roomScores.guest2 : roomScores.guest1);
+        html += `<span>${p3Name}: <b>${p3Score}</b></span>`;
+    }
+    sb.innerHTML = html;
+}
+
+// دالة حساب النقاط وإعلان الجولات (الهوست فقط ينفذها لضمان المزامنة)
+function processHostRoundEnd(type, state) {
+    let hScore = state.hostHand.reduce((s, t) => s + t.top + t.bottom, 0);
+    let g1Score = state.guest1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
+    let g2Score = state.guest2Hand ? state.guest2Hand.reduce((s, t) => s + t.top + t.bottom, 0) : 0;
+    
+    let winner = null;
+    let points = 0;
+    
+    if (type === 'host') { winner = 'host'; points = g1Score + g2Score; }
+    else if (type === 'guest1') { winner = 'guest1'; points = hScore + g2Score; }
+    else if (type === 'guest2') { winner = 'guest2'; points = hScore + g1Score; }
+    else if (type === 'block') {
+        let min = hScore; winner = 'host';
+        if (g1Score < min) { min = g1Score; winner = 'guest1'; }
+        if (roomMaxPlayers === 3 && g2Score < min) { min = g2Score; winner = 'guest2'; }
+        
+        points = (hScore + g1Score + g2Score) - min;
+    }
+    
+    roomScores[winner] += points;
+    let isFinal = roomScores[winner] >= targetScore;
+    
+    // ترجمة اسم الفائز
+    let winnerName = (winner === 'host') ? "صاحب الغرفة" : ((winner === 'guest1') ? "اللاعب 2" : "اللاعب 3");
+    
+    let msg = (type === 'block') ? "🔒 انغلقت اللعبة! " : "🎯 جولة انتهت! ";
+    msg += `فاز ${winnerName} بكسب ${points} نقطة.`;
+    
+    if(isFinal) msg = `🎉🎉 انتهت المباراة الكبرى! البطل هو ${winnerName} بتخطيه حاجز الـ ${targetScore} نقطة!`;
+
+    window.update(window.ref(window.db, 'rooms/' + roomId), {
+        scores: roomScores,
+        roundAlert: msg,
+        gameState: null // تصفير الطاولة
+    });
+    
+    if (!isFinal) {
+        setTimeout(() => {
+            window.update(window.ref(window.db, 'rooms/' + roomId), { roundAlert: null });
+            startOnlineGame();
+        }, 5000); // 5 ثواني استراحة ثم تبدأ الجولة القادمة
+    }
 }
 
 function startOnlineGame() {
     let set = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
-            if (i === 0 && j === 0) continue; // استبعاد (0-0) لتصبح 27 ورقة (9 لكل لاعب)
+            if (roomMaxPlayers === 3 && i === 0 && j === 0) continue; 
             set.push({ top: i, bottom: j });
         }
     }
@@ -94,36 +216,38 @@ function startOnlineGame() {
         [set[i], set[j]] = [set[j], set[i]];
     }
 
+    let handSize = roomMaxPlayers === 3 ? 9 : 7;
     const newGameState = {
-        hostHand: set.splice(0, 9),
-        guest1Hand: set.splice(0, 9),
-        guest2Hand: set.splice(0, 9),
-        boneyard: set, // ستكون فارغة تقريباً
+        hostHand: set.splice(0, handSize),
+        guest1Hand: set.splice(0, handSize),
+        guest2Hand: roomMaxPlayers === 3 ? set.splice(0, handSize) : [],
+        boneyard: set,
         boardChain: [],
         leftEndValue: -1,
         rightEndValue: -1
     };
 
-    // البحث عن أكبر "دوش" لتحديد من يبدأ
     let startingRole = 'host';
-    outer: for (let d = 6; d >= 1; d--) {
+    outer: for (let d = 6; d >= 0; d--) {
         if (newGameState.hostHand.some(t => t.top === d && t.bottom === d)) { startingRole = 'host'; break outer; }
         if (newGameState.guest1Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest1'; break outer; }
-        if (newGameState.guest2Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest2'; break outer; }
+        if (roomMaxPlayers === 3 && newGameState.guest2Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest2'; break outer; }
     }
     newGameState.currentTurn = startingRole;
+    newGameState.isBlocked = false;
 
-    window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: newGameState });
+    window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: newGameState, roundAlert: null });
 }
 
 function syncGameState(onlineState) {
     document.getElementById("start-modal").classList.add("hidden");
+    document.getElementById("end-modal")?.classList.add("hidden");
+    isGameOver = false;
     
-    // إجبار اللعبة على وضع 3 لاعبين وإظهار الأفاتار الثالث
-    gameMode = 3; 
-    document.getElementById("comp2-avatar")?.classList.remove("hidden");
+    gameMode = roomMaxPlayers; 
+    if(gameMode === 3) document.getElementById("comp2-avatar")?.classList.remove("hidden");
+    else document.getElementById("comp2-avatar")?.classList.add("hidden");
     
-    // ربط أدوار الأونلاين بمقاعد اللعبة المحلية لتدور بشكل منطقي عند كل لاعب
     if (playerRole === 'host') {
         playerHand = onlineState.hostHand || [];
         comp1Hand = onlineState.guest1Hand || []; 
@@ -133,11 +257,15 @@ function syncGameState(onlineState) {
         else currentTurn = 'comp2';
     } else if (playerRole === 'guest1') {
         playerHand = onlineState.guest1Hand || [];
-        comp1Hand = onlineState.guest2Hand || [];
-        comp2Hand = onlineState.hostHand || [];
-        if (onlineState.currentTurn === 'guest1') currentTurn = 'player';
-        else if (onlineState.currentTurn === 'guest2') currentTurn = 'comp1';
-        else currentTurn = 'comp2';
+        comp1Hand = (roomMaxPlayers === 3) ? (onlineState.guest2Hand || []) : (onlineState.hostHand || []);
+        comp2Hand = (roomMaxPlayers === 3) ? (onlineState.hostHand || []) : [];
+        if (roomMaxPlayers === 2) {
+            currentTurn = (onlineState.currentTurn === 'guest1') ? 'player' : 'comp1';
+        } else {
+            if (onlineState.currentTurn === 'guest1') currentTurn = 'player';
+            else if (onlineState.currentTurn === 'guest2') currentTurn = 'comp1';
+            else currentTurn = 'comp2';
+        }
     } else if (playerRole === 'guest2') {
         playerHand = onlineState.guest2Hand || [];
         comp1Hand = onlineState.hostHand || [];
@@ -157,43 +285,46 @@ function syncGameState(onlineState) {
     startTimer();
 }
 
-function sendMoveToFirebase() {
+function sendMoveToFirebase(isBlocked = false) {
     if (!isOnline) return;
     
-    // نقل الدور برمجياً بالترتيب: صاحب الغرفة -> الضيف 1 -> الضيف 2
     let nextTurnRole;
-    if (playerRole === 'host') nextTurnRole = 'guest1';
-    else if (playerRole === 'guest1') nextTurnRole = 'guest2';
-    else if (playerRole === 'guest2') nextTurnRole = 'host';
+    if (roomMaxPlayers === 2) {
+        nextTurnRole = (playerRole === 'host') ? 'guest1' : 'host';
+    } else {
+        if (playerRole === 'host') nextTurnRole = 'guest1';
+        else if (playerRole === 'guest1') nextTurnRole = 'guest2';
+        else if (playerRole === 'guest2') nextTurnRole = 'host';
+    }
 
-    // تجميع أوراق الجميع قبل رفعها
     let hHand, g1Hand, g2Hand;
-    if (playerRole === 'host') { hHand = playerHand; g1Hand = comp1Hand; g2Hand = comp2Hand; }
-    else if (playerRole === 'guest1') { g1Hand = playerHand; g2Hand = comp1Hand; hHand = comp2Hand; }
-    else if (playerRole === 'guest2') { g2Hand = playerHand; hHand = comp1Hand; g1Hand = comp2Hand; }
+    if (roomMaxPlayers === 2) {
+        if (playerRole === 'host') { hHand = playerHand; g1Hand = comp1Hand; g2Hand = []; }
+        else { g1Hand = playerHand; hHand = comp1Hand; g2Hand = []; }
+    } else {
+        if (playerRole === 'host') { hHand = playerHand; g1Hand = comp1Hand; g2Hand = comp2Hand; }
+        else if (playerRole === 'guest1') { g1Hand = playerHand; g2Hand = comp1Hand; hHand = comp2Hand; }
+        else if (playerRole === 'guest2') { g2Hand = playerHand; hHand = comp1Hand; g1Hand = comp2Hand; }
+    }
 
     const state = {
-        hostHand: hHand,
-        guest1Hand: g1Hand,
-        guest2Hand: g2Hand,
+        hostHand: hHand || [],
+        guest1Hand: g1Hand || [],
+        guest2Hand: g2Hand || [],
         boneyard: boneyard,
         boardChain: boardChain,
         leftEndValue: leftEndValue !== null ? leftEndValue : -1,
         rightEndValue: rightEndValue !== null ? rightEndValue : -1,
         centerTileIndex: centerTileIndex,
-        currentTurn: nextTurnRole
+        currentTurn: nextTurnRole,
+        isBlocked: isBlocked
     };
 
     window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: state });
 }
 
 // ==========================================
-// 2. متغيرات اللعبة الأساسية
-// ==========================================
-// (باقي الكود الخاص بك من هنا كما هو تماماً دون تغيير)
-
-// ==========================================
-// 2. متغيرات اللعبة الأساسية
+// 2. متغيرات اللعبة الأساسية المحلية
 // ==========================================
 let fullSet = [], boneyard = [], playerHand = [], comp1Hand = [], comp2Hand = [], boardChain = [];
 let gameMode = 2, currentTurn = 'player', selectedTileIndex = null;
@@ -213,12 +344,13 @@ function showStartModal() {
 }
 
 function selectGameMode(mode) {
-    isOnline = false; // تأكيد أننا نلعب ضد الكمبيوتر محلياً
+    isOnline = false; 
+    document.getElementById("score-board")?.remove(); // إخفاء لوحة النقاط في اللعب المحلي
     startGame(mode);
 }
 
 // ==========================================
-// 3. منطق اللعبة
+// 3. منطق اللعبة (محلي + توجيه للأونلاين)
 // ==========================================
 function createDominoSet(mode) {
     let set = [];
@@ -246,6 +378,12 @@ function startGame(mode) {
 
     document.getElementById("start-modal")?.classList.add("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
+
+    let comp2Avatar = document.getElementById("comp2-avatar");
+    if (comp2Avatar) {
+        if (gameMode === 3) comp2Avatar.classList.remove("hidden");
+        else comp2Avatar.classList.add("hidden");
+    }
 
     fullSet = shuffle(createDominoSet(gameMode));
     let handSize = (gameMode === 3) ? 9 : 7;
@@ -382,15 +520,18 @@ function playPlayerTile(index, end) {
     selectedTileIndex = null;
 
     if (playerHand.length === 0) { 
-        endGame("🎉 مبروك! لقد فزت باللعبة!"); 
-        if (isOnline) sendMoveToFirebase(); // إرسال حالة الفوز
+        if (isOnline) {
+            sendMoveToFirebase(); // ستقوم الهوست بحساب النقاط وإنهاء الجولة
+        } else {
+            endGame("🎉 مبروك! لقد فزت باللعبة!"); 
+        }
         return; 
     }
     
     if (isOnline) {
-        sendMoveToFirebase(); // إرسال الحركة لصديقك
+        sendMoveToFirebase();
     } else {
-        nextTurn(); // تشغيل الكمبيوتر فقط في اللعب المحلي
+        nextTurn(); 
     }
 }
 
@@ -404,16 +545,12 @@ function addTileToBoard(tile, end) {
     }
 
     if (end === 'left') {
-        let orientedTile = (tile.bottom === leftEndValue) 
-            ? { top: tile.top, bottom: tile.bottom } 
-            : { top: tile.bottom, bottom: tile.top };
+        let orientedTile = (tile.bottom === leftEndValue) ? { top: tile.top, bottom: tile.bottom } : { top: tile.bottom, bottom: tile.top };
         leftEndValue = orientedTile.top;
         boardChain.unshift(orientedTile);
         centerTileIndex++; 
     } else {
-        let orientedTile = (tile.top === rightEndValue) 
-            ? { top: tile.top, bottom: tile.bottom } 
-            : { top: tile.bottom, bottom: tile.top };
+        let orientedTile = (tile.top === rightEndValue) ? { top: tile.top, bottom: tile.bottom } : { top: tile.bottom, bottom: tile.top };
         rightEndValue = orientedTile.bottom;
         boardChain.push(orientedTile);
     }
@@ -432,8 +569,8 @@ function nextTurn() {
     if (currentTurn === 'player') {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && boneyard.length === 0) {
-            if (isOnline) { sendMoveToFirebase(); } 
-            else { setTimeout(nextTurn, 600); }
+            if (isOnline) sendMoveToFirebase(); 
+            else setTimeout(nextTurn, 600); 
             return;
         }
     }
@@ -444,7 +581,7 @@ function nextTurn() {
 }
 
 function playComputerTurn() {
-    if (isGameOver || isOnline) return; // منع الكمبيوتر من اللعب نهائياً في وضع الأونلاين
+    if (isGameOver || isOnline) return; 
     let hand = (currentTurn === 'comp1') ? comp1Hand : comp2Hand;
     let playableIndices = [];
     
@@ -481,7 +618,7 @@ function drawFromBoneyard() {
     if (boneyard.length > 0) {
         playerHand.push(boneyard.pop());
         renderGame();
-        if (isOnline) sendMoveToFirebase(); // تحديث السوق عند الخصم
+        if (isOnline) sendMoveToFirebase(); 
     } else {
         if (isOnline) sendMoveToFirebase();
         else nextTurn();
@@ -495,21 +632,26 @@ function checkBlockGame() {
     let comp2CanPlay = (gameMode === 3) ? comp2Hand.some(t => getPlayableEnds(t).length > 0) : false;
 
     if (!playerCanPlay && !comp1CanPlay && (gameMode === 2 || !comp2CanPlay)) {
-        let pScore = playerHand.reduce((s, t) => s + t.top + t.bottom, 0);
-        let c1Score = comp1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
-        let minScore = Math.min(pScore, c1Score);
-        
-        let msg = "🔒 انغلقت اللعبة! ";
-        if (minScore === pScore) msg += `فزت بأقل نقاط (${pScore})!`;
-        else msg += `خسرت، نقاط الخصم أقل (${c1Score})!`;
-        
-        endGame(msg); return true;
+        if (isOnline) {
+            sendMoveToFirebase(true); // إرسال إشارة للهوست ليحسب نقاط القفلة
+            return true;
+        } else {
+            let pScore = playerHand.reduce((s, t) => s + t.top + t.bottom, 0);
+            let c1Score = comp1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
+            let minScore = Math.min(pScore, c1Score);
+            
+            let msg = "🔒 انغلقت اللعبة! ";
+            if (minScore === pScore) msg += `فزت بأقل نقاط (${pScore})!`;
+            else msg += `خسرت، نقاط الخصم أقل (${c1Score})!`;
+            
+            endGame(msg); return true;
+        }
     }
     return false;
 }
 
 // ==========================================
-// 4. دوال رسم الطاولة والقطع (تبقى كما هي)
+// 4. دوال رسم الطاولة والقطع (ثابتة لا تغيير فيها)
 // ==========================================
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
@@ -519,33 +661,25 @@ function getPieceSquares(in_dir, out_dir, isDouble) {
         if (!isDouble) { rot = -90; sq1 = {x: -HALF_SIZE, y:0}; sq2 = {x: HALF_SIZE, y:0}; }
         else { 
             rot = 0; sq1 = {x:0, y:0}; 
-            if (out_dir === 'RIGHT') sq2 = {x:0, y:0};
-            else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE};
-            else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
+            if (out_dir === 'RIGHT') sq2 = {x:0, y:0}; else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE}; else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
         }
     } else if (in_dir === 'LEFT') {
         if (!isDouble) { rot = 90; sq1 = {x: HALF_SIZE, y:0}; sq2 = {x: -HALF_SIZE, y:0}; }
         else { 
             rot = 0; sq1 = {x:0, y:0}; 
-            if (out_dir === 'LEFT') sq2 = {x:0, y:0};
-            else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE};
-            else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
+            if (out_dir === 'LEFT') sq2 = {x:0, y:0}; else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE}; else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
         }
     } else if (in_dir === 'DOWN') {
         if (!isDouble) { rot = 0; sq1 = {x:0, y: -HALF_SIZE}; sq2 = {x:0, y: HALF_SIZE}; }
         else { 
             rot = -90; sq1 = {x:0, y:0}; 
-            if (out_dir === 'DOWN') sq2 = {x:0, y:0};
-            else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0};
-            else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
+            if (out_dir === 'DOWN') sq2 = {x:0, y:0}; else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0}; else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
         }
     } else if (in_dir === 'UP') {
         if (!isDouble) { rot = 180; sq1 = {x:0, y: HALF_SIZE}; sq2 = {x:0, y: -HALF_SIZE}; }
         else { 
             rot = -90; sq1 = {x:0, y:0}; 
-            if (out_dir === 'UP') sq2 = {x:0, y:0};
-            else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0};
-            else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
+            if (out_dir === 'UP') sq2 = {x:0, y:0}; else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0}; else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
         }
     }
     return { rot, sq1, sq2 };
@@ -574,8 +708,7 @@ function calculateSnakeLayout(chain, centerIdx) {
     }
 
     let layout = [];
-    let cx = 0, cy = 0;
-    let p_sq2_abs = { x: 0, y: 0 }; 
+    let cx = 0, cy = 0, p_sq2_abs = { x: 0, y: 0 }; 
     const STEP_SIZE = 28;
 
     for (let i = 0; i < chain.length; i++) {
@@ -585,29 +718,19 @@ function calculateSnakeLayout(chain, centerIdx) {
         let out_dir = (i === chain.length - 1) ? in_dir : dirs[i];
         let trans = getPieceSquares(in_dir, out_dir, isDouble);
         
-        if (i === 0) {
-            cx = 0; cy = 0;
-        } else {
+        if (i === 0) { cx = 0; cy = 0; } else {
             let vec = {x:0, y:0};
-            if (dirs[i-1] === 'RIGHT') vec = {x: STEP_SIZE, y: 0};
-            else if (dirs[i-1] === 'LEFT') vec = {x: -STEP_SIZE, y: 0};
-            else if (dirs[i-1] === 'DOWN') vec = {x: 0, y: STEP_SIZE};
-            else if (dirs[i-1] === 'UP') vec = {x: 0, y: -STEP_SIZE};
-
+            if (dirs[i-1] === 'RIGHT') vec = {x: STEP_SIZE, y: 0}; else if (dirs[i-1] === 'LEFT') vec = {x: -STEP_SIZE, y: 0}; else if (dirs[i-1] === 'DOWN') vec = {x: 0, y: STEP_SIZE}; else if (dirs[i-1] === 'UP') vec = {x: 0, y: -STEP_SIZE};
             let target_sq1_abs = { x: p_sq2_abs.x + vec.x, y: p_sq2_abs.y + vec.y };
-            cx = target_sq1_abs.x - trans.sq1.x;
-            cy = target_sq1_abs.y - trans.sq1.y;
+            cx = target_sq1_abs.x - trans.sq1.x; cy = target_sq1_abs.y - trans.sq1.y;
         }
         
         p_sq2_abs = { x: cx + trans.sq2.x, y: cy + trans.sq2.y };
         
         layout.push({
             ...piece, cx: cx, cy: cy, rotation: trans.rot,
-            visualW: (trans.rot === 0 || trans.rot === 180) ? STEP_SIZE : (STEP_SIZE * 2),
-            visualH: (trans.rot === 0 || trans.rot === 180) ? (STEP_SIZE * 2) : STEP_SIZE,
-            start_x: cx + trans.sq1.x, start_y: cy + trans.sq1.y,
-            end_x: p_sq2_abs.x, end_y: p_sq2_abs.y,
-            in_dir: in_dir, out_dir: out_dir
+            visualW: (trans.rot === 0 || trans.rot === 180) ? STEP_SIZE : (STEP_SIZE * 2), visualH: (trans.rot === 0 || trans.rot === 180) ? (STEP_SIZE * 2) : STEP_SIZE,
+            start_x: cx + trans.sq1.x, start_y: cy + trans.sq1.y, end_x: p_sq2_abs.x, end_y: p_sq2_abs.y, in_dir: in_dir, out_dir: out_dir
         });
     }
     return layout;
