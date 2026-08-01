@@ -96,7 +96,7 @@
     border: 1px solid #b45309;
 }
 
-/* --- 5. Floating Scoreboard (Premium Glass Effect) --- */
+/* --- 5. Floating Scoreboard (Premium & Compact Glass Effect) --- */
 #scoreboard-container {
     position: absolute;
     top: 85px; 
@@ -105,43 +105,43 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    gap: 6px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     color: var(--text-light);
     z-index: var(--z-ui);
-    width: 160px;
+    width: 125px;
     pointer-events: auto;
 }
 
 .score-header {
     text-align: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: 8px;
-    margin-bottom: 4px;
+    padding-bottom: 6px;
+    margin-bottom: 2px;
 }
 
 .score-header span {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .score-header strong {
     color: var(--accent-comp);
-    font-size: 1rem;
+    font-size: 0.9rem;
     text-shadow: 0 0 8px var(--accent-comp-glow);
 }
 
 .score-box {
     background: rgba(0, 0, 0, 0.2);
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 0.85rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
     border: 1px solid rgba(255, 255, 255, 0.03);
     display: flex;
     justify-content: space-between;
@@ -425,23 +425,4 @@
 @keyframes toastSlideDown {
     from { opacity: 0; transform: translate(-50%, -20px); }
     to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-/* --- 13. Force Landscape for Small Screens --- */
-@media screen and (orientation: portrait) and (max-width: 768px) {
-    body {
-        transform: rotate(-90deg);
-        transform-origin: left top;
-        width: 100vh;
-        height: 100vw;
-        overflow-x: hidden;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background-color: var(--bg-dark); /* تأكد من وضع لون الخلفية المناسب هنا إذا لزم الأمر */
-    }
-    
-    .top-bar {
-        width: 100vh; 
-    }
 }
