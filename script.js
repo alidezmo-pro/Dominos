@@ -1,7 +1,79 @@
 /* ==========================================================
- * script.js - النسخة المحسنة كاملة ومكتملة بدون أخطاء
+ * script.js - النسخة الشاملة (اللعب الفردي + أساسيات الأونلاين)
  * ========================================================== */
 
+// ==========================================
+// 1. أكواد اللعب الأونلاين (الغرف عبر Firebase)
+// ==========================================
+let roomId = null;
+let playerRole = null; 
+
+window.createRoom = function() {
+    roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
+    playerRole = 'host';
+
+    const roomRef = window.ref(window.db, 'rooms/' + roomId);
+    
+    window.set(roomRef, {
+        status: 'waiting',
+        host: true,
+        guest: false
+    }).then(() => {
+        alert("تم إنشاء الغرفة بنجاح! 🎲\nكود الغرفة الخاص بك هو: " + roomId + "\nأرسله لصديقك ليدخل معك.");
+        document.getElementById("start-modal").classList.add("hidden");
+        listenToRoomUpdates(); 
+    }).catch((error) => {
+        alert("حدث خطأ أثناء الاتصال: " + error.message);
+    });
+};
+
+window.joinRoom = function() {
+    const inputCode = document.getElementById("room-code").value.trim();
+    if (!inputCode) {
+        alert("يرجى إدخال كود الغرفة أولاً!");
+        return;
+    }
+
+    const roomRef = window.ref(window.db, 'rooms/' + inputCode);
+    
+    window.onValue(roomRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.status === 'waiting') {
+            roomId = inputCode;
+            playerRole = 'guest';
+            
+            window.update(roomRef, {
+                status: 'playing',
+                guest: true
+            });
+
+            alert("تم الانضمام للغرفة بنجاح! 🔥");
+            document.getElementById("start-modal").classList.add("hidden");
+            listenToRoomUpdates();
+        } else if (data && data.status === 'playing') {
+            alert("هذه الغرفة ممتلئة وتلعب حالياً!");
+        } else {
+            alert("كود الغرفة غير صحيح أو الغرفة غير موجودة!");
+        }
+    }, { onlyOnce: true }); 
+};
+
+function listenToRoomUpdates() {
+    const roomRef = window.ref(window.db, 'rooms/' + roomId);
+    window.onValue(roomRef, (snapshot) => {
+        const data = snapshot.val();
+        
+        if (data && data.status === 'playing' && playerRole === 'host') {
+            alert("صديقك دخل الغرفة! اللعبة ستبدأ الآن.");
+            // لاحقاً: سنستدعي دالة توزيع الأوراق الأونلاين هنا
+        }
+        // لاحقاً: سنضع هنا كود استقبال حركات الخصم وتحديث الطاولة
+    });
+}
+
+// ==========================================
+// 2. متغيرات اللعبة الأساسية
+// ==========================================
 let fullSet = [];          
 let boneyard = [];         
 let playerHand = [];       
@@ -39,13 +111,15 @@ function selectGameMode(mode) {
     startGame(mode);
 }
 
-// إنشاء طقم الأوراق (مع إلغاء 0-0 في وضع 3 لاعبين)
+// ==========================================
+// 3. منطق اللعبة (توزيع، لعب، واجهة)
+// ==========================================
 function createDominoSet(mode) {
     let set = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
             if (mode === 3 && i === 0 && j === 0) {
-                continue; // إلغاء البلاطة 0-0
+                continue; 
             }
             set.push({ top: i, bottom: j });
         }
@@ -264,7 +338,6 @@ function nextTurn() {
     renderGame();
     startTimer();
 
-    // التخطي التلقائي الصامت بدون ظهور أي رسائل وبدون مشاكل في الرندر
     if (currentTurn === 'player') {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && boneyard.length === 0) {
