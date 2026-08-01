@@ -5,13 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لعبة الدومينو الاحترافية - أونلاين</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* تصغير عرض مربع النقاط */
+        #scoreboard-container {
+            max-width: 160px;
+            font-size: 0.85rem;
+        }
+        
+        /* تنسيق خطوات القائمة (الـ Wizard) */
+        .step-container {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+        .step-container.active-step {
+            display: flex;
+        }
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: right;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .back-btn:hover {
+            color: #fff;
+        }
+    </style>
 </head>
 <body>
     <main class="game-layout">
         
-        <!-- الشريط العلوي: المنافسون والمايك -->
+        <!-- الشريط العلوي -->
         <header class="top-bar">
-            <!-- الخصم 1 -->
             <div id="comp1-avatar" class="profile top-left">
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الخصم 1">
                 <div class="profile-info">
@@ -20,12 +49,10 @@
                 </div>
             </div>
 
-            <!-- زر المايك للتحدث -->
             <button id="mic-btn" class="btn-mic muted" onclick="toggleMic()">
                 🎙️ <span id="mic-status">المايك مغلق</span>
             </button>
 
-            <!-- الخصم 2 (عند اختيار 3 لاعبين) -->
             <div id="comp2-avatar" class="profile top-right hidden">
                 <div class="profile-info">
                     <span id="comp2-name" class="player-label">الخصم 2</span>
@@ -35,19 +62,16 @@
             </div>
         </header>
 
-        <!-- لوحة النتائج الحديثة المتناسقة -->
-        <div id="scoreboard-container">
+        <!-- لوحة النتائج -->
+        <div id="scoreboard-container" class="hidden">
             <div class="score-card">
                 <div class="score-header">
-                    <span>🎯 الهدف: <strong id="ui-target-score">100</strong> نقطة</span>
+                    <span>🎯 الهدف: <strong id="ui-target-score">100</strong></span>
                 </div>
-                <div class="score-body" id="score-players-list">
-                    <!-- يملأ ديناميكياً بأسماء اللاعبين والنقاط -->
-                </div>
+                <div class="score-body" id="score-players-list"></div>
             </div>
         </div>
 
-        <!-- منطقة الطاولة -->
         <section class="table-container">
             <div id="toast-msg" class="toast-notification hidden"></div>
             <div id="board-chain"></div>
@@ -55,7 +79,6 @@
 
         <!-- الشريط السفلي -->
         <footer class="bottom-bar">
-            <!-- اللاعب الحقيقي -->
             <div id="player-avatar" class="profile bottom-left">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="أنت">
                 <div class="profile-info">
@@ -63,14 +86,12 @@
                 </div>
             </div>
 
-            <!-- أوراق اللاعب -->
             <div class="bottom-center">
                 <div class="player-hand-wrapper">
                     <div id="player-hand"></div>
                 </div>
             </div>
 
-            <!-- زر السوق -->
             <div class="bottom-right">
                 <button class="btn-boneyard" onclick="drawFromBoneyard()">
                     🀙 السوق: <span id="boneyard-count" class="count">0</span>
@@ -79,58 +100,100 @@
         </footer>
     </main>
 
-    <!-- عنصر الصوت المستلم للمايك -->
     <audio id="remote-audio" autoplay></audio>
 
     <!-- النافذة المنبثقة لإعداد اللعبة -->
     <div id="start-modal" class="modal-overlay">
         <div class="modal-box">
-            <h2>🎲 لعبة الدومينو الاحترافية</h2>
+            <h2>🎲 لعبة الدومينو</h2>
             
             <div class="room-setup">
-                <!-- ادخال اسم اللاعب -->
-                <div class="form-group">
-                    <label>👤 اسمك في اللعبة:</label>
-                    <input type="text" id="player-name-input" class="text-input" placeholder="أدخل اسمك هنا" value="لاعب 1">
-                </div>
-
-                <div class="form-group">
-                    <label>👥 عدد اللاعبين:</label>
-                    <div class="btn-group">
-                        <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">2 لاعبين</button>
-                        <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">3 لاعبين</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>🏆 نقاط الفوز:</label>
-                    <div class="btn-group">
-                        <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
-                        <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
-                        <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
-                    </div>
-                </div>
-
-                <button class="btn-primary full-btn" onclick="createRoom()">➕ إنشاء غرفة أونلاين</button>
                 
-                <div id="created-code-box" class="code-display hidden">
-                    <span>كود الغرفة:</span>
-                    <strong id="display-room-id">----</strong>
-                    <small>في انتظار باقي اللاعبين...</small>
+                <!-- الخطوة 1: إدخال الاسم -->
+                <div id="step-1" class="step-container active-step">
+                    <div class="form-group">
+                        <label>👤 أدخل اسمك للبدء:</label>
+                        <input type="text" id="player-name-input" class="text-input" placeholder="مثال: أحمد">
+                    </div>
+                    <button class="btn-primary full-btn" onclick="goToStep(2)">متابعة ⬅️</button>
                 </div>
 
-                <div class="divider-text">أو</div>
-
-                <div class="join-box">
-                    <input type="text" id="room-code" placeholder="كود الغرفة">
-                    <button class="btn-secondary" onclick="joinRoom()">🔗 انضمام</button>
+                <!-- الخطوة 2: اختيار وضع اللعب -->
+                <div id="step-2" class="step-container">
+                    <button class="back-btn" onclick="goToStep(1)">➡️ رجوع</button>
+                    <h3>اختر وضع اللعب</h3>
+                    <button class="btn-primary full-btn" onclick="goToStep('online')">🌐 لعب أونلاين (مع أصدقاء)</button>
+                    <button class="btn-offline" style="margin-top: 10px;" onclick="goToStep('offline')">🤖 لعب أوفلاين (ضد الكمبيوتر)</button>
                 </div>
-            </div>
 
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+                <!-- الخطوة 3 (أوفلاين): إعدادات الكمبيوتر (لاعبين ونقاط) -->
+                <div id="step-offline" class="step-container">
+                    <button class="back-btn" onclick="goToStep(2)">➡️ رجوع</button>
+                    <h3>إعدادات اللعب ضد الكمبيوتر</h3>
+                    
+                    <div class="form-group">
+                        <label>👥 عدد اللاعبين:</label>
+                        <div class="btn-group">
+                            <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">أنت ضد 1</button>
+                            <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">أنت ضد 2</button>
+                        </div>
+                    </div>
 
-            <div>
-                <button class="btn-offline" onclick="selectGameMode(2)">🤖 لعب ضد الكمبيوتر</button>
+                    <div class="form-group">
+                        <label>🏆 نقاط الفوز:</label>
+                        <div class="btn-group">
+                            <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
+                            <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
+                            <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary full-btn" onclick="startOfflineGame()">🚀 بدء اللعب</button>
+                </div>
+
+                <!-- الخطوة 3 (أونلاين): إنشاء أو انضمام -->
+                <div id="step-online" class="step-container">
+                    <button class="back-btn" onclick="goToStep(2)">➡️ رجوع</button>
+                    <h3>اللعب عبر الإنترنت</h3>
+                    <button class="btn-primary full-btn" onclick="goToStep('online-create')">➕ إنشاء غرفة جديدة</button>
+                    <div class="divider-text">أو</div>
+                    <div class="join-box">
+                        <input type="text" id="room-code" placeholder="أدخل كود الغرفة">
+                        <button class="btn-secondary" onclick="joinRoom()">🔗 انضمام</button>
+                    </div>
+                </div>
+
+                <!-- الخطوة 4 (أونلاين): إعدادات إنشاء الغرفة (لاعبين ونقاط) -->
+                <div id="step-online-create" class="step-container">
+                    <button class="back-btn" onclick="goToStep('online')">➡️ رجوع</button>
+                    <h3>إعدادات الغرفة</h3>
+                    
+                    <div class="form-group">
+                        <label>👥 عدد اللاعبين:</label>
+                        <div class="btn-group">
+                            <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">2 لاعبين</button>
+                            <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">3 لاعبين</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🏆 نقاط الفوز:</label>
+                        <div class="btn-group">
+                            <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
+                            <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
+                            <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary full-btn" onclick="createRoom()">🚀 إنشاء الغرفة</button>
+                    
+                    <div id="created-code-box" class="code-display hidden" style="margin-top: 15px;">
+                        <span>كود الغرفة:</span>
+                        <strong id="display-room-id">----</strong>
+                        <small>أرسل هذا الكود لأصدقائك...</small>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -141,6 +204,44 @@
             <button class="btn-primary" onclick="location.reload()">🔄 العب مرة أخرى</button>
         </div>
     </div>
+
+    <!-- التحكم في خطوات الشاشة وحفظ الاسم -->
+    <script>
+        function goToStep(stepId) {
+            if(stepId === 2) {
+                const nameInput = document.getElementById('player-name-input').value.trim();
+                if(!nameInput) {
+                    alert("يرجى إدخال اسمك أولاً!");
+                    return;
+                }
+                localStorage.setItem("dominoPlayerName", nameInput);
+                document.getElementById('my-name-display').innerText = nameInput;
+            }
+
+            document.querySelectorAll('.step-container').forEach(el => {
+                el.classList.remove('active-step');
+            });
+            document.getElementById('step-' + stepId).classList.add('active-step');
+        }
+
+        function startOfflineGame() {
+            // المتغير selectedPlayersCount بيكون محفوظ في ملف script.js بناءً على اختيار المستخدم
+            // المتغير selectedTargetScore كمان محفوظ وبيتم استخدامه في اللعبة
+            if (typeof selectGameMode === "function" && typeof selectedPlayersCount !== "undefined") {
+                selectGameMode(selectedPlayersCount);
+            } else {
+                console.error("ملف script.js لم يتم تحميله بشكل صحيح.");
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem("dominoPlayerName");
+            if(savedName) {
+                document.getElementById('player-name-input').value = savedName;
+                document.getElementById('my-name-display').innerText = savedName;
+            }
+        });
+    </script>
 
     <!-- === كود فايربيز === -->
     <script type="module">
