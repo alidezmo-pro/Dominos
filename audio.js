@@ -3,15 +3,12 @@ import { state } from './state.js';
 
 let peer = null;
 let localStream = null;
-const connectedPeers = new Set(); // لحفظ من تم الاتصال بهم حتى لا يتكرر الصوت
+const connectedPeers = new Set();
 
 export async function initAudio() {
     try {
-        // 1. طلب صلاحية الميكروفون من المتصفح
+        // 1. طلب صلاحية الميكروفون من المتصفح (ستظهر الرسالة الآن)
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        
-        // كتم المايك كوضع افتراضي في البداية حتى يضغط اللاعب على الزر
-        localStream.getAudioTracks()[0].enabled = false;
         
         // 2. إنشاء معرّف فريد للاعب بناءً على الغرفة ودوره
         const myPeerId = `domino-${state.roomId}-${state.playerRole}`;
@@ -21,13 +18,11 @@ export async function initAudio() {
         
         peer.on('open', (id) => {
             console.log('📞 متصل بخادم الصوت. المعرّف الخاص بك:', id);
-            // بعد الاتصال بالخادم، نحاول الاتصال بباقي اللاعبين في الغرفة
             setTimeout(callOtherPlayers, 2000);
         });
         
-        // 4. استقبال المكالمات الصوتية من الخصم
         peer.on('call', (call) => {
-            call.answer(localStream); // الرد بالمايك الخاص بك
+            call.answer(localStream); 
             
             call.on('stream', (remoteStream) => {
                 if (!connectedPeers.has(call.peer)) {
@@ -37,16 +32,16 @@ export async function initAudio() {
             });
         });
 
+        return true; // نجاح الاتصال
     } catch (err) {
         console.error("⚠️ لم نتمكن من الوصول للميكروفون:", err);
+        return false; // فشل الاتصال
     }
 }
 
-// دالة للاتصال باللاعبين الآخرين
 function callOtherPlayers() {
     if (!peer || !localStream) return;
     
-    // تحديد الأدوار الأخرى التي يجب الاتصال بها
     const rolesToCall = ['host', 'guest1', 'guest2'].filter(role => role !== state.playerRole);
     
     rolesToCall.forEach(role => {
@@ -64,7 +59,6 @@ function callOtherPlayers() {
     });
 }
 
-// دالة لتشغيل صوت الخصم برمجياً
 function playRemoteStream(stream, peerId) {
     const audioElement = document.createElement('audio');
     audioElement.id = `audio-${peerId}`;
@@ -74,17 +68,24 @@ function playRemoteStream(stream, peerId) {
     console.log(`🔊 جاري تشغيل صوت: ${peerId}`);
 }
 
-// الدالة الحقيقية لزر المايك
-export function toggleMicUI() {
+// === التعديل هنا: طلب الصلاحية عند الضغط على الزر ===
+export async function toggleMicUI() {
     const micBtn = document.getElementById("mic-btn");
     const micStatus = document.getElementById("mic-status");
     
+    // إذا لم تكن الصلاحية مأخوذة من قبل، اطلبها الآن!
     if (!localStream) {
-        alert("🎤 يرجى إعطاء صلاحية الميكروفون للمتصفح أولاً!");
-        return;
+        micStatus.innerText = "جاري الاتصال...";
+        const success = await initAudio(); // ننتظر موافقة المستخدم
+        
+        if (!success) {
+            alert("🎤 يرجى السماح للمتصفح باستخدام الميكروفون من إعدادات الموقع أعلى الشاشة!");
+            micStatus.innerText = "المايك مغلق";
+            return;
+        }
     }
 
-    // التحكم في تشغيل أو إيقاف التقاط الصوت
+    // التحكم في كتم وفتح الصوت بعد أخذ الصلاحية
     const audioTrack = localStream.getAudioTracks()[0];
     
     if (micBtn.classList.contains("muted")) {
