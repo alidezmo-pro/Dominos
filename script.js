@@ -1,5 +1,5 @@
 /* ==========================================================
- * script.js - النسخة الشاملة (اللعب الفردي + أساسيات الأونلاين)
+ * script.js - النسخة النهائية (مزامنة الأونلاين + إيقاف الكمبيوتر)
  * ========================================================== */
 
 // ==========================================
@@ -7,18 +7,20 @@
 // ==========================================
 let roomId = null;
 let playerRole = null; 
+let isOnline = false; // متغير سحري لمعرفة هل نحن أونلاين أم لا
 
 window.createRoom = function() {
     roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
     playerRole = 'host';
+    isOnline = true;
+
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
-    
     window.set(roomRef, {
         status: 'waiting',
         host: true,
         guest: false
     }).then(() => {
-        alert("تم إنشاء الغرفة بنجاح! 🎲\nكود الغرفة الخاص بك هو: " + roomId + "\nأرسله لصديقك ليدخل معك.");
+        alert("تم إنشاء الغرفة بنجاح! 🎲\nكود الغرفة: " + roomId + "\nأرسله لصديقك.");
         document.getElementById("start-modal").classList.add("hidden");
         listenToRoomUpdates(); 
     });
@@ -26,7 +28,7 @@ window.createRoom = function() {
 
 window.joinRoom = function() {
     const inputCode = document.getElementById("room-code").value.trim();
-    if (!inputCode) return alert("يرجى إدخال كود الغرفة أولاً!");
+    if (!inputCode) return alert("يرجى إدخال الكود!");
 
     const roomRef = window.ref(window.db, 'rooms/' + inputCode);
     window.onValue(roomRef, (snapshot) => {
@@ -34,77 +36,67 @@ window.joinRoom = function() {
         if (data && data.status === 'waiting') {
             roomId = inputCode;
             playerRole = 'guest';
+            isOnline = true;
+            
             window.update(roomRef, { status: 'playing', guest: true });
-            alert("تم الانضمام للغرفة بنجاح! 🔥");
+            alert("تم الانضمام! ننتظر الأوراق من صاحب الغرفة...");
             document.getElementById("start-modal").classList.add("hidden");
             listenToRoomUpdates();
         } else if (data && data.status === 'playing') {
-            alert("هذه الغرفة ممتلئة وتلعب حالياً!");
+            alert("الغرفة ممتلئة!");
         } else {
-            alert("كود الغرفة غير صحيح!");
+            alert("الكود غير صحيح!");
         }
     }, { onlyOnce: true }); 
 };
 
-// --- الدالة المحدثة لمراقبة الغرفة وبدء اللعبة ---
 function listenToRoomUpdates() {
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
     window.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         
-        // 1. إذا اكتمل العدد ولم تتوزع الأوراق بعد
-        if (data && data.status === 'playing' && !data.gameState) {
-            if (playerRole === 'host') {
-                alert("صديقك دخل الغرفة! سيتم توزيع الأوراق الآن.");
-                startOnlineGame(); // صاحب الغرفة هو من يقوم بخلط وتوزيع الأوراق
-            } else {
-                alert("تم الانضمام! ننتظر توزيع الأوراق من صاحب الغرفة...");
-            }
+        // بدء اللعبة وتوزيع الأوراق (لصاحب الغرفة فقط)
+        if (data && data.status === 'playing' && !data.gameState && playerRole === 'host') {
+            startOnlineGame(); 
         }
         
-        // 2. إذا تم توزيع الأوراق ورفعها لفايربيز
+        // استقبال تحديثات الطاولة باستمرار (للطرفين)
         if (data && data.gameState) {
             syncGameState(data.gameState);
         }
     });
 }
 
-// --- دالة جديدة: خلط الأوراق ورفعها لفايربيز ---
 function startOnlineGame() {
     let set = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) set.push({ top: i, bottom: j });
     }
     
-    // خلط عشوائي
     for (let i = set.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1));
         [set[i], set[j]] = [set[j], set[i]];
     }
 
-    // تجهيز حالة اللعبة لرفعها (7 أوراق لكل لاعب)
     const newGameState = {
         hostHand: set.splice(0, 7),
         guestHand: set.splice(0, 7),
         boneyard: set,
         boardChain: [],
-        currentTurn: 'host', // صاحب الغرفة يبدأ مؤقتاً
+        currentTurn: 'host',
         leftEndValue: -1,
         rightEndValue: -1
     };
 
-    const roomRef = window.ref(window.db, 'rooms/' + roomId);
-    window.update(roomRef, { gameState: newGameState });
+    window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: newGameState });
 }
 
-// --- دالة جديدة: مزامنة الشاشتين وعرض الأوراق ---
 function syncGameState(onlineState) {
     document.getElementById("start-modal").classList.add("hidden");
     
-    // تحديد أوراقي وأوراق الخصم بناءً على دوري
     if (playerRole === 'host') {
         playerHand = onlineState.hostHand || [];
-        comp1Hand = onlineState.guestHand || []; // نستخدم يد الكمبيوتر كأنها للخصم الأونلاين
+        comp1Hand = onlineState.guestHand || []; 
         currentTurn = (onlineState.currentTurn === 'host') ? 'player' : 'comp1';
     } else {
         playerHand = onlineState.guestHand || [];
@@ -116,46 +108,47 @@ function syncGameState(onlineState) {
     boardChain = onlineState.boardChain || [];
     leftEndValue = onlineState.leftEndValue !== -1 ? onlineState.leftEndValue : null;
     rightEndValue = onlineState.rightEndValue !== -1 ? onlineState.rightEndValue : null;
+    centerTileIndex = onlineState.centerTileIndex || 0;
 
-    // استدعاء دالة الرسم الخاصة بك لتحديث الشاشة
     renderGame();
+}
+
+// دالة جديدة: إرسال حركتك إلى فايربيز
+function sendMoveToFirebase() {
+    if (!isOnline) return;
+    
+    let nextTurnRole = (currentTurn === 'player') ? 
+        ((playerRole === 'host') ? 'guest' : 'host') : 
+        ((playerRole === 'host') ? 'host' : 'guest');
+
+    const state = {
+        hostHand: (playerRole === 'host') ? playerHand : comp1Hand,
+        guestHand: (playerRole === 'guest') ? playerHand : comp1Hand,
+        boneyard: boneyard,
+        boardChain: boardChain,
+        leftEndValue: leftEndValue !== null ? leftEndValue : -1,
+        rightEndValue: rightEndValue !== null ? rightEndValue : -1,
+        centerTileIndex: centerTileIndex,
+        currentTurn: nextTurnRole
+    };
+
+    window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: state });
 }
 
 // ==========================================
 // 2. متغيرات اللعبة الأساسية
 // ==========================================
-// (باقي الكود الخاص بك كما هو دون تغيير...)
-
-// ==========================================
-// 2. متغيرات اللعبة الأساسية
-// ==========================================
-let fullSet = [];          
-let boneyard = [];         
-let playerHand = [];       
-let comp1Hand = [];        
-let comp2Hand = [];        
-let boardChain = [];       
-
-let gameMode = 2;          
-let currentTurn = 'player';
-let selectedTileIndex = null; 
-
-let leftEndValue = null;   
-let rightEndValue = null;  
-let isGameOver = false;
-let centerTileIndex = 0;
-
-let turnTimerInterval;
-let timeLeft = 25;
+let fullSet = [], boneyard = [], playerHand = [], comp1Hand = [], comp2Hand = [], boardChain = [];
+let gameMode = 2, currentTurn = 'player', selectedTileIndex = null;
+let leftEndValue = null, rightEndValue = null, isGameOver = false, centerTileIndex = 0;
+let turnTimerInterval, timeLeft = 25;
 
 window.selectGameMode = selectGameMode;
 window.drawFromBoneyard = drawFromBoneyard;
 window.selectBoardEnd = selectBoardEnd;
 window.showStartModal = showStartModal;
 
-window.onload = function() {
-    showStartModal();
-};
+window.onload = function() { showStartModal(); };
 
 function showStartModal() {
     document.getElementById("start-modal")?.classList.remove("hidden");
@@ -163,19 +156,18 @@ function showStartModal() {
 }
 
 function selectGameMode(mode) {
+    isOnline = false; // تأكيد أننا نلعب ضد الكمبيوتر محلياً
     startGame(mode);
 }
 
 // ==========================================
-// 3. منطق اللعبة (توزيع، لعب، واجهة)
+// 3. منطق اللعبة
 // ==========================================
 function createDominoSet(mode) {
     let set = [];
     for (let i = 0; i <= 6; i++) {
         for (let j = i; j <= 6; j++) {
-            if (mode === 3 && i === 0 && j === 0) {
-                continue; 
-            }
+            if (mode === 3 && i === 0 && j === 0) continue; 
             set.push({ top: i, bottom: j });
         }
     }
@@ -191,26 +183,14 @@ function shuffle(array) {
 }
 
 function startGame(mode) {
-    gameMode = mode;
-    isGameOver = false;
-    selectedTileIndex = null;
-    boardChain = [];
-    centerTileIndex = 0;
-    leftEndValue = null;
-    rightEndValue = null;
+    gameMode = mode; isGameOver = false; selectedTileIndex = null;
+    boardChain = []; centerTileIndex = 0; leftEndValue = null; rightEndValue = null;
     clearInterval(turnTimerInterval);
 
     document.getElementById("start-modal")?.classList.add("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
 
-    let comp2Avatar = document.getElementById("comp2-avatar");
-    if (comp2Avatar) {
-        if (gameMode === 3) comp2Avatar.classList.remove("hidden");
-        else comp2Avatar.classList.add("hidden");
-    }
-
     fullSet = shuffle(createDominoSet(gameMode));
-
     let handSize = (gameMode === 3) ? 9 : 7;
 
     playerHand = fullSet.splice(0, handSize);
@@ -222,7 +202,7 @@ function startGame(mode) {
     renderGame();
     startTimer();
 
-    if (currentTurn !== 'player') {
+    if (currentTurn !== 'player' && !isOnline) {
         setTimeout(playComputerTurn, 1000);
     }
 }
@@ -239,7 +219,6 @@ function determineFirstTurn() {
 function startTimer() {
     clearInterval(turnTimerInterval);
     timeLeft = 25;
-    
     renderAvatarTimer();
 
     turnTimerInterval = setInterval(() => {
@@ -247,11 +226,8 @@ function startTimer() {
         let timerElem = document.querySelector(".avatar-timer");
         if (timerElem) {
             timerElem.innerText = timeLeft;
-            if (timeLeft <= 5) {
-                timerElem.style.color = (timeLeft % 2 === 0) ? "#ffffff" : "#ef4444";
-            }
+            if (timeLeft <= 5) timerElem.style.color = (timeLeft % 2 === 0) ? "#ffffff" : "#ef4444";
         }
-        
         if (timeLeft <= 0) {
             clearInterval(turnTimerInterval);
             handleTimeOut();
@@ -261,17 +237,12 @@ function startTimer() {
 
 function renderAvatarTimer() {
     document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
-
     if (isGameOver) return;
 
     let activeAvatarContainer = null;
-    if (currentTurn === 'player') {
-        activeAvatarContainer = document.getElementById("player-avatar");
-    } else if (currentTurn === 'comp1') {
-        activeAvatarContainer = document.getElementById("comp1-avatar");
-    } else if (currentTurn === 'comp2') {
-        activeAvatarContainer = document.getElementById("comp2-avatar");
-    }
+    if (currentTurn === 'player') activeAvatarContainer = document.getElementById("player-avatar");
+    else if (currentTurn === 'comp1') activeAvatarContainer = document.getElementById("comp1-avatar");
+    else if (currentTurn === 'comp2') activeAvatarContainer = document.getElementById("comp2-avatar");
 
     if (activeAvatarContainer) {
         let timerElem = document.createElement("div");
@@ -294,7 +265,7 @@ function handleTimeOut() {
             playPlayerTile(chosen.index, chosen.ends[0]);
         } else if (boneyard.length > 0) {
             drawFromBoneyard();
-            setTimeout(nextTurn, 500); 
+            if(!isOnline) setTimeout(nextTurn, 500); 
         } else {
             nextTurn();
         }
@@ -307,7 +278,6 @@ function updateTurnStatus() {
         document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
         return;
     }
-
     document.getElementById("player-avatar")?.classList.remove("active-neon-player");
     document.getElementById("comp1-avatar")?.classList.remove("active-neon-comp");
     document.getElementById("comp2-avatar")?.classList.remove("active-neon-comp");
@@ -354,8 +324,17 @@ function playPlayerTile(index, end) {
     addTileToBoard(tile, end);
     selectedTileIndex = null;
 
-    if (playerHand.length === 0) { endGame("🎉 مبروك! لقد فزت باللعبة!"); return; }
-    nextTurn();
+    if (playerHand.length === 0) { 
+        endGame("🎉 مبروك! لقد فزت باللعبة!"); 
+        if (isOnline) sendMoveToFirebase(); // إرسال حالة الفوز
+        return; 
+    }
+    
+    if (isOnline) {
+        sendMoveToFirebase(); // إرسال الحركة لصديقك
+    } else {
+        nextTurn(); // تشغيل الكمبيوتر فقط في اللعب المحلي
+    }
 }
 
 function addTileToBoard(tile, end) {
@@ -396,20 +375,20 @@ function nextTurn() {
     if (currentTurn === 'player') {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && boneyard.length === 0) {
-            setTimeout(() => {
-                nextTurn();
-            }, 600);
+            if (isOnline) { sendMoveToFirebase(); } 
+            else { setTimeout(nextTurn, 600); }
             return;
         }
     }
 
-    if (currentTurn !== 'player' && !isGameOver) setTimeout(playComputerTurn, 900);
+    if (currentTurn !== 'player' && !isGameOver && !isOnline) {
+        setTimeout(playComputerTurn, 900);
+    }
 }
 
 function playComputerTurn() {
-    if (isGameOver) return;
+    if (isGameOver || isOnline) return; // منع الكمبيوتر من اللعب نهائياً في وضع الأونلاين
     let hand = (currentTurn === 'comp1') ? comp1Hand : comp2Hand;
-    let compName = (currentTurn === 'comp1') ? 'الكمبيوتر 1' : 'الكمبيوتر 2';
     let playableIndices = [];
     
     hand.forEach((tile, idx) => {
@@ -424,7 +403,7 @@ function playComputerTurn() {
 
         addTileToBoard(tile, endToPlay);
 
-        if (hand.length === 0) { endGame(`❌ للأسف، فاز ${compName} باللعبة!`); return; }
+        if (hand.length === 0) { endGame(`❌ للأسف، لقد خسرت!`); return; }
         nextTurn();
     } else {
         if (boneyard.length > 0) {
@@ -445,8 +424,10 @@ function drawFromBoneyard() {
     if (boneyard.length > 0) {
         playerHand.push(boneyard.pop());
         renderGame();
+        if (isOnline) sendMoveToFirebase(); // تحديث السوق عند الخصم
     } else {
-        nextTurn();
+        if (isOnline) sendMoveToFirebase();
+        else nextTurn();
     }
 }
 
@@ -459,18 +440,20 @@ function checkBlockGame() {
     if (!playerCanPlay && !comp1CanPlay && (gameMode === 2 || !comp2CanPlay)) {
         let pScore = playerHand.reduce((s, t) => s + t.top + t.bottom, 0);
         let c1Score = comp1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
-        let c2Score = (gameMode === 3) ? comp2Hand.reduce((s, t) => s + t.top + t.bottom, 0) : 999;
-        let minScore = Math.min(pScore, c1Score, c2Score);
+        let minScore = Math.min(pScore, c1Score);
         
         let msg = "🔒 انغلقت اللعبة! ";
         if (minScore === pScore) msg += `فزت بأقل نقاط (${pScore})!`;
-        else if (minScore === c1Score) msg += `فاز الكمبيوتر 1 (${c1Score})!`;
-        else msg += `فاز الكمبيوتر 2 (${c2Score})!`;
+        else msg += `خسرت، نقاط الخصم أقل (${c1Score})!`;
+        
         endGame(msg); return true;
     }
     return false;
 }
 
+// ==========================================
+// 4. دوال رسم الطاولة والقطع (تبقى كما هي)
+// ==========================================
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
     const HALF_SIZE = 14;
@@ -513,11 +496,10 @@ function getPieceSquares(in_dir, out_dir, isDouble) {
 
 function calculateSnakeLayout(chain, centerIdx) {
     if (!chain || chain.length === 0) return [];
-    
     let dirs = new Array(chain.length - 1);
     const MAX_ROW = 9; 
-    
     let travel = 'RIGHT'; let len = 0;
+    
     for (let i = centerIdx; i < chain.length - 1; i++) {
         dirs[i] = travel; len++;
         if (travel === 'RIGHT' && len >= MAX_ROW) { travel = 'DOWN'; len = 0; }
@@ -542,10 +524,8 @@ function calculateSnakeLayout(chain, centerIdx) {
     for (let i = 0; i < chain.length; i++) {
         let piece = chain[i];
         let isDouble = piece.top === piece.bottom;
-
         let in_dir = (i === 0) ? (dirs[0] || 'RIGHT') : dirs[i-1];
         let out_dir = (i === chain.length - 1) ? in_dir : dirs[i];
-        
         let trans = getPieceSquares(in_dir, out_dir, isDouble);
         
         if (i === 0) {
@@ -565,8 +545,7 @@ function calculateSnakeLayout(chain, centerIdx) {
         p_sq2_abs = { x: cx + trans.sq2.x, y: cy + trans.sq2.y };
         
         layout.push({
-            ...piece,
-            cx: cx, cy: cy, rotation: trans.rot,
+            ...piece, cx: cx, cy: cy, rotation: trans.rot,
             visualW: (trans.rot === 0 || trans.rot === 180) ? STEP_SIZE : (STEP_SIZE * 2),
             visualH: (trans.rot === 0 || trans.rot === 180) ? (STEP_SIZE * 2) : STEP_SIZE,
             start_x: cx + trans.sq1.x, start_y: cy + trans.sq1.y,
@@ -601,20 +580,16 @@ function renderGame() {
 
     let c1Count = document.getElementById("comp1-count");
     if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
-    let c2Count = document.getElementById("comp2-count");
-    if (c2Count && gameMode === 3) c2Count.innerText = `🂠 ${comp2Hand.length}`;
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
     let chainArea = document.getElementById("board-chain");
     if (chainArea) {
         chainArea.innerHTML = "";
-
         if (boardChain.length === 0) {
             chainArea.innerHTML = `<p style="color:rgba(255,255,255,0.3); font-size:12px; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);">الطاولة فارغة</p>`;
         } else {
             let layout = calculateSnakeLayout(boardChain, centerTileIndex);
-
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             layout.forEach(item => {
                 if (item.cx - item.visualW / 2 < minX) minX = item.cx - item.visualW / 2;
@@ -623,57 +598,35 @@ function renderGame() {
                 if (item.cy + item.visualH / 2 > maxY) maxY = item.cy + item.visualH / 2;
             });
 
-            let totalW = maxX - minX;
-            let totalH = maxY - minY;
-            let offsetX = -(minX + totalW / 2);
-            let offsetY = -(minY + totalH / 2);
-
+            let totalW = maxX - minX, totalH = maxY - minY;
+            let offsetX = -(minX + totalW / 2), offsetY = -(minY + totalH / 2);
             let tableElem = document.querySelector('.table-container');
             let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; 
             let maxAvailableHeight = tableElem ? tableElem.clientHeight - 80 : 200;
+            let scale = Math.max(Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1), 0.65);
 
-            let calcScale = Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1);
-            let scale = Math.max(calcScale, 0.65);
-
-            let first = layout[0];
-            let last = layout[layout.length - 1];
+            let first = layout[0], last = layout[layout.length - 1];
 
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
-                    let sx = (first.start_x + offsetX) * scale;
-                    let sy = (first.start_y + offsetY) * scale;
-                    if (first.in_dir === 'RIGHT') sx -= (40 * scale);
-                    else if (first.in_dir === 'LEFT') sx += (40 * scale);
-                    else if (first.in_dir === 'DOWN') sy -= (40 * scale);
-                    else if (first.in_dir === 'UP') sy += (40 * scale);
-                    
+                    let sx = (first.start_x + offsetX) * scale, sy = (first.start_y + offsetY) * scale;
+                    if (first.in_dir === 'RIGHT') sx -= (40 * scale); else if (first.in_dir === 'LEFT') sx += (40 * scale); else if (first.in_dir === 'DOWN') sy -= (40 * scale); else if (first.in_dir === 'UP') sy += (40 * scale);
                     chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">◀ هنا</div>`;
                 }
                 if (playableEnds.includes('right')) {
-                    let ex = (last.end_x + offsetX) * scale;
-                    let ey = (last.end_y + offsetY) * scale;
-                    if (last.out_dir === 'RIGHT') ex += (40 * scale);
-                    else if (last.out_dir === 'LEFT') ex -= (40 * scale);
-                    else if (last.out_dir === 'DOWN') ey += (40 * scale);
-                    else if (last.out_dir === 'UP') ey -= (40 * scale);
-
+                    let ex = (last.end_x + offsetX) * scale, ey = (last.end_y + offsetY) * scale;
+                    if (last.out_dir === 'RIGHT') ex += (40 * scale); else if (last.out_dir === 'LEFT') ex -= (40 * scale); else if (last.out_dir === 'DOWN') ey += (40 * scale); else if (last.out_dir === 'UP') ey -= (40 * scale);
                     chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${ex}px); top:calc(50% + ${ey}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">هنا ▶</div>`;
                 }
             }
 
             layout.forEach(item => {
-                let px = (item.cx + offsetX) * scale;
-                let py = (item.cy + offsetY) * scale;
-
+                let px = (item.cx + offsetX) * scale, py = (item.cy + offsetY) * scale;
                 chainArea.innerHTML += `
-                    <div class="domino-piece"
-                         style="position: absolute; left: calc(50% + ${px}px); top: calc(50% + ${py}px); transform: translate(-50%, -50%) scale(${scale}) rotate(${item.rotation}deg);">
-                        ${createDotsHTML(item.top)}
-                        <div class="divider"></div>
-                        ${createDotsHTML(item.bottom)}
-                    </div>
-                `;
+                    <div class="domino-piece" style="position: absolute; left: calc(50% + ${px}px); top: calc(50% + ${py}px); transform: translate(-50%, -50%) scale(${scale}) rotate(${item.rotation}deg);">
+                        ${createDotsHTML(item.top)}<div class="divider"></div>${createDotsHTML(item.bottom)}
+                    </div>`;
             });
         }
     }
@@ -683,9 +636,7 @@ function renderGame() {
 
 function createDotsHTML(value) {
     let dotsHTML = '';
-    for (let i = 1; i <= value; i++) {
-        dotsHTML += `<div class="dot dot-${i}"></div>`;
-    }
+    for (let i = 1; i <= value; i++) dotsHTML += `<div class="dot dot-${i}"></div>`;
     return `<div class="domino-half p-${value}">${dotsHTML}</div>`;
 }
 
@@ -693,7 +644,6 @@ function endGame(message) {
     isGameOver = true;
     clearInterval(turnTimerInterval); 
     document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
-
     let endTitle = document.getElementById("end-title");
     if (endTitle) endTitle.innerText = message;
     document.getElementById("end-modal")?.classList.remove("hidden");
