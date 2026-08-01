@@ -40,6 +40,8 @@
 
         <!-- منطقة الطاولة -->
         <section class="table-container">
+            <!-- توست التنبيهات السريعة -->
+            <div id="toast-msg" class="toast-notification hidden"></div>
             <div id="board-chain"></div>
         </section>
 
@@ -66,26 +68,51 @@
         </footer>
     </main>
 
-    <!-- النوافذ المنبثقة -->
+    <!-- النوافذ المنبثقة التفاعلية -->
     <div id="start-modal" class="modal-overlay">
         <div class="modal-box">
-            <h2>أهلاً بك في الدومينو! 🎲</h2>
+            <h2>🎲 لعبة الدومينو</h2>
             
-            <div style="margin-bottom: 20px;">
-                <p style="color: #38bdf8; font-weight: bold;">العب أونلاين مع صديق</p>
-                <button class="btn-primary" onclick="createRoom()">➕ إنشاء غرفة</button>
-                <div style="margin-top: 15px;">
-                    <input type="text" id="room-code" placeholder="أدخل كود الغرفة هنا" style="padding: 10px; width: 70%; border-radius: 8px; border: 1px solid #38bdf8; text-align: center; color: #000;">
-                    <br>
-                    <button class="btn-primary" onclick="joinRoom()" style="background: #f59e0b; margin-top: 10px;">🔗 انضمام للغرفة</button>
+            <div class="room-setup">
+                <h3>إعدادات الغرفة (أونلاين)</h3>
+                
+                <div class="form-group">
+                    <label>عدد اللاعبين:</label>
+                    <div class="btn-group">
+                        <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">2 لاعبين</button>
+                        <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">3 لاعبين</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>نقاط الفوز:</label>
+                    <div class="btn-group">
+                        <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
+                        <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
+                        <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
+                    </div>
+                </div>
+
+                <button class="btn-primary full-btn" onclick="createRoom()">➕ إنشاء غرفة جديدة</button>
+                
+                <div id="created-code-box" class="code-display hidden">
+                    <span>كود الغرفة:</span>
+                    <strong id="display-room-id">----</strong>
+                    <small>في انتظار باقي اللاعبين...</small>
+                </div>
+
+                <div class="divider-text">أو</div>
+
+                <div class="join-box">
+                    <input type="text" id="room-code" placeholder="أدخل كود الغرفة">
+                    <button class="btn-secondary" onclick="joinRoom()">🔗 انضمام</button>
                 </div>
             </div>
 
-            <hr style="border-color: #334155; margin: 20px 0;">
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
 
-            <div style="margin-bottom: 10px;">
-                <p>أو العب ضد الكمبيوتر للتجربة:</p>
-                <button class="btn-primary" onclick="selectGameMode(2)" style="background: #64748b;">👤 لاعبين</button>
+            <div>
+                <button class="btn-offline" onclick="selectGameMode(2)">👤 لعب سريع ضد الكمبيوتر</button>
             </div>
         </div>
     </div>
@@ -97,7 +124,7 @@
         </div>
     </div>
 
-    <!-- === كود فايربيز السري الخاص بك === -->
+    <!-- === كود فايربيز === -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
       import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-database.js";
@@ -114,7 +141,6 @@
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
 
-      // تمرير دوال فايربيز للملف الأساسي
       window.db = db;
       window.ref = ref;
       window.set = set;
@@ -122,7 +148,6 @@
       window.onValue = onValue;
     </script>
     
-    <!-- ملف اللعبة الأساسي -->
-    <script src="script.js?v=11.96"></script>
+    <script src="script.js?v=12.00"></script>
 </body>
 </html>
