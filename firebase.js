@@ -204,10 +204,7 @@ export function syncGameState(onlineState) {
     startTimer();
     checkAutoPass();
 
-    if (!window.audioInitialized) {
-        initAudio();
-        window.audioInitialized = true;
-    }
+    
 
 }
 
