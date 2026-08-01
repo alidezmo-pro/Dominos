@@ -30,6 +30,7 @@
     text-shadow: 0 0 15px rgba(239, 68, 68, 0.6), 0 2px 4px rgba(0,0,0,0.8);
     text-align: center;
     letter-spacing: 2px;
+    transform: translateX(20px); /* تم إضافة هذا السطر لتحريك التايمر لليمين، يمكنك تعديل الرقم */
 }
 
 /* Profiles - Glassmorphism */
@@ -62,7 +63,7 @@
     background: rgba(0,0,0,0.2);
 }
 
-/* حاوية معلومات اللاعب (تغطي الأفاتار بالكامل لضبط الأماكن) */
+/* حاوية معلومات اللاعب */
 .profile-info {
     position: absolute;
     top: 0;
@@ -73,13 +74,13 @@
     z-index: 10;
 }
 
-/* اسم اللاعب (في المنتصف أعلى الدائرة، تم تنزيله لأسفل ليكون أقرب) */
+/* اسم اللاعب */
 .player-label {
     position: absolute;
-    top: -16px; 
+    top: -5px; /* تم التعديل لـ -5 بناءً على طلبك */
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     padding: 2px 10px;
     border-radius: 12px;
     font-size: 0.75rem;
@@ -87,14 +88,15 @@
     color: #fff;
     white-space: nowrap;
     backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 2px solid #0f172a; 
+    z-index: 20; 
 }
 
 /* النقاط (كأس على يسار الأفاتار) */
 .profile-score {
     position: absolute;
     bottom: -2px;
-    right: 36px; /* التثبيت من اليمين عشان المربع يتمدد للخارج */
+    right: 36px; /* ثابتة على 36 كما طلبت */
     left: auto;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #fff;
@@ -103,7 +105,7 @@
     padding: 2px 6px;
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    border: 2px solid #0f172a; /* حدود بلون الخلفية لفصلها عن التايمر */
+    border: 2px solid #0f172a; 
     margin: 0;
     z-index: 20;
     white-space: nowrap;
@@ -116,7 +118,7 @@
 .profile-count {
     position: absolute;
     bottom: -2px;
-    left: 36px; /* التثبيت من اليسار عشان المربع يتمدد للخارج */
+    left: 36px; /* ثابتة على 36 كما طلبت */
     right: auto;
     background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
     color: #451a03;
@@ -135,28 +137,7 @@
 
 /* --- 5. Floating Scoreboard (Premium Horizontal Pill) --- */
 #scoreboard-container {
-    position: absolute;
-    top: 65px; 
-    left: 50%;
-    transform: translateX(-50%); 
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px; 
-    padding: 6px 16px;
-    display: flex; 
-    flex-direction: row;
-    flex-wrap: wrap; 
-    justify-content: center;
-    align-items: center;
-    gap: 12px; 
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    color: var(--text-light);
-    z-index: var(--z-ui);
-    width: max-content; 
-    max-width: 95vw; 
-    pointer-events: auto;
+    display: none !important; /* مخفية بالكامل */
 }
 
 .score-header {
