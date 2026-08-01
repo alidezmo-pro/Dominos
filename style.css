@@ -431,3 +431,139 @@ body {
         --domino-h: 52px; 
     }
 }
+/* --- الأشكال الجديدة للواجهة بدون Prompts --- */
+.room-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: right;
+}
+
+.room-setup h3 {
+    font-size: 1.1rem;
+    color: var(--accent-player);
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.opt-btn {
+    flex: 1;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.opt-btn.active {
+    background: var(--accent-player);
+    color: #000;
+    font-weight: bold;
+    border-color: var(--accent-player);
+}
+
+.full-btn {
+    width: 100%;
+    margin: 10px 0 0 0 !important;
+}
+
+.btn-secondary {
+    background: var(--accent-comp);
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-offline {
+    background: transparent;
+    border: 1px dashed var(--text-muted);
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: 8px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.divider-text {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin: 4px 0;
+}
+
+.join-box {
+    display: flex;
+    gap: 8px;
+}
+
+.join-box input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    text-align: center;
+}
+
+.code-display {
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid var(--accent-player);
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.code-display strong {
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    color: var(--accent-player);
+}
+
+/* التنبيهات السريعة (Toast) */
+.toast-notification {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--accent-player);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 20px;
+    z-index: 500;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+
