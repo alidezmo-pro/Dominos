@@ -1,0 +1,404 @@
+/* --- 4. Floating Top Bar (Over the Table) --- */
+.top-bar {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: var(--z-ui);
+    pointer-events: none;
+}
+
+.top-bar > * {
+    pointer-events: auto;
+}
+
+/* Timer Display */
+.timer-display {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-danger);
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.6), 0 2px 4px rgba(0,0,0,0.8);
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+/* Profiles - Glassmorphism */
+.profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 3px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    width: 50px;
+    height: 50px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.profile:hover {
+    transform: translateY(-2px) scale(1.05);
+}
+
+.profile img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(0,0,0,0.2);
+}
+
+.profile-info {
+    position: absolute;
+    top: -25px;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.player-label {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Card Count Badge */
+.profile-count {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
+    color: #451a03;
+    font-size: 0.75rem;
+    font-weight: 800;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    border: 1px solid #b45309;
+}
+
+/* --- 5. Floating Scoreboard (Premium Glass Effect) --- */
+#scoreboard-container {
+    position: absolute;
+    top: 85px; 
+    left: 16px;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    z-index: var(--z-ui);
+    width: 160px;
+    pointer-events: auto;
+}
+
+.score-header {
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.score-header span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.score-header strong {
+    color: var(--accent-comp);
+    font-size: 1rem;
+    text-shadow: 0 0 8px var(--accent-comp-glow);
+}
+
+.score-box {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.score-box:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.score-box span {
+    font-weight: 800;
+    color: var(--accent-score);
+    text-shadow: 0 0 5px rgba(16, 185, 129, 0.4);
+}
+
+/* --- 7. Bottom Bar (Glass UI) --- */
+.bottom-bar {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: flex-end;
+    gap: 1rem;
+    z-index: var(--z-ui);
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(to top, rgba(2, 6, 23, 0.9) 0%, transparent 100%);
+    border-radius: 0 0 24px 24px;
+}
+
+/* Boneyard Button */
+.btn-boneyard {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: var(--text-light);
+    padding: 0.8rem 1.2rem;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.btn-boneyard:hover { 
+    background: linear-gradient(135deg, rgba(51, 65, 85, 0.9), rgba(30, 41, 59, 1));
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-boneyard:active {
+    transform: translateY(0);
+}
+
+.btn-boneyard .count { 
+    background: var(--accent-player); 
+    color: #fff; 
+    padding: 0.2rem 0.6rem; 
+    border-radius: 8px; 
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Mic Button */
+.btn-mic {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    color: var(--text-light);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-mic:hover {
+    background: rgba(30, 41, 59, 0.8);
+}
+.btn-mic.active {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--accent-score);
+    color: var(--accent-score);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+/* --- 11. Room Setup & Lobby UI --- */
+.room-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: right;
+}
+
+.room-setup h3 {
+    font-size: 1.2rem;
+    color: var(--accent-player);
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.opt-btn {
+    flex: 1;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.opt-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.opt-btn.active {
+    background: rgba(14, 165, 233, 0.15);
+    color: var(--accent-player);
+    border-color: var(--accent-player);
+    box-shadow: inset 0 0 10px rgba(14, 165, 233, 0.1);
+}
+
+.full-btn {
+    width: 100%;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.5);
+}
+
+.btn-offline {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+    padding: 12px;
+    border-radius: 12px;
+    width: 100%;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-offline:hover {
+    border-color: var(--text-light);
+    color: var(--text-light);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.join-box {
+    display: flex;
+    gap: 8px;
+}
+
+.join-box input {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    text-align: center;
+    font-size: 1.1rem;
+    outline: none;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+}
+.join-box input:focus {
+    border-color: var(--accent-comp);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.code-display {
+    background: rgba(14, 165, 233, 0.05);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    padding: 16px;
+    border-radius: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.code-display span {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.code-display strong {
+    font-size: 2rem;
+    letter-spacing: 4px;
+    color: var(--accent-player);
+    text-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+}
+
+/* --- 12. Notifications (Toast System) --- */
+.toast-notification {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--accent-player);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 30px;
+    z-index: var(--z-toast);
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(14, 165, 233, 0.2);
+    animation: toastSlideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+}
+
+@keyframes toastSlideDown {
+    from { opacity: 0; transform: translate(-50%, -20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
