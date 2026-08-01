@@ -1,7 +1,10 @@
 /* ==========================================================
- * script.js - النسخة الاحترافية المحدثة
+ * Dominoes Game - Complete Script
+ * File: script.js
+ * Mode: Online (Firebase Realtime DB) + Offline vs AI
  * ========================================================== */
 
+// --- 1. Global State & Online Configuration ---
 let roomId = null;
 let playerRole = null; 
 let isOnline = false; 
@@ -10,22 +13,31 @@ let targetScore = 100;
 let roomScores = { host: 0, guest1: 0, guest2: 0 };
 window.lastAlert = null;
 
-// متغيرات الاختيار من الواجهة
+// Lobby Selections
 let selectedPlayersCount = 2;
 let selectedTargetScore = 100;
 
-window.setSelectPlayers = function(count, btn) {
-    selectedPlayersCount = count;
-    btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+// Local / Game Board State
+let fullSet = [], boneyard = [], playerHand = [], comp1Hand = [], comp2Hand = [], boardChain = [];
+let gameMode = 2, currentTurn = 'player', selectedTileIndex = null;
+let leftEndValue = null, rightEndValue = null, isGameOver = false, centerTileIndex = 0;
+let turnTimerInterval, timeLeft = 25;
+
+// --- 2. Window Exports for HTML Buttons ---
+window.setSelectPlayers = setSelectPlayers;
+window.setSelectScore = setSelectScore;
+window.createRoom = createRoom;
+window.joinRoom = joinRoom;
+window.selectGameMode = selectGameMode;
+window.drawFromBoneyard = drawFromBoneyard;
+window.selectBoardEnd = selectBoardEnd;
+window.showStartModal = showStartModal;
+
+window.onload = function() { 
+    showStartModal(); 
 };
 
-window.setSelectScore = function(score, btn) {
-    selectedTargetScore = score;
-    btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-};
-
+// --- 3. UI Helpers & Modals ---
 function showToast(msg, duration = 2500) {
     let toast = document.getElementById("toast-msg");
     if (!toast) return;
@@ -34,7 +46,25 @@ function showToast(msg, duration = 2500) {
     setTimeout(() => { toast.classList.add("hidden"); }, duration);
 }
 
-window.createRoom = function() {
+function showStartModal() {
+    document.getElementById("start-modal")?.classList.remove("hidden");
+    document.getElementById("end-modal")?.classList.add("hidden");
+}
+
+function setSelectPlayers(count, btn) {
+    selectedPlayersCount = count;
+    btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function setSelectScore(score, btn) {
+    selectedTargetScore = score;
+    btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+// --- 4. Firebase / Online Room Operations ---
+function createRoom() {
     roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
     playerRole = 'host';
     isOnline = true;
@@ -51,14 +81,18 @@ window.createRoom = function() {
         guest1: false,
         guest2: false
     }).then(() => {
-        document.getElementById("display-room-id").innerText = roomId;
-        document.getElementById("created-code-box").classList.remove("hidden");
+        const displayCode = document.getElementById("display-room-id");
+        if (displayCode) displayCode.innerText = roomId;
+        document.getElementById("created-code-box")?.classList.remove("hidden");
         listenToRoomUpdates(); 
+    }).catch(err => {
+        showToast("⚠️ حدث خطأ أثناء إنشاء الغرفة!");
+        console.error(err);
     });
-};
+}
 
-window.joinRoom = function() {
-    const inputCode = document.getElementById("room-code").value.trim();
+function joinRoom() {
+    const inputCode = document.getElementById("room-code")?.value.trim();
     if (!inputCode) return showToast("⚠️ يرجى إدخال الكود!");
 
     const roomRef = window.ref(window.db, 'rooms/' + inputCode);
@@ -86,7 +120,7 @@ window.joinRoom = function() {
             }
             
             roomId = inputCode;
-            document.getElementById("start-modal").classList.add("hidden");
+            document.getElementById("start-modal")?.classList.add("hidden");
             listenToRoomUpdates();
         } else if (data && data.status === 'playing') {
             showToast("⚠️ هذه الغرفة ممتلئة وتلعب حالياً!");
@@ -94,7 +128,7 @@ window.joinRoom = function() {
             showToast("⚠️ كود الغرفة غير صحيح!");
         }
     }, { onlyOnce: true }); 
-};
+}
 
 function listenToRoomUpdates() {
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
@@ -110,7 +144,7 @@ function listenToRoomUpdates() {
             updateScoreUI();
         }
 
-        // إشعارات الجولة التلقائية بدون alert
+        // إشعارات الجولة التلقائية
         if (data.roundAlert && data.roundAlert !== window.lastAlert) {
             window.lastAlert = data.roundAlert;
             showToast(data.roundAlert, 3000);
@@ -144,13 +178,8 @@ function listenToRoomUpdates() {
 }
 
 function updateScoreUI() {
-    let sb = document.getElementById("score-board");
-    if (!sb) {
-        sb = document.createElement("div");
-        sb.id = "score-board";
-        sb.style.cssText = "position:absolute; top:5px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#4ade80; padding:6px 14px; border-radius:20px; z-index:100; font-size:13px; display:flex; gap:12px; border: 1px solid #4ade80;";
-        document.body.appendChild(sb);
-    }
+    let sb = document.getElementById("scoreboard-container");
+    if (!sb) return;
     
     let p1Name = "أنت";
     let p2Name = (playerRole === 'host') ? "الخصم 1" : "صاحب الغرفة";
@@ -158,16 +187,20 @@ function updateScoreUI() {
     let myScore = roomScores[playerRole] || 0;
     let p2Score = (playerRole === 'host') ? roomScores.guest1 : roomScores.host;
     
-    let html = `<span>الهدف: <b>${targetScore}</b>🏆</span>`;
-    html += `<span>${p1Name}: <b>${myScore}</b></span>`;
-    html += `<span>${p2Name}: <b>${p2Score}</b></span>`;
+    let html = `<div class="score-target">الهدف: <b>${targetScore}</b> 🏆</div>`;
+    html += `<div class="score-players">`;
+    html += `<div class="score-box">${p1Name}: <span>${myScore}</span></div>`;
+    html += `<div class="score-box">${p2Name}: <span>${p2Score}</span></div>`;
     
     if (roomMaxPlayers === 3) {
         let p3Name = (playerRole === 'guest2') ? "الخصم 1" : "الخصم 2";
         let p3Score = (playerRole === 'host') ? roomScores.guest2 : (playerRole === 'guest1' ? roomScores.guest2 : roomScores.guest1);
-        html += `<span>${p3Name}: <b>${p3Score}</b></span>`;
+        html += `<div class="score-box">${p3Name}: <span>${p3Score}</span></div>`;
     }
+    html += `</div>`;
+    
     sb.innerHTML = html;
+    sb.classList.remove("hidden");
 }
 
 function processHostRoundEnd(type, state) {
@@ -196,10 +229,10 @@ function processHostRoundEnd(type, state) {
     let isFinal = roomScores[winner] >= targetScore;
     
     let winnerName = (winner === 'host') ? "صاحب الغرفة" : ((winner === 'guest1') ? "اللاعب 2" : "اللاعب 3");
-    let msg = (type === 'block') ? "🔒 انغلقت اللعبة! " : "🎯 جولة انتهت! ";
+    let msg = (type === 'block') ? "🔒 انغلقت اللعبة! " : "🎯 انتهت الجولة! ";
     msg += `فاز ${winnerName} بـ (${points}) نقطة.`;
     
-    if(isFinal) msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
+    if (isFinal) msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
 
     window.update(window.ref(window.db, 'rooms/' + roomId), {
         scores: roomScores,
@@ -208,7 +241,6 @@ function processHostRoundEnd(type, state) {
     });
     
     if (!isFinal) {
-        // تقليل زمن الانتظار إلى ثانيتين فقط لتسريع اللعب
         setTimeout(() => {
             window.update(window.ref(window.db, 'rooms/' + roomId), { roundAlert: null });
             startOnlineGame();
@@ -217,18 +249,8 @@ function processHostRoundEnd(type, state) {
 }
 
 function startOnlineGame() {
-    let set = [];
-    for (let i = 0; i <= 6; i++) {
-        for (let j = i; j <= 6; j++) {
-            if (roomMaxPlayers === 3 && i === 0 && j === 0) continue; 
-            set.push({ top: i, bottom: j });
-        }
-    }
-    
-    for (let i = set.length - 1; i > 0; i--) {
-        let j = Math.floor(Math.random() * (i + 1));
-        [set[i], set[j]] = [set[j], set[i]];
-    }
+    let set = createDominoSet(roomMaxPlayers);
+    shuffle(set);
 
     let handSize = roomMaxPlayers === 3 ? 9 : 7;
     const newGameState = {
@@ -254,13 +276,16 @@ function startOnlineGame() {
 }
 
 function syncGameState(onlineState) {
-    document.getElementById("start-modal").classList.add("hidden");
+    document.getElementById("start-modal")?.classList.add("hidden");
     document.getElementById("end-modal")?.classList.add("hidden");
     isGameOver = false;
     
     gameMode = roomMaxPlayers; 
-    if(gameMode === 3) document.getElementById("comp2-avatar")?.classList.remove("hidden");
-    else document.getElementById("comp2-avatar")?.classList.add("hidden");
+    let comp2Avatar = document.getElementById("comp2-avatar");
+    if (comp2Avatar) {
+        if (gameMode === 3) comp2Avatar.classList.remove("hidden");
+        else comp2Avatar.classList.add("hidden");
+    }
     
     if (playerRole === 'host') {
         playerHand = onlineState.hostHand || [];
@@ -297,8 +322,6 @@ function syncGameState(onlineState) {
 
     renderGame();
     startTimer();
-
-    // فحص الاسكيب التلقائي للدور عند استلام الحالة
     checkAutoPass();
 }
 
@@ -343,29 +366,10 @@ function sendMoveToFirebase(isBlocked = false, passTurn = true) {
     window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: state });
 }
 
-// ==========================================
-// 2. متغيرات اللعبة الأساسية المحلية
-// ==========================================
-let fullSet = [], boneyard = [], playerHand = [], comp1Hand = [], comp2Hand = [], boardChain = [];
-let gameMode = 2, currentTurn = 'player', selectedTileIndex = null;
-let leftEndValue = null, rightEndValue = null, isGameOver = false, centerTileIndex = 0;
-let turnTimerInterval, timeLeft = 25;
-
-window.selectGameMode = selectGameMode;
-window.drawFromBoneyard = drawFromBoneyard;
-window.selectBoardEnd = selectBoardEnd;
-window.showStartModal = showStartModal;
-
-window.onload = function() { showStartModal(); };
-
-function showStartModal() {
-    document.getElementById("start-modal")?.classList.remove("hidden");
-    document.getElementById("end-modal")?.classList.add("hidden");
-}
-
+// --- 5. Offline / Local Gameplay ---
 function selectGameMode(mode) {
     isOnline = false; 
-    document.getElementById("score-board")?.remove(); 
+    document.getElementById("scoreboard-container")?.classList.add("hidden"); 
     startGame(mode);
 }
 
@@ -428,6 +432,7 @@ function determineFirstTurn() {
     currentTurn = 'player';
 }
 
+// --- 6. Timer System ---
 function startTimer() {
     clearInterval(turnTimerInterval);
     timeLeft = 25;
@@ -477,14 +482,15 @@ function handleTimeOut() {
             playPlayerTile(chosen.index, chosen.ends[0]);
         } else if (boneyard.length > 0) {
             drawFromBoneyard();
-            if(!isOnline) setTimeout(nextTurn, 300); 
+            if (!isOnline) setTimeout(nextTurn, 300); 
         } else {
-            nextTurn();
+            if (isOnline) sendMoveToFirebase(false, true);
+            else nextTurn();
         }
     }
 }
 
-// دالة التجاوز التلقائي للدور (Auto Skip)
+// Auto Pass Check
 function checkAutoPass() {
     if (currentTurn === 'player' && !isGameOver && boardChain.length > 0) {
         let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
@@ -513,6 +519,7 @@ function updateTurnStatus() {
     else if (currentTurn === 'comp2') document.getElementById("comp2-avatar")?.classList.add("active-neon-comp");
 }
 
+// --- 7. Core Dominoes Moves & Rules ---
 function getPlayableEnds(tile) {
     if (boardChain.length === 0) return ['left', 'right'];
     let ends = [];
@@ -673,42 +680,49 @@ function checkBlockGame() {
             if (minScore === pScore) msg += `فزت بأقل نقاط (${pScore})!`;
             else msg += `خسرت، نقاط الخصم أقل (${c1Score})!`;
             
-            endGame(msg); return true;
+            endGame(msg); 
+            return true;
         }
     }
     return false;
 }
 
-// ==========================================
-// 4. دوال رسم الطاولة والقطع
-// ==========================================
+// --- 8. Board Rendering & Snake Chain Algorithm ---
 function getPieceSquares(in_dir, out_dir, isDouble) {
-    let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
+    let rot = 0, sq1 = { x: 0, y: 0 }, sq2 = { x: 0, y: 0 };
     const HALF_SIZE = 14;
     
     if (in_dir === 'RIGHT') {
-        if (!isDouble) { rot = -90; sq1 = {x: -HALF_SIZE, y:0}; sq2 = {x: HALF_SIZE, y:0}; }
+        if (!isDouble) { rot = -90; sq1 = { x: -HALF_SIZE, y: 0 }; sq2 = { x: HALF_SIZE, y: 0 }; }
         else { 
-            rot = 0; sq1 = {x:0, y:0}; 
-            if (out_dir === 'RIGHT') sq2 = {x:0, y:0}; else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE}; else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
+            rot = 0; sq1 = { x: 0, y: 0 }; 
+            if (out_dir === 'RIGHT') sq2 = { x: 0, y: 0 }; 
+            else if (out_dir === 'DOWN') sq2 = { x: 0, y: HALF_SIZE }; 
+            else if (out_dir === 'UP') sq2 = { x: 0, y: -HALF_SIZE };
         }
     } else if (in_dir === 'LEFT') {
-        if (!isDouble) { rot = 90; sq1 = {x: HALF_SIZE, y:0}; sq2 = {x: -HALF_SIZE, y:0}; }
+        if (!isDouble) { rot = 90; sq1 = { x: HALF_SIZE, y: 0 }; sq2 = { x: -HALF_SIZE, y: 0 }; }
         else { 
-            rot = 0; sq1 = {x:0, y:0}; 
-            if (out_dir === 'LEFT') sq2 = {x:0, y:0}; else if (out_dir === 'DOWN') sq2 = {x:0, y: HALF_SIZE}; else if (out_dir === 'UP') sq2 = {x:0, y: -HALF_SIZE};
+            rot = 0; sq1 = { x: 0, y: 0 }; 
+            if (out_dir === 'LEFT') sq2 = { x: 0, y: 0 }; 
+            else if (out_dir === 'DOWN') sq2 = { x: 0, y: HALF_SIZE }; 
+            else if (out_dir === 'UP') sq2 = { x: 0, y: -HALF_SIZE };
         }
     } else if (in_dir === 'DOWN') {
-        if (!isDouble) { rot = 0; sq1 = {x:0, y: -HALF_SIZE}; sq2 = {x:0, y: HALF_SIZE}; }
+        if (!isDouble) { rot = 0; sq1 = { x: 0, y: -HALF_SIZE }; sq2 = { x: 0, y: HALF_SIZE }; }
         else { 
-            rot = -90; sq1 = {x:0, y:0}; 
-            if (out_dir === 'DOWN') sq2 = {x:0, y:0}; else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0}; else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
+            rot = -90; sq1 = { x: 0, y: 0 }; 
+            if (out_dir === 'DOWN') sq2 = { x: 0, y: 0 }; 
+            else if (out_dir === 'RIGHT') sq2 = { x: HALF_SIZE, y: 0 }; 
+            else if (out_dir === 'LEFT') sq2 = { x: -HALF_SIZE, y: 0 };
         }
     } else if (in_dir === 'UP') {
-        if (!isDouble) { rot = 180; sq1 = {x:0, y: HALF_SIZE}; sq2 = {x:0, y: -HALF_SIZE}; }
+        if (!isDouble) { rot = 180; sq1 = { x: 0, y: HALF_SIZE }; sq2 = { x: 0, y: -HALF_SIZE }; }
         else { 
-            rot = -90; sq1 = {x:0, y:0}; 
-            if (out_dir === 'UP') sq2 = {x:0, y:0}; else if (out_dir === 'RIGHT') sq2 = {x: HALF_SIZE, y:0}; else if (out_dir === 'LEFT') sq2 = {x: -HALF_SIZE, y:0};
+            rot = -90; sq1 = { x: 0, y: 0 }; 
+            if (out_dir === 'UP') sq2 = { x: 0, y: 0 }; 
+            else if (out_dir === 'RIGHT') sq2 = { x: HALF_SIZE, y: 0 }; 
+            else if (out_dir === 'LEFT') sq2 = { x: -HALF_SIZE, y: 0 };
         }
     }
     return { rot, sq1, sq2 };
@@ -748,24 +762,32 @@ function calculateSnakeLayout(chain, centerIdx) {
         let trans = getPieceSquares(in_dir, out_dir, isDouble);
         
         if (i === 0) { cx = 0; cy = 0; } else {
-            let vec = {x:0, y:0};
-            if (dirs[i-1] === 'RIGHT') vec = {x: STEP_SIZE, y: 0}; else if (dirs[i-1] === 'LEFT') vec = {x: -STEP_SIZE, y: 0}; else if (dirs[i-1] === 'DOWN') vec = {x: 0, y: STEP_SIZE}; else if (dirs[i-1] === 'UP') vec = {x: 0, y: -STEP_SIZE};
+            let vec = { x: 0, y: 0 };
+            if (dirs[i-1] === 'RIGHT') vec = { x: STEP_SIZE, y: 0 }; 
+            else if (dirs[i-1] === 'LEFT') vec = { x: -STEP_SIZE, y: 0 }; 
+            else if (dirs[i-1] === 'DOWN') vec = { x: 0, y: STEP_SIZE }; 
+            else if (dirs[i-1] === 'UP') vec = { x: 0, y: -STEP_SIZE };
+            
             let target_sq1_abs = { x: p_sq2_abs.x + vec.x, y: p_sq2_abs.y + vec.y };
-            cx = target_sq1_abs.x - trans.sq1.x; cy = target_sq1_abs.y - trans.sq1.y;
+            cx = target_sq1_abs.x - trans.sq1.x; 
+            cy = target_sq1_abs.y - trans.sq1.y;
         }
         
         p_sq2_abs = { x: cx + trans.sq2.x, y: cy + trans.sq2.y };
         
         layout.push({
             ...piece, cx: cx, cy: cy, rotation: trans.rot,
-            visualW: (trans.rot === 0 || trans.rot === 180) ? STEP_SIZE : (STEP_SIZE * 2), visualH: (trans.rot === 0 || trans.rot === 180) ? (STEP_SIZE * 2) : STEP_SIZE,
-            start_x: cx + trans.sq1.x, start_y: cy + trans.sq1.y, end_x: p_sq2_abs.x, end_y: p_sq2_abs.y, in_dir: in_dir, out_dir: out_dir
+            visualW: (trans.rot === 0 || trans.rot === 180) ? STEP_SIZE : (STEP_SIZE * 2), 
+            visualH: (trans.rot === 0 || trans.rot === 180) ? (STEP_SIZE * 2) : STEP_SIZE,
+            start_x: cx + trans.sq1.x, start_y: cy + trans.sq1.y, end_x: p_sq2_abs.x, end_y: p_sq2_abs.y, 
+            in_dir: in_dir, out_dir: out_dir
         });
     }
     return layout;
 }
 
 function renderGame() {
+    // 1. رسم ورق اللاعب
     let playerArea = document.getElementById("player-hand");
     if (playerArea) {
         playerArea.innerHTML = "";
@@ -787,11 +809,15 @@ function renderGame() {
         });
     }
 
+    // 2. رسم عدادات المنافسين والسوق
     let c1Count = document.getElementById("comp1-count");
-    if (c1Count) c1Count.innerText = `🂠 ${comp1Hand.length}`;
+    if (c1Count) c1Count.innerText = comp1Hand.length;
+    let c2Count = document.getElementById("comp2-count");
+    if (c2Count) c2Count.innerText = comp2Hand.length;
     let bCount = document.getElementById("boneyard-count");
     if (bCount) bCount.innerText = boneyard.length;
 
+    // 3. رسم الطاولة
     let chainArea = document.getElementById("board-chain");
     if (chainArea) {
         chainArea.innerHTML = "";
@@ -800,6 +826,7 @@ function renderGame() {
         } else {
             let layout = calculateSnakeLayout(boardChain, centerTileIndex);
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            
             layout.forEach(item => {
                 if (item.cx - item.visualW / 2 < minX) minX = item.cx - item.visualW / 2;
                 if (item.cx + item.visualW / 2 > maxX) maxX = item.cx + item.visualW / 2;
@@ -816,29 +843,42 @@ function renderGame() {
 
             let first = layout[0], last = layout[layout.length - 1];
 
+            // أزرار اختيار الأطراف
             if (selectedTileIndex !== null) {
                 let playableEnds = getPlayableEnds(playerHand[selectedTileIndex]);
                 if (playableEnds.includes('left')) {
                     let sx = (first.start_x + offsetX) * scale, sy = (first.start_y + offsetY) * scale;
-                    if (first.in_dir === 'RIGHT') sx -= (40 * scale); else if (first.in_dir === 'LEFT') sx += (40 * scale); else if (first.in_dir === 'DOWN') sy -= (40 * scale); else if (first.in_dir === 'UP') sy += (40 * scale);
-                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">◀ هنا</div>`;
+                    if (first.in_dir === 'RIGHT') sx -= (40 * scale); 
+                    else if (first.in_dir === 'LEFT') sx += (40 * scale); 
+                    else if (first.in_dir === 'DOWN') sy -= (40 * scale); 
+                    else if (first.in_dir === 'UP') sy += (40 * scale);
+                    
+                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:100; cursor:pointer; background:var(--accent-player); color:#000; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:12px;">◀ هنا</div>`;
                 }
                 if (playableEnds.includes('right')) {
                     let ex = (last.end_x + offsetX) * scale, ey = (last.end_y + offsetY) * scale;
-                    if (last.out_dir === 'RIGHT') ex += (40 * scale); else if (last.out_dir === 'LEFT') ex -= (40 * scale); else if (last.out_dir === 'DOWN') ey += (40 * scale); else if (last.out_dir === 'UP') ey -= (40 * scale);
-                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${ex}px); top:calc(50% + ${ey}px); transform:translate(-50%,-50%) scale(${scale}); z-index:10;">هنا ▶</div>`;
+                    if (last.out_dir === 'RIGHT') ex += (40 * scale); 
+                    else if (last.out_dir === 'LEFT') ex -= (40 * scale); 
+                    else if (last.out_dir === 'DOWN') ey += (40 * scale); 
+                    else if (last.out_dir === 'UP') ey -= (40 * scale);
+                    
+                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${ex}px); top:calc(50% + ${ey}px); transform:translate(-50%,-50%) scale(${scale}); z-index:100; cursor:pointer; background:var(--accent-player); color:#000; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:12px;">هنا ▶</div>`;
                 }
             }
 
+            // رسم قطع الدومينو على الطاولة
             layout.forEach(item => {
                 let px = (item.cx + offsetX) * scale, py = (item.cy + offsetY) * scale;
                 chainArea.innerHTML += `
                     <div class="domino-piece" style="position: absolute; left: calc(50% + ${px}px); top: calc(50% + ${py}px); transform: translate(-50%, -50%) scale(${scale}) rotate(${item.rotation}deg);">
-                        ${createDotsHTML(item.top)}<div class="divider"></div>${createDotsHTML(item.bottom)}
+                        ${createDotsHTML(item.top)}
+                        <div class="divider"></div>
+                        ${createDotsHTML(item.bottom)}
                     </div>`;
             });
         }
     }
+    
     updateTurnStatus();
     renderAvatarTimer();
 }
@@ -853,7 +893,9 @@ function endGame(message) {
     isGameOver = true;
     clearInterval(turnTimerInterval); 
     document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
+    
     let endTitle = document.getElementById("end-title");
     if (endTitle) endTitle.innerText = message;
+    
     document.getElementById("end-modal")?.classList.remove("hidden");
 }
