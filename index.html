@@ -205,7 +205,7 @@
         </div>
     </div>
 
-    <!-- التحكم في خطوات الشاشة وحفظ الاسم -->
+       <!-- التحكم في خطوات الشاشة وحفظ الاسم -->
     <script>
         function goToStep(stepId) {
             if(stepId === 2) {
@@ -224,13 +224,12 @@
             document.getElementById('step-' + stepId).classList.add('active-step');
         }
 
+        // تم التعديل هنا ليتماشى مع نظام الـ Modules وحالة اللعبة
         function startOfflineGame() {
-            // المتغير selectedPlayersCount بيكون محفوظ في ملف script.js بناءً على اختيار المستخدم
-            // المتغير selectedTargetScore كمان محفوظ وبيتم استخدامه في اللعبة
-            if (typeof selectGameMode === "function" && typeof selectedPlayersCount !== "undefined") {
-                selectGameMode(selectedPlayersCount);
+            if (typeof window.selectGameMode === "function" && window.state) {
+                window.selectGameMode(window.state.selectedPlayersCount);
             } else {
-                console.error("ملف script.js لم يتم تحميله بشكل صحيح.");
+                console.error("ملفات اللعبة (Modules) لم يتم تحميلها بشكل صحيح.");
             }
         }
 
@@ -260,6 +259,7 @@
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
 
+      // ربط أدوات فايربيز بالنطاق العام لتستخدمها ملفات الـ Modules
       window.db = db;
       window.ref = ref;
       window.set = set;
@@ -267,6 +267,7 @@
       window.onValue = onValue;
     </script>
     
-    <script src="script.js?v=13.02"></script>
+    <!-- التعديل الأهم: استدعاء main.js كـ module بدلاً من script.js -->
+    <script type="module" src="main.js"></script>
 </body>
 </html>
