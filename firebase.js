@@ -3,6 +3,8 @@ import { state } from './state.js';
 import { showToast, updateScoreUI, updateNamesUI } from './ui.js'; // تم إضافة updateNamesUI هنا
 import { createDominoSet, shuffle, startTimer, checkAutoPass } from './logic.js';
 import { renderGame } from './render.js';
+import { initAudio } from './audio.js';
+
 
 export function createRoom() {
     state.roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
@@ -201,6 +203,12 @@ export function syncGameState(onlineState) {
     renderGame();
     startTimer();
     checkAutoPass();
+
+    if (!window.audioInitialized) {
+        initAudio();
+        window.audioInitialized = true;
+    }
+
 }
 
 export function processHostRoundEnd(type, gameState) {
