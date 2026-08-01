@@ -1,6 +1,6 @@
 // firebase.js
 import { state } from './state.js';
-import { showToast, updateScoreUI } from './ui.js';
+import { showToast, updateScoreUI, updateNamesUI } from './ui.js'; // تم إضافة updateNamesUI هنا
 import { createDominoSet, shuffle, startTimer, checkAutoPass } from './logic.js';
 import { renderGame } from './render.js';
 
@@ -43,7 +43,7 @@ export function joinRoom() {
             state.roomMaxPlayers = data.maxPlayers || 2;
             state.targetScore = data.targetScore || 100;
             
-                      if (state.roomMaxPlayers === 2) {
+            if (state.roomMaxPlayers === 2) {
                 state.playerRole = 'guest1';
                 state.isOnline = true;
                 // إرسال الاسم للضيف الأول
@@ -82,6 +82,12 @@ export function listenToRoomUpdates() {
 
         state.roomMaxPlayers = data.maxPlayers || 2;
         state.targetScore = data.targetScore || 100;
+
+        // --- تحديث الأسماء ---
+        if (data.names) {
+            state.roomNames = data.names;
+            updateNamesUI(); 
+        }
 
         if (data.scores) {
             state.roomScores = data.scores;
@@ -222,7 +228,7 @@ export function processHostRoundEnd(type, gameState) {
     state.roomScores[winner] += points;
     let isFinal = state.roomScores[winner] >= state.targetScore;
     
-    let winnerName = (winner === 'host') ? "صاحب الغرفة" : ((winner === 'guest1') ? "اللاعب 2" : "اللاعب 3");
+    let winnerName = (winner === 'host') ? (state.roomNames.host || "صاحب الغرفة") : ((winner === 'guest1') ? (state.roomNames.guest1 || "اللاعب 2") : (state.roomNames.guest2 || "اللاعب 3"));
     let msg = (type === 'block') ? "🔒 انغلقت اللعبة! " : "🎯 انتهت الجولة! ";
     msg += `فاز ${winnerName} بـ (${points}) نقطة.`;
     
