@@ -106,7 +106,7 @@
 /* النقاط (كأس أسفل الأفاتار) */
 .profile-score {
     position: absolute;
-    top: calc(100% + 4px); /* لإنزال المربع تحت الأفاتار بمسافة 4 بيكسل */
+    top: calc(100% + 11px); /* لإنزال المربع تحت الأفاتار بمسافة 4 بيكسل */
     bottom: auto;
     left: 50%;
     right: auto;
