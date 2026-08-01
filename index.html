@@ -7,40 +7,48 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- الهيكل الرئيسي للعبة -->
     <main class="game-layout">
         
-        <!-- الشريط العلوي: المنافسون -->
+        <!-- الشريط العلوي: المنافسون والمايك -->
         <header class="top-bar">
-            <!-- الخصم الأونلاين -->
+            <!-- الخصم 1 -->
             <div id="comp1-avatar" class="profile top-left">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الخصم">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الخصم 1">
                 <div class="profile-info">
+                    <span id="comp1-name" class="player-label">الخصم 1</span>
                     <span id="comp1-count" class="profile-count">🂠 0</span>
                 </div>
             </div>
 
+            <!-- زر المايك للتحدث -->
+            <button id="mic-btn" class="btn-mic muted" onclick="toggleMic()">
+                🎙️ <span id="mic-status">المايك مغلق</span>
+            </button>
+
+            <!-- الخصم 2 (عند اختيار 3 لاعبين) -->
             <div id="comp2-avatar" class="profile top-right hidden">
                 <div class="profile-info">
+                    <span id="comp2-name" class="player-label">الخصم 2</span>
                     <span id="comp2-count" class="profile-count">🂠 0</span>
                 </div>
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="الكمبيوتر 2">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="الخصم 2">
             </div>
         </header>
 
-        <!-- لوحة النتائج الاحترافية -->
-        <div id="scoreboard-container" class="hidden">
-            <div class="score-target">الهدف: <span id="ui-target-score">100</span> 🏆</div>
-            <div class="score-players">
-                <div class="score-box" id="ui-score-p1">أنت: <span id="score-val-p1">0</span></div>
-                <div class="score-box" id="ui-score-p2">الخصم: <span id="score-val-p2">0</span></div>
-                <div class="score-box hidden" id="ui-score-p3">الخصم 2: <span id="score-val-p3">0</span></div>
+        <!-- لوحة النتائج الحديثة المتناسقة -->
+        <div id="scoreboard-container">
+            <div class="score-card">
+                <div class="score-header">
+                    <span>🎯 الهدف: <strong id="ui-target-score">100</strong> نقطة</span>
+                </div>
+                <div class="score-body" id="score-players-list">
+                    <!-- يملأ ديناميكياً بأسماء اللاعبين والنقاط -->
+                </div>
             </div>
         </div>
 
         <!-- منطقة الطاولة -->
         <section class="table-container">
-            <!-- توست التنبيهات السريعة -->
             <div id="toast-msg" class="toast-notification hidden"></div>
             <div id="board-chain"></div>
         </section>
@@ -49,7 +57,10 @@
         <footer class="bottom-bar">
             <!-- اللاعب الحقيقي -->
             <div id="player-avatar" class="profile bottom-left">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="اللاعب">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="أنت">
+                <div class="profile-info">
+                    <span id="my-name-display" class="player-label">أنت</span>
+                </div>
             </div>
 
             <!-- أوراق اللاعب -->
@@ -68,16 +79,23 @@
         </footer>
     </main>
 
-    <!-- النوافذ المنبثقة التفاعلية -->
+    <!-- عنصر الصوت المستلم للمايك -->
+    <audio id="remote-audio" autoplay></audio>
+
+    <!-- النافذة المنبثقة لإعداد اللعبة -->
     <div id="start-modal" class="modal-overlay">
         <div class="modal-box">
-            <h2>🎲 لعبة الدومينو</h2>
+            <h2>🎲 لعبة الدومينو الاحترافية</h2>
             
             <div class="room-setup">
-                <h3>إعدادات الغرفة (أونلاين)</h3>
-                
+                <!-- ادخال اسم اللاعب -->
                 <div class="form-group">
-                    <label>عدد اللاعبين:</label>
+                    <label>👤 اسمك في اللعبة:</label>
+                    <input type="text" id="player-name-input" class="text-input" placeholder="أدخل اسمك هنا" value="لاعب 1">
+                </div>
+
+                <div class="form-group">
+                    <label>👥 عدد اللاعبين:</label>
                     <div class="btn-group">
                         <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">2 لاعبين</button>
                         <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">3 لاعبين</button>
@@ -85,7 +103,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>نقاط الفوز:</label>
+                    <label>🏆 نقاط الفوز:</label>
                     <div class="btn-group">
                         <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
                         <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
@@ -93,7 +111,7 @@
                     </div>
                 </div>
 
-                <button class="btn-primary full-btn" onclick="createRoom()">➕ إنشاء غرفة جديدة</button>
+                <button class="btn-primary full-btn" onclick="createRoom()">➕ إنشاء غرفة أونلاين</button>
                 
                 <div id="created-code-box" class="code-display hidden">
                     <span>كود الغرفة:</span>
@@ -104,7 +122,7 @@
                 <div class="divider-text">أو</div>
 
                 <div class="join-box">
-                    <input type="text" id="room-code" placeholder="أدخل كود الغرفة">
+                    <input type="text" id="room-code" placeholder="كود الغرفة">
                     <button class="btn-secondary" onclick="joinRoom()">🔗 انضمام</button>
                 </div>
             </div>
@@ -112,7 +130,7 @@
             <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
 
             <div>
-                <button class="btn-offline" onclick="selectGameMode(2)">👤 لعب سريع ضد الكمبيوتر</button>
+                <button class="btn-offline" onclick="startOfflineMode()">🤖 لعب ضد الكمبيوتر</button>
             </div>
         </div>
     </div>
@@ -148,6 +166,6 @@
       window.onValue = onValue;
     </script>
     
-    <script src="script.js?v=12.00"></script>
+    <script src="script.js?v=13.00"></script>
 </body>
 </html>
