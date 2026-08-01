@@ -1,10 +1,7 @@
 /* ==========================================================
- * script.js - النسخة الاحترافية (2 أو 3 لاعبين + نظام نقاط وجولات)
+ * script.js - النسخة الاحترافية المحدثة
  * ========================================================== */
 
-// ==========================================
-// 1. أكواد اللعب الأونلاين (غرف، جولات، نقاط)
-// ==========================================
 let roomId = null;
 let playerRole = null; 
 let isOnline = false; 
@@ -13,19 +10,36 @@ let targetScore = 100;
 let roomScores = { host: 0, guest1: 0, guest2: 0 };
 window.lastAlert = null;
 
-window.createRoom = function() {
-    let pCount = prompt("هل تريد إنشاء الغرفة لـ 2 أم 3 لاعبين؟", "2");
-    if (pCount !== "2" && pCount !== "3") return alert("اختيار غير صحيح!");
-    
-    let tScore = prompt("ما هو عدد النقاط المطلوب للفوز بالمباراة؟ (مثلاً 50 أو 100)", "100");
-    let target = parseInt(tScore);
-    if (isNaN(target) || target < 10) target = 100;
+// متغيرات الاختيار من الواجهة
+let selectedPlayersCount = 2;
+let selectedTargetScore = 100;
 
+window.setSelectPlayers = function(count, btn) {
+    selectedPlayersCount = count;
+    btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+};
+
+window.setSelectScore = function(score, btn) {
+    selectedTargetScore = score;
+    btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+};
+
+function showToast(msg, duration = 2500) {
+    let toast = document.getElementById("toast-msg");
+    if (!toast) return;
+    toast.innerText = msg;
+    toast.classList.remove("hidden");
+    setTimeout(() => { toast.classList.add("hidden"); }, duration);
+}
+
+window.createRoom = function() {
     roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
     playerRole = 'host';
     isOnline = true;
-    roomMaxPlayers = parseInt(pCount);
-    targetScore = target;
+    roomMaxPlayers = selectedPlayersCount;
+    targetScore = selectedTargetScore;
 
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
     window.set(roomRef, {
@@ -37,15 +51,15 @@ window.createRoom = function() {
         guest1: false,
         guest2: false
     }).then(() => {
-        alert(`تم إنشاء الغرفة! 🎲\nالكود: ${roomId}\nاللاعبين: ${roomMaxPlayers}\nنقاط الفوز: ${targetScore}`);
-        document.getElementById("start-modal").classList.add("hidden");
+        document.getElementById("display-room-id").innerText = roomId;
+        document.getElementById("created-code-box").classList.remove("hidden");
         listenToRoomUpdates(); 
     });
 };
 
 window.joinRoom = function() {
     const inputCode = document.getElementById("room-code").value.trim();
-    if (!inputCode) return alert("يرجى إدخال الكود!");
+    if (!inputCode) return showToast("⚠️ يرجى إدخال الكود!");
 
     const roomRef = window.ref(window.db, 'rooms/' + inputCode);
     window.onValue(roomRef, (snapshot) => {
@@ -58,18 +72,16 @@ window.joinRoom = function() {
                 playerRole = 'guest1';
                 isOnline = true;
                 window.update(roomRef, { guest1: true, status: 'playing' });
-                alert("تم الانضمام للغرفة! اللعبة ستبدأ الآن 🔥");
             } else if (roomMaxPlayers === 3) {
                 if (!data.guest1) {
                     playerRole = 'guest1';
                     isOnline = true;
                     window.update(roomRef, { guest1: true });
-                    alert("تم الانضمام كلاعب ثاني! ننتظر دخول اللاعب الثالث...");
+                    showToast("تم الانضمام! ننتظر اللاعب الثالث...");
                 } else if (!data.guest2) {
                     playerRole = 'guest2';
                     isOnline = true;
                     window.update(roomRef, { guest2: true, status: 'playing' });
-                    alert("تم الانضمام كلاعب ثالث! ستبدأ اللعبة الآن 🔥");
                 }
             }
             
@@ -77,9 +89,9 @@ window.joinRoom = function() {
             document.getElementById("start-modal").classList.add("hidden");
             listenToRoomUpdates();
         } else if (data && data.status === 'playing') {
-            alert("هذه الغرفة ممتلئة وتلعب حالياً!");
+            showToast("⚠️ هذه الغرفة ممتلئة وتلعب حالياً!");
         } else {
-            alert("الكود غير صحيح!");
+            showToast("⚠️ كود الغرفة غير صحيح!");
         }
     }, { onlyOnce: true }); 
 };
@@ -98,24 +110,21 @@ function listenToRoomUpdates() {
             updateScoreUI();
         }
 
-        // إشعارات نهاية الجولة
+        // إشعارات الجولة التلقائية بدون alert
         if (data.roundAlert && data.roundAlert !== window.lastAlert) {
             window.lastAlert = data.roundAlert;
-            alert(data.roundAlert);
+            showToast(data.roundAlert, 3000);
         }
         
-        // التحقق من بدء جولة جديدة
         let isFull = (roomMaxPlayers === 2 && data.guest1) || (roomMaxPlayers === 3 && data.guest1 && data.guest2);
         if (isFull && data.status === 'playing' && !data.gameState && playerRole === 'host' && !data.roundAlert) {
             startOnlineGame(); 
         }
         
-        // استقبال تحديثات الطاولة ومعالجة نهايات الجولة (للهوست فقط)
         if (data.gameState) {
             syncGameState(data.gameState);
             
             if (playerRole === 'host') {
-                // حماية ضد تحويل المصفوفات الفارغة إلى undefined في Firebase
                 const hHand = data.gameState.hostHand || [];
                 const g1Hand = data.gameState.guest1Hand || [];
                 const g2Hand = data.gameState.guest2Hand || [];
@@ -134,20 +143,19 @@ function listenToRoomUpdates() {
     });
 }
 
-// إنشاء لوحة نتائج ديناميكية
 function updateScoreUI() {
     let sb = document.getElementById("score-board");
     if (!sb) {
         sb = document.createElement("div");
         sb.id = "score-board";
-        sb.style.cssText = "position:absolute; top:5px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#4ade80; padding:8px 15px; border-radius:20px; z-index:100; font-size:14px; display:flex; gap:15px; border: 1px solid #4ade80; flex-wrap: wrap; justify-content: center;";
+        sb.style.cssText = "position:absolute; top:5px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#4ade80; padding:6px 14px; border-radius:20px; z-index:100; font-size:13px; display:flex; gap:12px; border: 1px solid #4ade80;";
         document.body.appendChild(sb);
     }
     
     let p1Name = "أنت";
     let p2Name = (playerRole === 'host') ? "الخصم 1" : "صاحب الغرفة";
     
-    let myScore = roomScores[playerRole];
+    let myScore = roomScores[playerRole] || 0;
     let p2Score = (playerRole === 'host') ? roomScores.guest1 : roomScores.host;
     
     let html = `<span>الهدف: <b>${targetScore}</b>🏆</span>`;
@@ -162,7 +170,6 @@ function updateScoreUI() {
     sb.innerHTML = html;
 }
 
-// دالة حساب النقاط وإعلان الجولات (الهوست فقط ينفذها لضمان المزامنة)
 function processHostRoundEnd(type, state) {
     let hHand = state.hostHand || [];
     let g1Hand = state.guest1Hand || [];
@@ -182,32 +189,30 @@ function processHostRoundEnd(type, state) {
         let min = hScore; winner = 'host';
         if (g1Score < min) { min = g1Score; winner = 'guest1'; }
         if (roomMaxPlayers === 3 && g2Score < min) { min = g2Score; winner = 'guest2'; }
-        
         points = (hScore + g1Score + g2Score) - min;
     }
     
     roomScores[winner] += points;
     let isFinal = roomScores[winner] >= targetScore;
     
-    // ترجمة اسم الفائز
     let winnerName = (winner === 'host') ? "صاحب الغرفة" : ((winner === 'guest1') ? "اللاعب 2" : "اللاعب 3");
-    
     let msg = (type === 'block') ? "🔒 انغلقت اللعبة! " : "🎯 جولة انتهت! ";
-    msg += `فاز ${winnerName} بكسب ${points} نقطة.`;
+    msg += `فاز ${winnerName} بـ (${points}) نقطة.`;
     
-    if(isFinal) msg = `🎉🎉 انتهت المباراة الكبرى! البطل هو ${winnerName} بتخطيه حاجز الـ ${targetScore} نقطة!`;
+    if(isFinal) msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
 
     window.update(window.ref(window.db, 'rooms/' + roomId), {
         scores: roomScores,
         roundAlert: msg,
-        gameState: null // تصفير الطاولة
+        gameState: null 
     });
     
     if (!isFinal) {
+        // تقليل زمن الانتظار إلى ثانيتين فقط لتسريع اللعب
         setTimeout(() => {
             window.update(window.ref(window.db, 'rooms/' + roomId), { roundAlert: null });
             startOnlineGame();
-        }, 5000); // 5 ثواني استراحة ثم تبدأ الجولة القادمة
+        }, 2000); 
     }
 }
 
@@ -292,6 +297,9 @@ function syncGameState(onlineState) {
 
     renderGame();
     startTimer();
+
+    // فحص الاسكيب التلقائي للدور عند استلام الحالة
+    checkAutoPass();
 }
 
 function sendMoveToFirebase(isBlocked = false, passTurn = true) {
@@ -357,13 +365,10 @@ function showStartModal() {
 
 function selectGameMode(mode) {
     isOnline = false; 
-    document.getElementById("score-board")?.remove(); // إخفاء لوحة النقاط في اللعب المحلي
+    document.getElementById("score-board")?.remove(); 
     startGame(mode);
 }
 
-// ==========================================
-// 3. منطق اللعبة (محلي + توجيه للأونلاين)
-// ==========================================
 function createDominoSet(mode) {
     let set = [];
     for (let i = 0; i <= 6; i++) {
@@ -410,7 +415,7 @@ function startGame(mode) {
     startTimer();
 
     if (currentTurn !== 'player' && !isOnline) {
-        setTimeout(playComputerTurn, 1000);
+        setTimeout(playComputerTurn, 600);
     }
 }
 
@@ -472,9 +477,23 @@ function handleTimeOut() {
             playPlayerTile(chosen.index, chosen.ends[0]);
         } else if (boneyard.length > 0) {
             drawFromBoneyard();
-            if(!isOnline) setTimeout(nextTurn, 500); 
+            if(!isOnline) setTimeout(nextTurn, 300); 
         } else {
             nextTurn();
+        }
+    }
+}
+
+// دالة التجاوز التلقائي للدور (Auto Skip)
+function checkAutoPass() {
+    if (currentTurn === 'player' && !isGameOver && boardChain.length > 0) {
+        let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
+        if (!canPlay && boneyard.length === 0) {
+            showToast("لا توجد حركات متاحة، تم تجاوز دورك تلقائياً ⏩");
+            setTimeout(() => {
+                if (isOnline) sendMoveToFirebase(false, true); 
+                else nextTurn();
+            }, 1000);
         }
     }
 }
@@ -533,7 +552,7 @@ function playPlayerTile(index, end) {
 
     if (playerHand.length === 0) { 
         if (isOnline) {
-            sendMoveToFirebase(); // ستقوم الهوست بحساب النقاط وإنهاء الجولة
+            sendMoveToFirebase(); 
         } else {
             endGame("🎉 مبروك! لقد فزت باللعبة!"); 
         }
@@ -578,17 +597,10 @@ function nextTurn() {
     renderGame();
     startTimer();
 
-    if (currentTurn === 'player') {
-        let canPlay = playerHand.some(t => getPlayableEnds(t).length > 0);
-        if (!canPlay && boneyard.length === 0) {
-            if (isOnline) sendMoveToFirebase(); 
-            else setTimeout(nextTurn, 600); 
-            return;
-        }
-    }
+    checkAutoPass();
 
     if (currentTurn !== 'player' && !isGameOver && !isOnline) {
-        setTimeout(playComputerTurn, 900);
+        setTimeout(playComputerTurn, 600);
     }
 }
 
@@ -615,7 +627,7 @@ function playComputerTurn() {
         if (boneyard.length > 0) {
             hand.push(boneyard.pop());
             renderGame();
-            setTimeout(playComputerTurn, 600);
+            setTimeout(playComputerTurn, 400);
         } else {
             nextTurn();
         }
@@ -632,10 +644,12 @@ function drawFromBoneyard() {
         renderGame();
         
         if (isOnline) {
-            sendMoveToFirebase(false, false); // عدم نقل الدور عند السحب
+            sendMoveToFirebase(false, false); 
         }
+        checkAutoPass();
     } else {
-        if (isOnline) sendMoveToFirebase(false, true); // نقل الدور إذا كان السوق فارغاً
+        showToast("السوق فارغ!");
+        if (isOnline) sendMoveToFirebase(false, true); 
         else nextTurn();
     }
 }
@@ -648,7 +662,7 @@ function checkBlockGame() {
 
     if (!playerCanPlay && !comp1CanPlay && (gameMode === 2 || !comp2CanPlay)) {
         if (isOnline) {
-            sendMoveToFirebase(true); // إرسال إشارة للهوست ليحسب نقاط القفلة
+            sendMoveToFirebase(true); 
             return true;
         } else {
             let pScore = playerHand.reduce((s, t) => s + t.top + t.bottom, 0);
@@ -666,7 +680,7 @@ function checkBlockGame() {
 }
 
 // ==========================================
-// 4. دوال رسم الطاولة والقطع (ثابتة لا تغيير فيها)
+// 4. دوال رسم الطاولة والقطع
 // ==========================================
 function getPieceSquares(in_dir, out_dir, isDouble) {
     let rot = 0, sq1 = {x:0, y:0}, sq2 = {x:0, y:0};
