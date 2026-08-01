@@ -1,0 +1,23 @@
+/* --- 2. Base Resets --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-light);
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden; 
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+.hidden { 
+    display: none !important; 
+    opacity: 0;
+    pointer-events: none;
+}
