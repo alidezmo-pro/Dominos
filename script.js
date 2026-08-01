@@ -1,13 +1,16 @@
 /* ==========================================================
  * script.js - النسخة النهائية (مزامنة الأونلاين + إيقاف الكمبيوتر)
  * ========================================================== */
+/* ==========================================================
+ * script.js - النسخة النهائية (مزامنة الأونلاين + إيقاف الكمبيوتر + 3 لاعبين)
+ * ========================================================== */
 
 // ==========================================
-// 1. أكواد اللعب الأونلاين (الغرف عبر Firebase)
+// 1. أكواد اللعب الأونلاين (الغرف عبر Firebase) - 3 لاعبين
 // ==========================================
 let roomId = null;
 let playerRole = null; 
-let isOnline = false; // متغير سحري لمعرفة هل نحن أونلاين أم لا
+let isOnline = false; 
 
 window.createRoom = function() {
     roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
@@ -18,9 +21,10 @@ window.createRoom = function() {
     window.set(roomRef, {
         status: 'waiting',
         host: true,
-        guest: false
+        guest1: false,
+        guest2: false
     }).then(() => {
-        alert("تم إنشاء الغرفة بنجاح! 🎲\nكود الغرفة: " + roomId + "\nأرسله لصديقك.");
+        alert("تم إنشاء الغرفة بنجاح! 🎲\nكود الغرفة: " + roomId + "\nأرسله لصديقيك (ننتظر دخول لاعبين اثنين).");
         document.getElementById("start-modal").classList.add("hidden");
         listenToRoomUpdates(); 
     });
@@ -34,16 +38,25 @@ window.joinRoom = function() {
     window.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         if (data && data.status === 'waiting') {
-            roomId = inputCode;
-            playerRole = 'guest';
-            isOnline = true;
+            if (!data.guest1) {
+                // أنا اللاعب الثاني الذي دخل الغرفة
+                playerRole = 'guest1';
+                isOnline = true;
+                window.update(roomRef, { guest1: true });
+                alert("تم الانضمام كلاعب ثاني! ننتظر دخول اللاعب الثالث...");
+            } else if (!data.guest2) {
+                // أنا اللاعب الثالث الذي دخل الغرفة (اكتمل العدد)
+                playerRole = 'guest2';
+                isOnline = true;
+                window.update(roomRef, { guest2: true, status: 'playing' });
+                alert("تم الانضمام كلاعب ثالث! اكتمل العدد وستبدأ اللعبة الآن 🔥");
+            }
             
-            window.update(roomRef, { status: 'playing', guest: true });
-            alert("تم الانضمام! ننتظر الأوراق من صاحب الغرفة...");
+            roomId = inputCode;
             document.getElementById("start-modal").classList.add("hidden");
             listenToRoomUpdates();
         } else if (data && data.status === 'playing') {
-            alert("الغرفة ممتلئة!");
+            alert("هذه الغرفة ممتلئة (يوجد 3 لاعبين بالفعل)!");
         } else {
             alert("الكود غير صحيح!");
         }
@@ -55,12 +68,12 @@ function listenToRoomUpdates() {
     window.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         
-        // بدء اللعبة وتوزيع الأوراق (لصاحب الغرفة فقط)
+        // إذا اكتمل العدد (3 لاعبين) ولم تتوزع الأوراق، صاحب الغرفة يوزعها
         if (data && data.status === 'playing' && !data.gameState && playerRole === 'host') {
             startOnlineGame(); 
         }
         
-        // استقبال تحديثات الطاولة باستمرار (للطرفين)
+        // استقبال تحديثات الطاولة باستمرار (للجميع)
         if (data && data.gameState) {
             syncGameState(data.gameState);
         }
@@ -70,7 +83,10 @@ function listenToRoomUpdates() {
 function startOnlineGame() {
     let set = [];
     for (let i = 0; i <= 6; i++) {
-        for (let j = i; j <= 6; j++) set.push({ top: i, bottom: j });
+        for (let j = i; j <= 6; j++) {
+            if (i === 0 && j === 0) continue; // استبعاد (0-0) لتصبح 27 ورقة (9 لكل لاعب)
+            set.push({ top: i, bottom: j });
+        }
     }
     
     for (let i = set.length - 1; i > 0; i--) {
@@ -79,14 +95,23 @@ function startOnlineGame() {
     }
 
     const newGameState = {
-        hostHand: set.splice(0, 7),
-        guestHand: set.splice(0, 7),
-        boneyard: set,
+        hostHand: set.splice(0, 9),
+        guest1Hand: set.splice(0, 9),
+        guest2Hand: set.splice(0, 9),
+        boneyard: set, // ستكون فارغة تقريباً
         boardChain: [],
-        currentTurn: 'host',
         leftEndValue: -1,
         rightEndValue: -1
     };
+
+    // البحث عن أكبر "دوش" لتحديد من يبدأ
+    let startingRole = 'host';
+    outer: for (let d = 6; d >= 1; d--) {
+        if (newGameState.hostHand.some(t => t.top === d && t.bottom === d)) { startingRole = 'host'; break outer; }
+        if (newGameState.guest1Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest1'; break outer; }
+        if (newGameState.guest2Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest2'; break outer; }
+    }
+    newGameState.currentTurn = startingRole;
 
     window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: newGameState });
 }
@@ -94,14 +119,32 @@ function startOnlineGame() {
 function syncGameState(onlineState) {
     document.getElementById("start-modal").classList.add("hidden");
     
+    // إجبار اللعبة على وضع 3 لاعبين وإظهار الأفاتار الثالث
+    gameMode = 3; 
+    document.getElementById("comp2-avatar")?.classList.remove("hidden");
+    
+    // ربط أدوار الأونلاين بمقاعد اللعبة المحلية لتدور بشكل منطقي عند كل لاعب
     if (playerRole === 'host') {
         playerHand = onlineState.hostHand || [];
-        comp1Hand = onlineState.guestHand || []; 
-        currentTurn = (onlineState.currentTurn === 'host') ? 'player' : 'comp1';
-    } else {
-        playerHand = onlineState.guestHand || [];
+        comp1Hand = onlineState.guest1Hand || []; 
+        comp2Hand = onlineState.guest2Hand || [];
+        if (onlineState.currentTurn === 'host') currentTurn = 'player';
+        else if (onlineState.currentTurn === 'guest1') currentTurn = 'comp1';
+        else currentTurn = 'comp2';
+    } else if (playerRole === 'guest1') {
+        playerHand = onlineState.guest1Hand || [];
+        comp1Hand = onlineState.guest2Hand || [];
+        comp2Hand = onlineState.hostHand || [];
+        if (onlineState.currentTurn === 'guest1') currentTurn = 'player';
+        else if (onlineState.currentTurn === 'guest2') currentTurn = 'comp1';
+        else currentTurn = 'comp2';
+    } else if (playerRole === 'guest2') {
+        playerHand = onlineState.guest2Hand || [];
         comp1Hand = onlineState.hostHand || [];
-        currentTurn = (onlineState.currentTurn === 'guest') ? 'player' : 'comp1';
+        comp2Hand = onlineState.guest1Hand || [];
+        if (onlineState.currentTurn === 'guest2') currentTurn = 'player';
+        else if (onlineState.currentTurn === 'host') currentTurn = 'comp1';
+        else currentTurn = 'comp2';
     }
 
     boneyard = onlineState.boneyard || [];
@@ -111,20 +154,28 @@ function syncGameState(onlineState) {
     centerTileIndex = onlineState.centerTileIndex || 0;
 
     renderGame();
-    startTimer(); // ⏱️ السطر السحري لتشغيل التايمر في الأونلاين
+    startTimer();
 }
 
-// دالة جديدة: إرسال حركتك إلى فايربيز
 function sendMoveToFirebase() {
     if (!isOnline) return;
     
-    let nextTurnRole = (currentTurn === 'player') ? 
-        ((playerRole === 'host') ? 'guest' : 'host') : 
-        ((playerRole === 'host') ? 'host' : 'guest');
+    // نقل الدور برمجياً بالترتيب: صاحب الغرفة -> الضيف 1 -> الضيف 2
+    let nextTurnRole;
+    if (playerRole === 'host') nextTurnRole = 'guest1';
+    else if (playerRole === 'guest1') nextTurnRole = 'guest2';
+    else if (playerRole === 'guest2') nextTurnRole = 'host';
+
+    // تجميع أوراق الجميع قبل رفعها
+    let hHand, g1Hand, g2Hand;
+    if (playerRole === 'host') { hHand = playerHand; g1Hand = comp1Hand; g2Hand = comp2Hand; }
+    else if (playerRole === 'guest1') { g1Hand = playerHand; g2Hand = comp1Hand; hHand = comp2Hand; }
+    else if (playerRole === 'guest2') { g2Hand = playerHand; hHand = comp1Hand; g1Hand = comp2Hand; }
 
     const state = {
-        hostHand: (playerRole === 'host') ? playerHand : comp1Hand,
-        guestHand: (playerRole === 'guest') ? playerHand : comp1Hand,
+        hostHand: hHand,
+        guest1Hand: g1Hand,
+        guest2Hand: g2Hand,
         boneyard: boneyard,
         boardChain: boardChain,
         leftEndValue: leftEndValue !== null ? leftEndValue : -1,
@@ -135,6 +186,11 @@ function sendMoveToFirebase() {
 
     window.update(window.ref(window.db, 'rooms/' + roomId), { gameState: state });
 }
+
+// ==========================================
+// 2. متغيرات اللعبة الأساسية
+// ==========================================
+// (باقي الكود الخاص بك من هنا كما هو تماماً دون تغيير)
 
 // ==========================================
 // 2. متغيرات اللعبة الأساسية
