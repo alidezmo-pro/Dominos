@@ -30,7 +30,6 @@
     text-shadow: 0 0 15px rgba(239, 68, 68, 0.6), 0 2px 4px rgba(0,0,0,0.8);
     text-align: center;
     letter-spacing: 2px;
-    transform: translateX(20px); /* تم إضافة هذا السطر لتحريك التايمر لليمين، يمكنك تعديل الرقم */
 }
 
 /* Profiles - Glassmorphism */
@@ -63,6 +62,18 @@
     background: rgba(0,0,0,0.2);
 }
 
+/* كلاس مقترح لضبط التايمر الدائري (الأزرق) حول الأفاتار */
+.timer-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 110%;
+    height: 110%;
+    z-index: 1; /* عشان يبقى تحت الاسم والنقاط */
+    pointer-events: none;
+}
+
 /* حاوية معلومات اللاعب */
 .profile-info {
     position: absolute;
@@ -77,7 +88,7 @@
 /* اسم اللاعب */
 .player-label {
     position: absolute;
-    top: -5px; /* تم التعديل لـ -5 بناءً على طلبك */
+    top: -4px; /* التعديل الأخير للاسم */
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
@@ -96,7 +107,7 @@
 .profile-score {
     position: absolute;
     bottom: -2px;
-    right: 36px; /* ثابتة على 36 كما طلبت */
+    right: 36px; 
     left: auto;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: #fff;
@@ -118,7 +129,7 @@
 .profile-count {
     position: absolute;
     bottom: -2px;
-    left: 36px; /* ثابتة على 36 كما طلبت */
+    left: 36px; 
     right: auto;
     background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
     color: #451a03;
@@ -137,7 +148,28 @@
 
 /* --- 5. Floating Scoreboard (Premium Horizontal Pill) --- */
 #scoreboard-container {
-    display: none !important; /* مخفية بالكامل */
+    position: absolute;
+    top: 65px; 
+    left: 50%;
+    transform: translateX(-50%); 
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px; 
+    padding: 6px 16px;
+    display: flex; 
+    flex-direction: row;
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-items: center;
+    gap: 12px; 
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    z-index: var(--z-ui);
+    width: max-content; 
+    max-width: 95vw; 
+    pointer-events: auto;
 }
 
 .score-header {
