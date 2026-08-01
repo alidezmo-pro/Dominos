@@ -2,6 +2,8 @@
 import { setSelectPlayers, setSelectScore, showStartModal } from './ui.js';
 import { createRoom, joinRoom } from './firebase.js';
 import { selectGameMode, drawFromBoneyard, selectBoardEnd } from './logic.js';
+// استيراد دالة المايك الحقيقية من ملف الصوت
+import { toggleMicUI } from './audio.js';
 // في أعلى ملف main.js
 import { state } from './state.js';
 
@@ -21,18 +23,6 @@ window.showStartModal = showStartModal;
 window.onload = function() { 
     showStartModal(); 
 };
-// دالة تشغيل وإغلاق المايك
-window.toggleMic = function() {
-    const micBtn = document.getElementById("mic-btn");
-    const micStatus = document.getElementById("mic-status");
-    
-    if (micBtn.classList.contains("muted")) {
-        micBtn.classList.remove("muted");
-        micStatus.innerText = "المايك مفتوح";
-        // هنا يمكنك لاحقاً إضافة كود الـ WebRTC الخاص بفتح المايك
-    } else {
-        micBtn.classList.add("muted");
-        micStatus.innerText = "المايك مغلق";
-        // هنا يمكنك لاحقاً إضافة كود الـ WebRTC الخاص بغلق المايك
-    }
-};
+
+// ربط زر المايك بالدالة الحقيقية للاتصال الصوتي
+window.toggleMic = toggleMicUI;
