@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>لعبة الدومينو الاحترافية</title>
+    <title>لعبة الدومينو الاحترافية - أونلاين</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,18 +12,17 @@
         
         <!-- الشريط العلوي: المنافسون -->
         <header class="top-bar">
-            <!-- الكمبيوتر 1 -->
+            <!-- الخصم الأونلاين -->
             <div id="comp1-avatar" class="profile top-left">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الكمبيوتر 1">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الخصم">
                 <div class="profile-info">
-                    <span id="comp1-count" class="profile-count">🂠 9</span>
+                    <span id="comp1-count" class="profile-count">🂠 0</span>
                 </div>
             </div>
 
-            <!-- الكمبيوتر 2 (خاص بوضع 3 لاعبين) -->
             <div id="comp2-avatar" class="profile top-right hidden">
                 <div class="profile-info">
-                    <span id="comp2-count" class="profile-count">🂠 9</span>
+                    <span id="comp2-count" class="profile-count">🂠 0</span>
                 </div>
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="الكمبيوتر 2">
             </div>
@@ -61,19 +60,59 @@
     <div id="start-modal" class="modal-overlay">
         <div class="modal-box">
             <h2>أهلاً بك في الدومينو! 🎲</h2>
-            <p>اختر نظام اللعب للبدء:</p>
-            <button class="btn-primary" onclick="selectGameMode(2)">👤 لاعبين</button>
-            <button class="btn-primary" onclick="selectGameMode(3)">👥 لاعبين 3</button>
+            
+            <div style="margin-bottom: 20px;">
+                <p style="color: #38bdf8; font-weight: bold;">العب أونلاين مع صديق</p>
+                <button class="btn-primary" onclick="createRoom()">➕ إنشاء غرفة</button>
+                <div style="margin-top: 15px;">
+                    <input type="text" id="room-code" placeholder="أدخل كود الغرفة هنا" style="padding: 10px; width: 70%; border-radius: 8px; border: 1px solid #38bdf8; text-align: center; color: #000;">
+                    <br>
+                    <button class="btn-primary" onclick="joinRoom()" style="background: #f59e0b; margin-top: 10px;">🔗 انضمام للغرفة</button>
+                </div>
+            </div>
+
+            <hr style="border-color: #334155; margin: 20px 0;">
+
+            <div style="margin-bottom: 10px;">
+                <p>أو العب ضد الكمبيوتر للتجربة:</p>
+                <button class="btn-primary" onclick="selectGameMode(2)" style="background: #64748b;">👤 لاعبين</button>
+            </div>
         </div>
     </div>
 
     <div id="end-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <h2 id="end-title">انتهت اللعبة!</h2>
-            <button class="btn-primary" onclick="showStartModal()">🔄 العب مرة أخرى</button>
+            <button class="btn-primary" onclick="location.reload()">🔄 العب مرة أخرى</button>
         </div>
     </div>
 
-    <script src="script.js?v=11.7"></script>
+    <!-- === كود فايربيز السري الخاص بك === -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
+      import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyC28vhM3_RlSPbPYFsb2RL8DO5685Ue_p8",
+        authDomain: "dominos-pro-beee8.firebaseapp.com",
+        projectId: "dominos-pro-beee8",
+        storageBucket: "dominos-pro-beee8.firebasestorage.app",
+        messagingSenderId: "184280288087",
+        appId: "1:184280288087:web:4976d9e7bd96b93bc04c12"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // تمرير دوال فايربيز للملف الأساسي
+      window.db = db;
+      window.ref = ref;
+      window.set = set;
+      window.update = update;
+      window.onValue = onValue;
+    </script>
+    
+    <!-- ملف اللعبة الأساسي -->
+    <script src="script.js?v=11.8"></script>
 </body>
 </html>
