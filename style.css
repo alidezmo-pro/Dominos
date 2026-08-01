@@ -16,6 +16,7 @@
     --accent-player: #38bdf8;
     --accent-comp: #f59e0b;
     --accent-danger: #ef4444;
+    --accent-score: #4ade80;
     
     --domino-bg: #f8fafc;
     --domino-dot: #0f172a;
@@ -145,7 +146,59 @@ body {
     box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-/* --- 5. Table Area --- */
+/* --- 5. Floating Scoreboard Container (Left Side) --- */
+#scoreboard-container {
+    position: absolute;
+    top: 70px; /* أسفل صورة المنافس الأيسر */
+    left: 12px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    color: var(--text-light);
+    z-index: var(--z-ui);
+    min-width: 120px;
+    pointer-events: auto;
+}
+
+.score-target {
+    font-weight: bold;
+    color: var(--accent-comp);
+    font-size: 0.85rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+}
+
+.score-players {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.score-box {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.score-box span {
+    font-weight: bold;
+    color: var(--accent-score);
+    margin-right: 6px;
+}
+
+/* --- 6. Table Area --- */
 .table-container {
     flex-grow: 1;
     position: relative;
@@ -169,7 +222,7 @@ body {
     transition: transform 0.3s ease-in-out;
 }
 
-/* --- 6. Bottom Bar (Boneyard + Hand + Player Avatar) --- */
+/* --- 7. Bottom Bar (Boneyard + Hand + Player Avatar) --- */
 .bottom-bar {
     flex: 0 0 auto;
     display: grid;
@@ -282,7 +335,7 @@ body {
     pointer-events: none;
 }
 
-/* --- 7. Domino Pieces --- */
+/* --- 8. Domino Pieces --- */
 .domino-piece {
     width: var(--domino-w);
     height: var(--domino-h);
@@ -338,7 +391,7 @@ body {
 .p-6 .dot-5 { top: 50%; right: 15%; transform: translateY(-50%); }
 .p-6 .dot-6 { bottom: 15%; right: 15%; }
 
-/* --- 8. Active Turn Effects --- */
+/* --- 9. Active Turn Effects --- */
 .active-neon-player {
     border-color: var(--accent-player) !important;
     box-shadow: 0 0 12px rgba(56, 189, 248, 0.8) !important;
@@ -349,7 +402,7 @@ body {
     box-shadow: 0 0 12px rgba(245, 158, 11, 0.8) !important;
 }
 
-/* --- 9. Modals --- */
+/* --- 10. Modals --- */
 .hidden { display: none !important; }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: center; align-items: center; z-index: var(--z-modal); backdrop-filter: blur(4px); }
 .modal-box { background: var(--table-bg); padding: 2.5rem; border-radius: 20px; text-align: center; border: 2px solid var(--accent-player); box-shadow: 0 0 30px rgba(56, 189, 248, 0.3); max-width: 400px; width: 90%; }
@@ -358,9 +411,12 @@ body {
 .btn-primary { background: var(--accent-player); color: #000; border: none; padding: 0.75rem 1.5rem; font-size: 1.1rem; border-radius: 10px; cursor: pointer; font-weight: bold; margin: 0.5rem; transition: transform 0.2s ease; }
 .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(56, 189, 248, 0.5); }
 
-/* --- 10. Responsive Breakpoints --- */
+/* --- 11. Responsive Breakpoints --- */
 @media (max-width: 768px) {
     .btn-boneyard { padding: 0.5rem; font-size: 0.85rem; }
+    #scoreboard-container { top: 60px; left: 8px; padding: 8px; min-width: 100px; }
+    .score-target { font-size: 0.75rem; }
+    .score-box { font-size: 0.7rem; padding: 4px 6px; }
     
     :root { 
         --domino-w: 30px; 
