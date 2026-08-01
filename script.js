@@ -11,7 +11,6 @@ let playerRole = null;
 window.createRoom = function() {
     roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
     playerRole = 'host';
-
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
     
     window.set(roomRef, {
@@ -22,54 +21,110 @@ window.createRoom = function() {
         alert("تم إنشاء الغرفة بنجاح! 🎲\nكود الغرفة الخاص بك هو: " + roomId + "\nأرسله لصديقك ليدخل معك.");
         document.getElementById("start-modal").classList.add("hidden");
         listenToRoomUpdates(); 
-    }).catch((error) => {
-        alert("حدث خطأ أثناء الاتصال: " + error.message);
     });
 };
 
 window.joinRoom = function() {
     const inputCode = document.getElementById("room-code").value.trim();
-    if (!inputCode) {
-        alert("يرجى إدخال كود الغرفة أولاً!");
-        return;
-    }
+    if (!inputCode) return alert("يرجى إدخال كود الغرفة أولاً!");
 
     const roomRef = window.ref(window.db, 'rooms/' + inputCode);
-    
     window.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         if (data && data.status === 'waiting') {
             roomId = inputCode;
             playerRole = 'guest';
-            
-            window.update(roomRef, {
-                status: 'playing',
-                guest: true
-            });
-
+            window.update(roomRef, { status: 'playing', guest: true });
             alert("تم الانضمام للغرفة بنجاح! 🔥");
             document.getElementById("start-modal").classList.add("hidden");
             listenToRoomUpdates();
         } else if (data && data.status === 'playing') {
             alert("هذه الغرفة ممتلئة وتلعب حالياً!");
         } else {
-            alert("كود الغرفة غير صحيح أو الغرفة غير موجودة!");
+            alert("كود الغرفة غير صحيح!");
         }
     }, { onlyOnce: true }); 
 };
 
+// --- الدالة المحدثة لمراقبة الغرفة وبدء اللعبة ---
 function listenToRoomUpdates() {
     const roomRef = window.ref(window.db, 'rooms/' + roomId);
     window.onValue(roomRef, (snapshot) => {
         const data = snapshot.val();
         
-        if (data && data.status === 'playing' && playerRole === 'host') {
-            alert("صديقك دخل الغرفة! اللعبة ستبدأ الآن.");
-            // لاحقاً: سنستدعي دالة توزيع الأوراق الأونلاين هنا
+        // 1. إذا اكتمل العدد ولم تتوزع الأوراق بعد
+        if (data && data.status === 'playing' && !data.gameState) {
+            if (playerRole === 'host') {
+                alert("صديقك دخل الغرفة! سيتم توزيع الأوراق الآن.");
+                startOnlineGame(); // صاحب الغرفة هو من يقوم بخلط وتوزيع الأوراق
+            } else {
+                alert("تم الانضمام! ننتظر توزيع الأوراق من صاحب الغرفة...");
+            }
         }
-        // لاحقاً: سنضع هنا كود استقبال حركات الخصم وتحديث الطاولة
+        
+        // 2. إذا تم توزيع الأوراق ورفعها لفايربيز
+        if (data && data.gameState) {
+            syncGameState(data.gameState);
+        }
     });
 }
+
+// --- دالة جديدة: خلط الأوراق ورفعها لفايربيز ---
+function startOnlineGame() {
+    let set = [];
+    for (let i = 0; i <= 6; i++) {
+        for (let j = i; j <= 6; j++) set.push({ top: i, bottom: j });
+    }
+    
+    // خلط عشوائي
+    for (let i = set.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [set[i], set[j]] = [set[j], set[i]];
+    }
+
+    // تجهيز حالة اللعبة لرفعها (7 أوراق لكل لاعب)
+    const newGameState = {
+        hostHand: set.splice(0, 7),
+        guestHand: set.splice(0, 7),
+        boneyard: set,
+        boardChain: [],
+        currentTurn: 'host', // صاحب الغرفة يبدأ مؤقتاً
+        leftEndValue: -1,
+        rightEndValue: -1
+    };
+
+    const roomRef = window.ref(window.db, 'rooms/' + roomId);
+    window.update(roomRef, { gameState: newGameState });
+}
+
+// --- دالة جديدة: مزامنة الشاشتين وعرض الأوراق ---
+function syncGameState(onlineState) {
+    document.getElementById("start-modal").classList.add("hidden");
+    
+    // تحديد أوراقي وأوراق الخصم بناءً على دوري
+    if (playerRole === 'host') {
+        playerHand = onlineState.hostHand || [];
+        comp1Hand = onlineState.guestHand || []; // نستخدم يد الكمبيوتر كأنها للخصم الأونلاين
+        currentTurn = (onlineState.currentTurn === 'host') ? 'player' : 'comp1';
+    } else {
+        playerHand = onlineState.guestHand || [];
+        comp1Hand = onlineState.hostHand || [];
+        currentTurn = (onlineState.currentTurn === 'guest') ? 'player' : 'comp1';
+    }
+
+    boneyard = onlineState.boneyard || [];
+    boardChain = onlineState.boardChain || [];
+    leftEndValue = onlineState.leftEndValue !== -1 ? onlineState.leftEndValue : null;
+    rightEndValue = onlineState.rightEndValue !== -1 ? onlineState.rightEndValue : null;
+
+    // استدعاء دالة الرسم الخاصة بك لتحديث الشاشة
+    renderGame();
+}
+
+// ==========================================
+// 2. متغيرات اللعبة الأساسية
+// ==========================================
+// (باقي الكود الخاص بك كما هو دون تغيير...)
 
 // ==========================================
 // 2. متغيرات اللعبة الأساسية
