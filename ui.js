@@ -26,12 +26,32 @@ export function setSelectScore(score, btn) {
     btn.classList.add('active');
 }
 
+// === دالة جديدة لتحديث أسماء اللاعبين فوق الصور (الـ Avatars) ===
+export function updateNamesUI() {
+    if (!state.isOnline) return;
+
+    let comp1NameEl = document.getElementById('comp1-name');
+    let comp2NameEl = document.getElementById('comp2-name');
+
+    if (state.playerRole === 'host') {
+        if (comp1NameEl) comp1NameEl.innerText = state.roomNames.guest1 || "في الانتظار...";
+        if (comp2NameEl) comp2NameEl.innerText = state.roomNames.guest2 || "في الانتظار...";
+    } else if (state.playerRole === 'guest1') {
+        if (comp1NameEl) comp1NameEl.innerText = state.roomNames.host || "صاحب الغرفة";
+        if (comp2NameEl) comp2NameEl.innerText = state.roomNames.guest2 || "في الانتظار...";
+    } else if (state.playerRole === 'guest2') {
+        if (comp1NameEl) comp1NameEl.innerText = state.roomNames.host || "صاحب الغرفة";
+        if (comp2NameEl) comp2NameEl.innerText = state.roomNames.guest1 || "الخصم 1";
+    }
+}
+
+// === الدالة المعدلة لعرض الأسماء الحقيقية في لوحة النتائج بدلاً من "صاحب الغرفة/الخصم" ===
 export function updateScoreUI() {
     let sb = document.getElementById("scoreboard-container");
     if (!sb) return;
     
     let p1Name = "أنت";
-    let p2Name = (state.playerRole === 'host') ? "الخصم 1" : "صاحب الغرفة";
+    let p2Name = (state.playerRole === 'host') ? (state.roomNames.guest1 || "الخصم 1") : (state.roomNames.host || "صاحب الغرفة");
     
     let myScore = state.roomScores[state.playerRole] || 0;
     let p2Score = (state.playerRole === 'host') ? state.roomScores.guest1 : state.roomScores.host;
@@ -42,7 +62,7 @@ export function updateScoreUI() {
     html += `<div class="score-box">${p2Name}: <span>${p2Score}</span></div>`;
     
     if (state.roomMaxPlayers === 3) {
-        let p3Name = (state.playerRole === 'guest2') ? "الخصم 1" : "الخصم 2";
+        let p3Name = (state.playerRole === 'guest2') ? (state.roomNames.guest1 || "الخصم 1") : (state.roomNames.guest2 || "الخصم 2");
         let p3Score = (state.playerRole === 'host') ? state.roomScores.guest2 : (state.playerRole === 'guest1' ? state.roomScores.guest2 : state.roomScores.guest1);
         html += `<div class="score-box">${p3Name}: <span>${p3Score}</span></div>`;
     }
