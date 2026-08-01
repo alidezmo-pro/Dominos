@@ -7,10 +7,23 @@
     <link rel="stylesheet" href="main.css">
     
     <style>
-        /* تصغير عرض مربع النقاط */
+        /* إخفاء لوحة النتائج القديمة تماماً */
         #scoreboard-container {
-            max-width: 160px;
-            font-size: 0.85rem;
+            display: none !important;
+        }
+
+        /* تنسيق النقاط الجديدة داخل الأفاتار */
+        .profile-score {
+            background: rgba(16, 185, 129, 0.2); /* خلفية خضراء خفيفة */
+            color: #10b981; /* لون النص */
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-right: 5px;
+            text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            display: inline-block;
         }
         
         /* تنسيق خطوات القائمة (الـ Wizard) */
@@ -46,6 +59,7 @@
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الخصم 1">
                 <div class="profile-info">
                     <span id="comp1-name" class="player-label">الخصم 1</span>
+                    <span id="comp1-score-avatar" class="profile-score">🏆 0</span>
                     <span id="comp1-count" class="profile-count">🂠 0</span>
                 </div>
             </div>
@@ -57,13 +71,14 @@
             <div id="comp2-avatar" class="profile top-right hidden">
                 <div class="profile-info">
                     <span id="comp2-name" class="player-label">الخصم 2</span>
+                    <span id="comp2-score-avatar" class="profile-score">🏆 0</span>
                     <span id="comp2-count" class="profile-count">🂠 0</span>
                 </div>
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp2" alt="الخصم 2">
             </div>
         </header>
 
-        <!-- لوحة النتائج -->
+        <!-- لوحة النتائج (تم إخفاؤها عبر CSS ولكن تُركت برمجياً لتجنب الأخطاء) -->
         <div id="scoreboard-container" class="hidden">
             <div class="score-card">
                 <div class="score-header">
@@ -84,6 +99,7 @@
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=player" alt="أنت">
                 <div class="profile-info">
                     <span id="my-name-display" class="player-label">أنت</span>
+                    <span id="player-score-avatar" class="profile-score">🏆 0</span>
                 </div>
             </div>
 
@@ -206,14 +222,11 @@
         </div>
     </div>
 
-        <!-- عنصر مخفي لتشغيل صوت الخصم -->
-    <audio id="remote-audio" autoplay></audio>
-
-        <!-- مكتبة PeerJS للاتصال الصوتي -->
+    <!-- مكتبة PeerJS للاتصال الصوتي -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 
-       <!-- التحكم في خطوات الشاشة وحفظ الاسم -->
+    <!-- التحكم في خطوات الشاشة وحفظ الاسم -->
     <script>
         function goToStep(stepId) {
             if(stepId === 2) {
