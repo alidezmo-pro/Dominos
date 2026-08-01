@@ -111,6 +111,7 @@ function syncGameState(onlineState) {
     centerTileIndex = onlineState.centerTileIndex || 0;
 
     renderGame();
+    startTimer(); // ⏱️ السطر السحري لتشغيل التايمر في الأونلاين
 }
 
 // دالة جديدة: إرسال حركتك إلى فايربيز
