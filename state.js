@@ -31,4 +31,9 @@ export const state = {
     // Timer
     turnTimerInterval: null, 
     timeLeft: 20
+
+    // أضف هذه السطور داخل كائن export const state = { ... }
+    playerName: localStorage.getItem("dominoPlayerName") || "لاعب",
+    roomNames: { host: "انتظار...", guest1: "انتظار...", guest2: "انتظار..." },
+
 };
