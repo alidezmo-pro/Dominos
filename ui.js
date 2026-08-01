@@ -26,7 +26,7 @@ export function setSelectScore(score, btn) {
     btn.classList.add('active');
 }
 
-// === دالة جديدة لتحديث أسماء اللاعبين فوق الصور (الـ Avatars) ===
+// === دالة تحديث أسماء اللاعبين فوق الصور (الـ Avatars) ===
 export function updateNamesUI() {
     if (!state.isOnline) return;
 
@@ -45,31 +45,31 @@ export function updateNamesUI() {
     }
 }
 
-// === الدالة المعدلة لعرض الأسماء الحقيقية في لوحة النتائج بدلاً من "صاحب الغرفة/الخصم" ===
+// === الدالة المعدلة لعرض النقاط داخل الأفاتار بدلاً من لوحة النتائج المنفصلة ===
 export function updateScoreUI() {
-    let sb = document.getElementById("scoreboard-container");
-    if (!sb) return;
-    
-    let p1Name = "أنت";
-    let p2Name = (state.playerRole === 'host') ? (state.roomNames.guest1 || "الخصم 1") : (state.roomNames.host || "صاحب الغرفة");
-    
+    if (!state.isOnline) return;
+
+    // جلب نقاطك أنت
     let myScore = state.roomScores[state.playerRole] || 0;
+    
+    // جلب نقاط الخصم 1 بناءً على دورك الحالي
     let p2Score = (state.playerRole === 'host') ? state.roomScores.guest1 : state.roomScores.host;
     
-    let html = `<div class="score-target">الهدف: <b>${state.targetScore}</b> 🏆</div>`;
-    html += `<div class="score-players">`;
-    html += `<div class="score-box">${p1Name}: <span>${myScore}</span></div>`;
-    html += `<div class="score-box">${p2Name}: <span>${p2Score}</span></div>`;
-    
+    // تحديث رقم نقاطك في الـ UI
+    let myScoreEl = document.getElementById("player-score-avatar");
+    if (myScoreEl) myScoreEl.innerText = `🏆 ${myScore}`;
+
+    // تحديث رقم نقاط الخصم 1 في الـ UI
+    let comp1ScoreEl = document.getElementById("comp1-score-avatar");
+    if (comp1ScoreEl) comp1ScoreEl.innerText = `🏆 ${p2Score}`;
+
+    // إذا كانت اللعبة بـ 3 لاعبين، نحدث الخصم 2
     if (state.roomMaxPlayers === 3) {
-        let p3Name = (state.playerRole === 'guest2') ? (state.roomNames.guest1 || "الخصم 1") : (state.roomNames.guest2 || "الخصم 2");
         let p3Score = (state.playerRole === 'host') ? state.roomScores.guest2 : (state.playerRole === 'guest1' ? state.roomScores.guest2 : state.roomScores.guest1);
-        html += `<div class="score-box">${p3Name}: <span>${p3Score}</span></div>`;
+        
+        let comp2ScoreEl = document.getElementById("comp2-score-avatar");
+        if (comp2ScoreEl) comp2ScoreEl.innerText = `🏆 ${p3Score}`;
     }
-    html += `</div>`;
-    
-    sb.innerHTML = html;
-    sb.classList.remove("hidden");
 }
 
 export function updateTurnStatus() {
