@@ -6,6 +6,14 @@ import { selectGameMode, drawFromBoneyard, selectBoardEnd } from './logic.js';
 import { toggleMicUI } from './audio.js';
 // في أعلى ملف main.js
 import { state } from './state.js';
+import { setSelectPlayers, setSelectScore, showStartModal, returnToMainMenu } from './ui.js';
+
+
+
+
+
+window.returnToMainMenu = returnToMainMenu;
+
 
 // مع بقية المتغيرات التي يتم ربطها بـ window
 window.state = state;
