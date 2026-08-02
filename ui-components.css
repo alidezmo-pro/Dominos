@@ -48,6 +48,7 @@
     width: 50px;
     height: 50px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    flex-shrink: 0; /* يمنع انكماش الأفاتار وتخريب الأبعاد في الشاشات الصغيرة */
 }
 
 .profile:hover {
@@ -88,7 +89,7 @@
 /* اسم اللاعب (أعلى الأفاتار) */
 .player-label {
     position: absolute;
-    top: -3px; 
+    top: -12px; /* تم تعديل الارتفاع قليلاً لضمان عدم التداخل */
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
@@ -106,7 +107,7 @@
 /* النقاط (كأس أسفل الأفاتار) */
 .profile-score {
     position: absolute;
-    top: calc(100% + 14px); /* لإنزال المربع تحت الأفاتار بمسافة 4 بيكسل */
+    top: calc(100% + 5px); /* استخدام مسافة ديناميكية آمنة */
     bottom: auto;
     left: 50%;
     right: auto;
@@ -130,8 +131,9 @@
 /* عدد الأوراق (على يمين الأفاتار) */
 .profile-count {
     position: absolute;
-    bottom: -2px;
-    left: 36px; 
+    bottom: -4px; 
+    left: 100%; /* يعتمد على النسبة المئوية ليعمل على أي شاشة */
+    transform: translateX(-65%); /* سحب العنصر ليتمركز على الحافة تماماً */
     right: auto;
     background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
     color: #451a03;
