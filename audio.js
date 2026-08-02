@@ -13,8 +13,37 @@ export async function initAudio() {
         // 2. إنشاء معرّف فريد للاعب بناءً على الغرفة ودوره
         const myPeerId = `domino-${state.roomId}-${state.playerRole}`;
         
-        // 3. تهيئة الاتصال عبر خوادم PeerJS المجانية
-        peer = new Peer(myPeerId);
+        // 3. إعدادات خوادم STUN و TURN من Metered
+        const peerOptions = {
+            config: {
+                iceServers: [
+                    { urls: "stun:stun.relay.metered.ca:80" },
+                    { 
+                        urls: "turn:global.relay.metered.ca:80", 
+                        username: "1dedfc86f40960fa5dcae787", 
+                        credential: "RMvH3tj4ie0ehFws" 
+                    },
+                    { 
+                        urls: "turn:global.relay.metered.ca:80?transport=tcp", 
+                        username: "1dedfc86f40960fa5dcae787", 
+                        credential: "RMvH3tj4ie0ehFws" 
+                    },
+                    { 
+                        urls: "turn:global.relay.metered.ca:443", 
+                        username: "1dedfc86f40960fa5dcae787", 
+                        credential: "RMvH3tj4ie0ehFws" 
+                    },
+                    { 
+                        urls: "turns:global.relay.metered.ca:443?transport=tcp", 
+                        username: "1dedfc86f40960fa5dcae787", 
+                        credential: "RMvH3tj4ie0ehFws" 
+                    }
+                ]
+            }
+        };
+        
+        // 4. تهيئة الاتصال عبر الخوادم الجديدة لحل مشكلة الشبكات المختلفة
+        peer = new Peer(myPeerId, peerOptions);
         
         peer.on('open', (id) => {
             console.log('📞 متصل بخادم الصوت. المعرّف الخاص بك:', id);
