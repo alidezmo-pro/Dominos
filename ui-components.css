@@ -89,7 +89,7 @@
 /* اسم اللاعب (أعلى الأفاتار) */
 .player-label {
     position: absolute;
-    top: -12px; /* تم تعديل الارتفاع قليلاً لضمان عدم التداخل */
+    top: -4px; /* تم تعديل الارتفاع قليلاً لضمان عدم التداخل */
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
@@ -107,7 +107,7 @@
 /* النقاط (كأس أسفل الأفاتار) */
 .profile-score {
     position: absolute;
-    top: calc(100% + 5px); /* استخدام مسافة ديناميكية آمنة */
+    top: calc(100% + 13px); /* استخدام مسافة ديناميكية آمنة */
     bottom: auto;
     left: 50%;
     right: auto;
