@@ -97,3 +97,18 @@ export function endGame(message) {
     
     document.getElementById("end-modal")?.classList.remove("hidden");
 }
+
+export function returnToMainMenu() {
+    document.getElementById("end-modal")?.classList.add("hidden");
+    document.getElementById("start-modal")?.classList.remove("hidden");
+    
+    // إعادة ضبط خطوات الواجهة لتعود لشاشة اختيار الأونلاين/أوفلاين
+    document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active-step'));
+    document.getElementById('step-2')?.classList.add('active-step');
+    
+    if (state.isOnline) {
+        state.isOnline = false;
+        // يمكنك هنا مستقبلاً إضافة كود لمغادرة غرفة فايربيز إن أردت
+    }
+}
+
