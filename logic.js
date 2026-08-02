@@ -1,11 +1,13 @@
 // logic.js
 import { state } from './state.js';
 import { renderGame, renderAvatarTimer } from './render.js';
-import { showToast, updateTurnStatus, endGame } from './ui.js';
+import { showToast, updateTurnStatus, endGame, updateScoreUI } from './ui.js';
 import { sendMoveToFirebase } from './firebase.js';
 
 export function selectGameMode(mode) {
     state.isOnline = false; 
+    state.targetScore = state.selectedTargetScore;
+    state.roomScores = { host: 0, guest1: 0, guest2: 0 };
     document.getElementById("scoreboard-container")?.classList.add("hidden"); 
     startGame(mode);
 }
@@ -147,7 +149,7 @@ export function onPlayerTileClick(index) {
     playPlayerTile(index, targetEnd);
 }
 
-window.onPlayerTileClick = onPlayerTileClick; // لتعمل مع الـ onclick في الـ HTML
+window.onPlayerTileClick = onPlayerTileClick; 
 
 export function selectBoardEnd(end) {
     if (state.selectedTileIndex !== null) {
@@ -165,7 +167,7 @@ export function playPlayerTile(index, end) {
         if (state.isOnline) {
             sendMoveToFirebase(); 
         } else {
-            endGame("🎉 مبروك! لقد فزت باللعبة!"); 
+            processOfflineRoundEnd('player'); 
         }
         return; 
     }
@@ -228,7 +230,10 @@ export function playComputerTurn() {
 
         addTileToBoard(tile, endToPlay);
 
-        if (hand.length === 0) { endGame(`❌ للأسف، لقد خسرت!`); return; }
+        if (hand.length === 0) { 
+            processOfflineRoundEnd(state.currentTurn); 
+            return; 
+        }
         nextTurn();
     } else {
         if (state.boneyard.length > 0) {
@@ -270,17 +275,55 @@ export function checkBlockGame() {
             sendMoveToFirebase(true); 
             return true;
         } else {
-            let pScore = state.playerHand.reduce((s, t) => s + t.top + t.bottom, 0);
-            let c1Score = state.comp1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
-            let minScore = Math.min(pScore, c1Score);
-            
-            let msg = "🔒 انغلقت اللعبة! ";
-            if (minScore === pScore) msg += `فزت بأقل نقاط (${pScore})!`;
-            else msg += `خسرت، نقاط الخصم أقل (${c1Score})!`;
-            
-            endGame(msg); 
+            processOfflineRoundEnd('block'); 
             return true;
         }
     }
     return false;
+}
+
+export function processOfflineRoundEnd(type) {
+    let pScore = state.playerHand.reduce((s, t) => s + t.top + t.bottom, 0);
+    let c1Score = state.comp1Hand.reduce((s, t) => s + t.top + t.bottom, 0);
+    let c2Score = state.comp2Hand.reduce((s, t) => s + t.top + t.bottom, 0);
+
+    let winner = null;
+    let points = 0;
+    let msg = "";
+
+    // تحديد الفائز وحساب النقاط
+    if (type === 'player') {
+        winner = 'host'; 
+        points = c1Score + c2Score;
+        msg = `🎯 فزت بالجولة! حصدت ${points} نقطة.`;
+    } else if (type === 'comp1') {
+        winner = 'guest1';
+        points = pScore + c2Score;
+        msg = `🎯 فاز الخصم 1 بالجولة! حصد ${points} نقطة.`;
+    } else if (type === 'comp2') {
+        winner = 'guest2';
+        points = pScore + c1Score;
+        msg = `🎯 فاز الخصم 2 بالجولة! حصد ${points} نقطة.`;
+    } else if (type === 'block') {
+        let min = pScore; winner = 'host';
+        if (c1Score < min) { min = c1Score; winner = 'guest1'; }
+        if (state.gameMode === 3 && c2Score < min) { min = c2Score; winner = 'guest2'; }
+        points = (pScore + c1Score + c2Score) - min;
+        msg = `🔒 انغلقت اللعبة! فاز ${winner === 'host' ? 'أنت' : (winner === 'guest1' ? 'الخصم 1' : 'الخصم 2')} بـ ${points} نقطة.`;
+    }
+
+    state.roomScores[winner] += points;
+    updateScoreUI(); 
+
+    let isFinal = state.roomScores[winner] >= state.targetScore;
+
+    if (isFinal) {
+        let finalMsg = `🎉 انتهت المباراة! الفائز هو ${winner === 'host' ? 'أنت' : (winner === 'guest1' ? 'الخصم 1' : 'الخصم 2')}!`;
+        endGame(finalMsg);
+    } else {
+        showToast(msg, 3500);
+        state.isGameOver = true; 
+        clearInterval(state.turnTimerInterval);
+        setTimeout(() => { startGame(state.gameMode); }, 3500); 
+    }
 }
