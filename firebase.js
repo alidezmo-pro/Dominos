@@ -238,6 +238,7 @@ export function processHostRoundEnd(type, gameState) {
     msg += `فاز ${winnerName} بـ (${points}) نقطة.`;
     
     if (isFinal) msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
+    endGame(msg);
 
     window.update(window.ref(window.db, 'rooms/' + state.roomId), {
         scores: state.roomScores,
