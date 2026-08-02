@@ -89,7 +89,7 @@
 /* اسم اللاعب (أعلى الأفاتار) */
 .player-label {
     position: absolute;
-    top: -4px; /* تم تعديل الارتفاع قليلاً لضمان عدم التداخل */
+    top: -2px; /* تم تعديل الارتفاع قليلاً لضمان عدم التداخل */
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.8);
@@ -131,7 +131,7 @@
 /* عدد الأوراق (على يمين الأفاتار) */
 .profile-count {
     position: absolute;
-    bottom: -4px; 
+    bottom: -2px; 
     left: 100%; /* يعتمد على النسبة المئوية ليعمل على أي شاشة */
     transform: translateX(-65%); /* سحب العنصر ليتمركز على الحافة تماماً */
     right: auto;
