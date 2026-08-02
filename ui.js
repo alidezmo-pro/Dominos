@@ -112,3 +112,7 @@ export function returnToMainMenu() {
     }
 }
 
+// === التعديلات الجديدة: ربط الدوال بـ window لتعمل مع الـ HTML ===
+window.setSelectPlayers = setSelectPlayers;
+window.setSelectScore = setSelectScore;
+window.returnToMainMenu = returnToMainMenu;
