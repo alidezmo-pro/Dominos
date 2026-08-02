@@ -1,10 +1,9 @@
 // firebase.js
 import { state } from './state.js';
-import { showToast, updateScoreUI, updateNamesUI } from './ui.js'; // تم إضافة updateNamesUI هنا
+import { showToast, updateScoreUI, updateNamesUI, endGame } from './ui.js'; 
 import { createDominoSet, shuffle, startTimer, checkAutoPass } from './logic.js';
 import { renderGame } from './render.js';
 import { initAudio } from './audio.js';
-
 
 export function createRoom() {
     state.roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
@@ -48,19 +47,16 @@ export function joinRoom() {
             if (state.roomMaxPlayers === 2) {
                 state.playerRole = 'guest1';
                 state.isOnline = true;
-                // إرسال الاسم للضيف الأول
                 window.update(roomRef, { guest1: true, status: 'playing', 'names/guest1': state.playerName });
             } else if (state.roomMaxPlayers === 3) {
                 if (!data.guest1) {
                     state.playerRole = 'guest1';
                     state.isOnline = true;
-                    // إرسال الاسم للضيف الأول
                     window.update(roomRef, { guest1: true, 'names/guest1': state.playerName });
                     showToast("تم الانضمام! ننتظر اللاعب الثالث...");
                 } else if (!data.guest2) {
                     state.playerRole = 'guest2';
                     state.isOnline = true;
-                    // إرسال الاسم للضيف الثاني
                     window.update(roomRef, { guest2: true, status: 'playing', 'names/guest2': state.playerName });
                 }
             }
@@ -85,7 +81,6 @@ export function listenToRoomUpdates() {
         state.roomMaxPlayers = data.maxPlayers || 2;
         state.targetScore = data.targetScore || 100;
 
-        // --- تحديث الأسماء ---
         if (data.names) {
             state.roomNames = data.names;
             updateNamesUI(); 
@@ -95,11 +90,6 @@ export function listenToRoomUpdates() {
             state.roomScores = data.scores;
             updateScoreUI();
         }
-
-        if (data.roundAlert && data.roundAlert !== state.lastAlert) {
-            state.lastAlert = data.roundAlert;
-            showToast(data.roundAlert, 3000);
-        }
         
         let isFull = (state.roomMaxPlayers === 2 && data.guest1) || (state.roomMaxPlayers === 3 && data.guest1 && data.guest2);
         if (isFull && data.status === 'playing' && !data.gameState && state.playerRole === 'host' && !data.roundAlert) {
@@ -108,6 +98,14 @@ export function listenToRoomUpdates() {
         
         if (data.gameState) {
             syncGameState(data.gameState);
+            
+            // إظهار نافذة النهاية للجميع إذا انتهت الجولة
+            if (data.gameState.isRoundOver) {
+                if (data.roundAlert) {
+                    endGame(data.roundAlert);
+                }
+                return; // إيقاف التنفيذ لمنع التكرار
+            }
             
             if (state.playerRole === 'host') {
                 const hHand = data.gameState.hostHand || [];
@@ -136,18 +134,19 @@ export function startOnlineGame() {
     const newGameState = {
         hostHand: set.splice(0, handSize),
         guest1Hand: set.splice(0, handSize),
-        guest2Hand: state.roomMaxPlayers === 3 ? set.splice(0, handSize) : [],
-        boneyard: set,
-        boardChain: [],
+        guest2Hand: state.roomMaxPlayers === 3 ? set.splice(0, handSize) : false,
+        boneyard: set.length > 0 ? set : false,
+        boardChain: false,
         leftEndValue: -1,
-        rightEndValue: -1
+        rightEndValue: -1,
+        isRoundOver: false
     };
 
     let startingRole = 'host';
     outer: for (let d = 6; d >= 0; d--) {
-        if (newGameState.hostHand.some(t => t.top === d && t.bottom === d)) { startingRole = 'host'; break outer; }
-        if (newGameState.guest1Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest1'; break outer; }
-        if (state.roomMaxPlayers === 3 && newGameState.guest2Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest2'; break outer; }
+        if (newGameState.hostHand && newGameState.hostHand.some(t => t.top === d && t.bottom === d)) { startingRole = 'host'; break outer; }
+        if (newGameState.guest1Hand && newGameState.guest1Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest1'; break outer; }
+        if (state.roomMaxPlayers === 3 && newGameState.guest2Hand && newGameState.guest2Hand.some(t => t.top === d && t.bottom === d)) { startingRole = 'guest2'; break outer; }
     }
     newGameState.currentTurn = startingRole;
     newGameState.isBlocked = false;
@@ -157,8 +156,12 @@ export function startOnlineGame() {
 
 export function syncGameState(onlineState) {
     document.getElementById("start-modal")?.classList.add("hidden");
-    document.getElementById("end-modal")?.classList.add("hidden");
-    state.isGameOver = false;
+    
+    // لا تخفي نافذة النهاية إذا كانت الجولة قد انتهت للتو
+    if (!onlineState.isRoundOver) {
+        document.getElementById("end-modal")?.classList.add("hidden");
+        state.isGameOver = false;
+    }
     
     state.gameMode = state.roomMaxPlayers; 
     let comp2Avatar = document.getElementById("comp2-avatar");
@@ -203,9 +206,6 @@ export function syncGameState(onlineState) {
     renderGame();
     startTimer();
     checkAutoPass();
-
-    
-
 }
 
 export function processHostRoundEnd(type, gameState) {
@@ -238,19 +238,21 @@ export function processHostRoundEnd(type, gameState) {
     msg += `فاز ${winnerName} بـ (${points}) نقطة.`;
     
     if (isFinal) msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
-    endGame(msg);
+    
+    endGame(msg); // للمضيف
 
+    // إرسال التحديث لفايربيز وإعلام الجميع بأن الجولة انتهت دون مسح لوحة اللعب فوراً
     window.update(window.ref(window.db, 'rooms/' + state.roomId), {
         scores: state.roomScores,
         roundAlert: msg,
-        gameState: null 
+        'gameState/isRoundOver': true 
     });
     
     if (!isFinal) {
         setTimeout(() => {
             window.update(window.ref(window.db, 'rooms/' + state.roomId), { roundAlert: null });
             startOnlineGame();
-        }, 2000); 
+        }, 4000); // تأخير 4 ثوانٍ ليتسنى للجميع رؤية الورقة الأخيرة ونافذة النهاية
     }
 }
 
@@ -279,17 +281,19 @@ export function sendMoveToFirebase(isBlocked = false, passTurn = true) {
         else if (state.playerRole === 'guest2') { g2Hand = state.playerHand; hHand = state.comp1Hand; g1Hand = state.comp2Hand; }
     }
 
+    // إرسال false بدلاً من المصفوفة الفارغة لمنع فايربيز من حذفها تلقائياً
     const gameState = {
-        hostHand: hHand || [],
-        guest1Hand: g1Hand || [],
-        guest2Hand: g2Hand || [],
-        boneyard: state.boneyard,
-        boardChain: state.boardChain,
+        hostHand: (hHand && hHand.length > 0) ? hHand : false,
+        guest1Hand: (g1Hand && g1Hand.length > 0) ? g1Hand : false,
+        guest2Hand: (g2Hand && g2Hand.length > 0) ? g2Hand : false,
+        boneyard: (state.boneyard && state.boneyard.length > 0) ? state.boneyard : false,
+        boardChain: (state.boardChain && state.boardChain.length > 0) ? state.boardChain : false,
         leftEndValue: state.leftEndValue !== null ? state.leftEndValue : -1,
         rightEndValue: state.rightEndValue !== null ? state.rightEndValue : -1,
         centerTileIndex: state.centerTileIndex,
         currentTurn: nextTurnRole,
-        isBlocked: isBlocked
+        isBlocked: isBlocked,
+        isRoundOver: false
     };
 
     window.update(window.ref(window.db, 'rooms/' + state.roomId), { gameState: gameState });
