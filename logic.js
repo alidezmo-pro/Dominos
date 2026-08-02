@@ -117,6 +117,9 @@ export function checkAutoPass() {
         if (!canPlay && state.boneyard.length === 0) {
             showToast("لا توجد حركات متاحة، تم تجاوز دورك تلقائياً ⏩");
             setTimeout(() => {
+                if (state.isGameOver) return; // يمنع التنفيذ في حال انتهت اللعبة
+                if (checkBlockGame()) return; // يتأكد إذا اللعبة منغلقة قبل إرسال التجاوز
+
                 if (state.isOnline) sendMoveToFirebase(false, true); 
                 else nextTurn();
             }, 1000);
