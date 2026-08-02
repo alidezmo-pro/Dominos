@@ -99,10 +99,14 @@ export function listenToRoomUpdates() {
         if (data.gameState) {
             syncGameState(data.gameState);
             
-            // إظهار نافذة النهاية للجميع إذا انتهت الجولة
+            // إظهار نافذة النهاية للجميع إذا انتهت المباراة، أو رسالة إذا انتهت الجولة فقط
             if (data.gameState.isRoundOver) {
-                if (data.roundAlert) {
+                if (data.isFinalMatch && data.roundAlert) {
                     endGame(data.roundAlert);
+                } else if (!data.isFinalMatch && data.roundAlert) {
+                    showToast(data.roundAlert, 3500);
+                    state.isGameOver = true;
+                    clearInterval(state.turnTimerInterval);
                 }
                 return; // إيقاف التنفيذ لمنع التكرار
             }
@@ -237,22 +241,32 @@ export function processHostRoundEnd(type, gameState) {
     let msg = (type === 'block') ? "🔒 انغلقت اللعبة! " : "🎯 انتهت الجولة! ";
     msg += `فاز ${winnerName} بـ (${points}) نقطة.`;
     
-    if (isFinal) msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
-    
-    endGame(msg); // للمضيف
+    if (isFinal) {
+        msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
+        endGame(msg); // للمضيف
+        
+        window.update(window.ref(window.db, 'rooms/' + state.roomId), {
+            scores: state.roomScores,
+            roundAlert: msg,
+            isFinalMatch: true, // علامة تدل على انتهاء المباراة كلياً
+            'gameState/isRoundOver': true 
+        });
+    } else {
+        showToast(msg, 3500); // إظهار رسالة عابرة فقط
+        state.isGameOver = true;
+        clearInterval(state.turnTimerInterval);
 
-    // إرسال التحديث لفايربيز وإعلام الجميع بأن الجولة انتهت دون مسح لوحة اللعب فوراً
-    window.update(window.ref(window.db, 'rooms/' + state.roomId), {
-        scores: state.roomScores,
-        roundAlert: msg,
-        'gameState/isRoundOver': true 
-    });
-    
-    if (!isFinal) {
+        window.update(window.ref(window.db, 'rooms/' + state.roomId), {
+            scores: state.roomScores,
+            roundAlert: msg,
+            isFinalMatch: false, // الجولة انتهت ولكن المباراة مستمرة
+            'gameState/isRoundOver': true 
+        });
+        
         setTimeout(() => {
             window.update(window.ref(window.db, 'rooms/' + state.roomId), { roundAlert: null });
             startOnlineGame();
-        }, 4000); // تأخير 4 ثوانٍ ليتسنى للجميع رؤية الورقة الأخيرة ونافذة النهاية
+        }, 4000); // تأخير ليتسنى للجميع رؤية الورقة الأخيرة
     }
 }
 
