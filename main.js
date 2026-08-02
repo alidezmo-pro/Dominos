@@ -1,36 +1,49 @@
 // main.js
-import { setSelectPlayers, setSelectScore, showStartModal } from './ui.js';
-import { createRoom, joinRoom } from './firebase.js';
-import { selectGameMode, drawFromBoneyard, selectBoardEnd } from './logic.js';
-// استيراد دالة المايك الحقيقية من ملف الصوت
-import { toggleMicUI } from './audio.js';
-// في أعلى ملف main.js
+
+// 1. استيراد state
 import { state } from './state.js';
+
+// 2. استيراد دوال الواجهة (تم دمجها في سطر واحد لتجنب التكرار)
 import { setSelectPlayers, setSelectScore, showStartModal, returnToMainMenu } from './ui.js';
 
+// 3. استيراد دوال فايربيز
+import { createRoom, joinRoom } from './firebase.js';
+
+// 4. استيراد دوال المنطق واللعب
+import { selectGameMode, drawFromBoneyard, selectBoardEnd } from './logic.js';
+
+// 5. استيراد دالة المايك الحقيقية من ملف الصوت
+import { toggleMicUI } from './audio.js';
 
 
+// ==========================================
+// ربط المتغيرات والدوال بكائن window لتعمل في HTML
+// ==========================================
 
-
-window.returnToMainMenu = returnToMainMenu;
-
-
-// مع بقية المتغيرات التي يتم ربطها بـ window
+// ربط state بـ window
 window.state = state;
 
-// ربط الوظائف للـ HTML Buttons
+// ربط وظائف أزرار الواجهة
+window.returnToMainMenu = returnToMainMenu;
 window.setSelectPlayers = setSelectPlayers;
 window.setSelectScore = setSelectScore;
+window.showStartModal = showStartModal;
+
+// ربط وظائف الأونلاين
 window.createRoom = createRoom;
 window.joinRoom = joinRoom;
+
+// ربط وظائف اللعب
 window.selectGameMode = selectGameMode;
 window.drawFromBoneyard = drawFromBoneyard;
 window.selectBoardEnd = selectBoardEnd;
-window.showStartModal = showStartModal;
 
+// ربط زر المايك
+window.toggleMic = toggleMicUI;
+
+// ==========================================
+// تشغيل الواجهة عند تحميل الصفحة
+// ==========================================
 window.onload = function() { 
     showStartModal(); 
 };
-
-// ربط زر المايك بالدالة الحقيقية للاتصال الصوتي
-window.toggleMic = toggleMicUI;
