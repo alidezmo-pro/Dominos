@@ -26,7 +26,6 @@ export function setSelectScore(score, btn) {
     btn.classList.add('active');
 }
 
-// === دالة تحديث أسماء اللاعبين فوق الصور (الـ Avatars) ===
 export function updateNamesUI() {
     if (!state.isOnline) return;
 
@@ -45,28 +44,30 @@ export function updateNamesUI() {
     }
 }
 
-// === الدالة المعدلة لعرض النقاط داخل الأفاتار بدلاً من لوحة النتائج المنفصلة ===
+// === الدالة المعدلة لعرض النقاط لتعمل في الأونلاين والأوفلاين ===
 export function updateScoreUI() {
-    if (!state.isOnline) return;
+    let myScore, p2Score, p3Score;
 
-    // جلب نقاطك أنت
-    let myScore = state.roomScores[state.playerRole] || 0;
-    
-    // جلب نقاط الخصم 1 بناءً على دورك الحالي
-    let p2Score = (state.playerRole === 'host') ? state.roomScores.guest1 : state.roomScores.host;
-    
-    // تحديث رقم نقاطك في الـ UI
+    if (state.isOnline) {
+        myScore = state.roomScores[state.playerRole] || 0;
+        p2Score = (state.playerRole === 'host') ? state.roomScores.guest1 : state.roomScores.host;
+        if (state.roomMaxPlayers === 3) {
+            p3Score = (state.playerRole === 'host') ? state.roomScores.guest2 : (state.playerRole === 'guest1' ? state.roomScores.guest2 : state.roomScores.guest1);
+        }
+    } else {
+        // تعيين النقاط لوضع الأوفلاين
+        myScore = state.roomScores.host || 0;
+        p2Score = state.roomScores.guest1 || 0;
+        p3Score = state.roomScores.guest2 || 0;
+    }
+
     let myScoreEl = document.getElementById("player-score-avatar");
     if (myScoreEl) myScoreEl.innerText = `🏆 ${myScore}`;
 
-    // تحديث رقم نقاط الخصم 1 في الـ UI
     let comp1ScoreEl = document.getElementById("comp1-score-avatar");
     if (comp1ScoreEl) comp1ScoreEl.innerText = `🏆 ${p2Score}`;
 
-    // إذا كانت اللعبة بـ 3 لاعبين، نحدث الخصم 2
-    if (state.roomMaxPlayers === 3) {
-        let p3Score = (state.playerRole === 'host') ? state.roomScores.guest2 : (state.playerRole === 'guest1' ? state.roomScores.guest2 : state.roomScores.guest1);
-        
+    if (state.gameMode === 3 || state.roomMaxPlayers === 3) {
         let comp2ScoreEl = document.getElementById("comp2-score-avatar");
         if (comp2ScoreEl) comp2ScoreEl.innerText = `🏆 ${p3Score}`;
     }
@@ -102,13 +103,11 @@ export function returnToMainMenu() {
     document.getElementById("end-modal")?.classList.add("hidden");
     document.getElementById("start-modal")?.classList.remove("hidden");
     
-    // إعادة ضبط خطوات الواجهة لتعود لشاشة اختيار الأونلاين/أوفلاين
     document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active-step'));
     document.getElementById('step-2')?.classList.add('active-step');
     
     if (state.isOnline) {
         state.isOnline = false;
-        // يمكنك هنا مستقبلاً إضافة كود لمغادرة غرفة فايربيز إن أردت
     }
 }
 
