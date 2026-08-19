@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { renderGame, renderAvatarTimer } from './render.js';
 import { showToast, updateTurnStatus, endGame, updateScoreUI } from './ui.js';
 import { sendMoveToFirebase } from './firebase.js';
+import { playTileSound, playDrawSound } from './sfx.js';
 
 export function selectGameMode(mode) {
     state.isOnline = false; 
@@ -12,6 +13,7 @@ export function selectGameMode(mode) {
     startGame(mode);
 }
 
+// إنشاء مجموعة قطع الدومينو
 export function createDominoSet(mode) {
     let set = [];
     for (let i = 0; i <= 6; i++) {
@@ -20,20 +22,28 @@ export function createDominoSet(mode) {
             set.push({ top: i, bottom: j });
         }
     }
-    return set;
+    return shuffle(set);
 }
 
+// خوارزمية الخلط الاحترافية (Fisher-Yates المزدوجة لضمان عشوائية تامة)
 export function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        let j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+    for (let cycle = 0; cycle < 2; cycle++) {
+        for (let i = array.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
     }
     return array;
 }
 
 export function startGame(mode) {
-    state.gameMode = mode; state.isGameOver = false; state.selectedTileIndex = null;
-    state.boardChain = []; state.centerTileIndex = 0; state.leftEndValue = null; state.rightEndValue = null;
+    state.gameMode = mode; 
+    state.isGameOver = false; 
+    state.selectedTileIndex = null;
+    state.boardChain = []; 
+    state.centerTileIndex = 0; 
+    state.leftEndValue = null; 
+    state.rightEndValue = null;
     clearInterval(state.turnTimerInterval);
 
     document.getElementById("start-modal")?.classList.add("hidden");
@@ -45,7 +55,7 @@ export function startGame(mode) {
         else comp2Avatar.classList.add("hidden");
     }
 
-    state.fullSet = shuffle(createDominoSet(state.gameMode));
+    state.fullSet = createDominoSet(state.gameMode);
     let handSize = (state.gameMode === 3) ? 9 : 7;
 
     state.playerHand = state.fullSet.splice(0, handSize);
@@ -101,7 +111,7 @@ export function handleTimeOut() {
         if (playableIndices.length > 0) {
             let chosen = playableIndices[Math.floor(Math.random() * playableIndices.length)];
             playPlayerTile(chosen.index, chosen.ends[0]);
-        } else if (state.boneyard.length > 0) {
+        } else if (state.boneyard.length > 0 && state.boardChain.length > 0) {
             drawFromBoneyard();
             if (!state.isOnline) setTimeout(nextTurn, 300); 
         } else {
@@ -111,14 +121,31 @@ export function handleTimeOut() {
     }
 }
 
+// دالة مساعدة: فحص وجود حركات صالحة في اليد
+export function hasPlayableTile(hand, leftEnd, rightEnd) {
+    if (!hand || hand.length === 0) return false;
+
+    // إذا كانت الطاولة فارغة، تُعتبر جميع القطع صالحة للعب للبدء بها
+    const isBoardEmpty = leftEnd === null || leftEnd === -1 || rightEnd === null || rightEnd === -1;
+    if (isBoardEmpty) {
+        return true;
+    }
+
+    // مطابقة أطراف الأحجار مع أطراف الطاولة الحالية
+    return hand.some(tile => 
+        tile.top === leftEnd || tile.bottom === leftEnd ||
+        tile.top === rightEnd || tile.bottom === rightEnd
+    );
+}
+
 export function checkAutoPass() {
     if (state.currentTurn === 'player' && !state.isGameOver && state.boardChain.length > 0) {
         let canPlay = state.playerHand.some(t => getPlayableEnds(t).length > 0);
         if (!canPlay && state.boneyard.length === 0) {
             showToast("لا توجد حركات متاحة، تم تجاوز دورك تلقائياً ⏩");
             setTimeout(() => {
-                if (state.isGameOver) return; // يمنع التنفيذ في حال انتهت اللعبة
-                if (checkBlockGame()) return; // يتأكد إذا اللعبة منغلقة قبل إرسال التجاوز
+                if (state.isGameOver) return;
+                if (checkBlockGame()) return;
 
                 if (state.isOnline) sendMoveToFirebase(false, true); 
                 else nextTurn();
@@ -164,6 +191,7 @@ export function selectBoardEnd(end) {
 export function playPlayerTile(index, end) {
     let tile = state.playerHand.splice(index, 1)[0];
     addTileToBoard(tile, end);
+    playTileSound(); 
     state.selectedTileIndex = null;
 
     if (state.playerHand.length === 0) { 
@@ -216,6 +244,7 @@ export function nextTurn() {
     }
 }
 
+// ذكاء اصطناعي للكمبيوتر يعتمد على التخلص من القطع المزدوجة والأعلى نقاطاً
 export function playComputerTurn() {
     if (state.isGameOver || state.isOnline) return; 
     let hand = (state.currentTurn === 'comp1') ? state.comp1Hand : state.comp2Hand;
@@ -223,15 +252,27 @@ export function playComputerTurn() {
     
     hand.forEach((tile, idx) => {
         let ends = getPlayableEnds(tile);
-        if (ends.length > 0 || state.boardChain.length === 0) playableIndices.push({ index: idx, ends: ends });
+        if (ends.length > 0 || state.boardChain.length === 0) {
+            playableIndices.push({ index: idx, ends: ends, tile: tile });
+        }
     });
 
     if (playableIndices.length > 0) {
-        let chosen = playableIndices.find(item => hand[item.index].top === hand[item.index].bottom) || playableIndices[0];
+        // فرز خيارات اللعب: الأحجار المزدوجة أولاً، ثم المجموع الأعلى للنقاط
+        playableIndices.sort((a, b) => {
+            const aIsDouble = a.tile.top === a.tile.bottom;
+            const bIsDouble = b.tile.top === b.tile.bottom;
+            if (aIsDouble && !bIsDouble) return -1;
+            if (!aIsDouble && bIsDouble) return 1;
+            return (b.tile.top + b.tile.bottom) - (a.tile.top + a.tile.bottom);
+        });
+
+        let chosen = playableIndices[0];
         let tile = hand.splice(chosen.index, 1)[0];
         let endToPlay = chosen.ends.length > 0 ? chosen.ends[0] : 'right';
 
         addTileToBoard(tile, endToPlay);
+        playTileSound();
 
         if (hand.length === 0) { 
             processOfflineRoundEnd(state.currentTurn); 
@@ -241,6 +282,7 @@ export function playComputerTurn() {
     } else {
         if (state.boneyard.length > 0) {
             hand.push(state.boneyard.pop());
+            playDrawSound();
             renderGame();
             setTimeout(playComputerTurn, 400);
         } else {
@@ -249,22 +291,44 @@ export function playComputerTurn() {
     }
 }
 
+// معالجة السحب من السوق وفق القواعد الرسمية
 export function drawFromBoneyard() {
     if (state.currentTurn !== 'player' || state.isGameOver) return;
-    let hasPlayable = state.playerHand.some(tile => getPlayableEnds(tile).length > 0);
-    if (hasPlayable && state.boardChain.length > 0) return;
-    
-    if (state.boneyard.length > 0) {
-        state.playerHand.push(state.boneyard.pop());
-        renderGame();
-        
-        if (state.isOnline) sendMoveToFirebase(false, false); 
-        checkAutoPass();
-    } else {
-        showToast("السوق فارغ!");
+
+    // 1. التحقق مما إذا كانت الطاولة فارغة
+    const isBoardEmpty = state.leftEndValue === null || 
+                         state.leftEndValue === -1 || 
+                         !state.boardChain || 
+                         state.boardChain.length === 0;
+
+    // 2. منع السحب إذا كانت الطاولة فارغة
+    if (isBoardEmpty) {
+        showToast("⚠️ لا يمكنك السحب والطاولة فارغة! يجب عليك إنزال قطعة لبدء اللعبة.");
+        return;
+    }
+
+    // 3. منع السحب إذا كان لدى اللاعب قطع صالحة للعب
+    if (hasPlayableTile(state.playerHand, state.leftEndValue, state.rightEndValue)) {
+        showToast("⚠️ لديك قطع صالحة للعب! لا يمكنك السحب من السوق.");
+        return;
+    }
+
+    // 4. التحقق من توفر كروت بالسوق
+    if (!state.boneyard || state.boneyard.length === 0) {
+        showToast("⚠️ السوق فارغ!");
         if (state.isOnline) sendMoveToFirebase(false, true); 
         else nextTurn();
+        return;
     }
+
+    // 5. اقتطاع قطعة وإضافتها ليد اللاعب
+    const drawnTile = state.boneyard.pop();
+    state.playerHand.push(drawnTile);
+    playDrawSound();
+    renderGame();
+
+    if (state.isOnline) sendMoveToFirebase(false, false); 
+    checkAutoPass();
 }
 
 export function checkBlockGame() {
