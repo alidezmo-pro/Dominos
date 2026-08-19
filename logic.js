@@ -154,11 +154,29 @@ export function checkAutoPass() {
     }
 }
 
+// logic.js - تحسين دالة فحص أطراف القطع لضمان الدقة البرمجية
+
 export function getPlayableEnds(tile) {
-    if (state.boardChain.length === 0) return ['left', 'right'];
+    if (!state.boardChain || state.boardChain.length === 0) return ['left', 'right'];
+    
     let ends = [];
-    if (tile.top === state.leftEndValue || tile.bottom === state.leftEndValue) ends.push('left');
-    if (tile.top === state.rightEndValue || tile.bottom === state.rightEndValue) ends.push('right');
+    
+    // تحويل القيم إلى أرقام صريحة لتفادي مشاكل مقارنة النص بالرقم (e.g. "5" === 5)
+    const tileTop = Number(tile.top);
+    const tileBottom = Number(tile.bottom);
+    const leftEnd = Number(state.leftEndValue);
+    const rightEnd = Number(state.rightEndValue);
+
+    // فحص التطابق مع الطرف الأيسر
+    if (tileTop === leftEnd || tileBottom === leftEnd) {
+        ends.push('left');
+    }
+    
+    // فحص التطابق مع الطرف الأيمن
+    if (tileTop === rightEnd || tileBottom === rightEnd) {
+        ends.push('right');
+    }
+    
     return ends;
 }
 
