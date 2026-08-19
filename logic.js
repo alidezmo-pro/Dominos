@@ -1,9 +1,12 @@
-// logic.js
+// logic.js - إدارة منطق اللعبة وتعيين زمن تفكير الكمبيوتر
 import { state } from './state.js';
 import { renderGame, renderAvatarTimer } from './render.js';
 import { showToast, updateTurnStatus, endGame, updateScoreUI } from './ui.js';
 import { sendMoveToFirebase } from './firebase.js';
 import { playTileSound, playDrawSound } from './sfx.js';
+
+// ثابِت يحدد زمن تفكير الكمبيوتر بالمللي ثانية (4000ms = 4 ثوانٍ)
+const COMPUTER_THINK_DELAY = 4000; 
 
 export function selectGameMode(mode) {
     state.isOnline = false; 
@@ -67,8 +70,9 @@ export function startGame(mode) {
     renderGame();
     startTimer();
 
+    // إعطاء الكمبيوتر مهلة 4 ثوانٍ للتفكير عند بدء الجولة إذا كان هو من يبدأ
     if (state.currentTurn !== 'player' && !state.isOnline) {
-        setTimeout(playComputerTurn, 600);
+        setTimeout(playComputerTurn, COMPUTER_THINK_DELAY);
     }
 }
 
@@ -154,25 +158,21 @@ export function checkAutoPass() {
     }
 }
 
-// logic.js - تحسين دالة فحص أطراف القطع لضمان الدقة البرمجية
-
+// فحص أطراف القطع القابلة للعب مع تحويل الأرقام لضمان الدقة البرمجية
 export function getPlayableEnds(tile) {
     if (!state.boardChain || state.boardChain.length === 0) return ['left', 'right'];
     
     let ends = [];
     
-    // تحويل القيم إلى أرقام صريحة لتفادي مشاكل مقارنة النص بالرقم (e.g. "5" === 5)
     const tileTop = Number(tile.top);
     const tileBottom = Number(tile.bottom);
     const leftEnd = Number(state.leftEndValue);
     const rightEnd = Number(state.rightEndValue);
 
-    // فحص التطابق مع الطرف الأيسر
     if (tileTop === leftEnd || tileBottom === leftEnd) {
         ends.push('left');
     }
     
-    // فحص التطابق مع الطرف الأيمن
     if (tileTop === rightEnd || tileBottom === rightEnd) {
         ends.push('right');
     }
@@ -257,12 +257,13 @@ export function nextTurn() {
     startTimer();
     checkAutoPass();
 
+    // تأجير لعب الكمبيوتر لمدة 4 ثوانٍ
     if (state.currentTurn !== 'player' && !state.isGameOver && !state.isOnline) {
-        setTimeout(playComputerTurn, 600);
+        setTimeout(playComputerTurn, COMPUTER_THINK_DELAY);
     }
 }
 
-// ذكاء اصطناعي للكمبيوتر يعتمد على التخلص من القطع المزدوجة والأعلى نقاطاً
+// ذكاء اصطناعي للكمبيوتر يفكّر لمدة 4 ثوانٍ قبل التخلص من الأحجار المزدوجة والأعلى نقاطاً
 export function playComputerTurn() {
     if (state.isGameOver || state.isOnline) return; 
     let hand = (state.currentTurn === 'comp1') ? state.comp1Hand : state.comp2Hand;
@@ -302,7 +303,8 @@ export function playComputerTurn() {
             hand.push(state.boneyard.pop());
             playDrawSound();
             renderGame();
-            setTimeout(playComputerTurn, 400);
+            // إعطاء مهلة بين كل حركة سحب وأخرى
+            setTimeout(playComputerTurn, COMPUTER_THINK_DELAY);
         } else {
             nextTurn();
         }
