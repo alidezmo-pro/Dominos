@@ -6,7 +6,7 @@ import { sendMoveToFirebase } from './firebase.js';
 import { playTileSound, playDrawSound } from './sfx.js';
 
 // ثابِت يحدد زمن تفكير الكمبيوتر بالمللي ثانية (4000ms = 4 ثوانٍ)
-const COMPUTER_THINK_DELAY = 4000; 
+const COMPUTER_THINK_DELAY = 10000; 
 
 export function selectGameMode(mode) {
     state.isOnline = false; 
