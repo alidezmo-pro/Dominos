@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { showToast, updateScoreUI, updateNamesUI, endGame } from './ui.js'; 
 import { createDominoSet, shuffle, startTimer, checkAutoPass } from './logic.js';
 import { renderGame } from './render.js';
-import { initAudio } from './audio.js';
+import { initAudio } from './audio.js'; // تم الاستيراد بنجاح
 
 export function createRoom() {
     state.roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
@@ -27,6 +27,10 @@ export function createRoom() {
         if (displayCode) displayCode.innerText = state.roomId;
         document.getElementById("created-code-box")?.classList.remove("hidden");
         listenToRoomUpdates(); 
+        
+        // === التعديل هنا: بدء اتصال الصوت فور إنشاء الغرفة للمضيف ===
+        initAudio(); 
+        
     }).catch(err => {
         showToast("⚠️ حدث خطأ أثناء إنشاء الغرفة!");
         console.error(err);
@@ -64,6 +68,10 @@ export function joinRoom() {
             state.roomId = inputCode;
             document.getElementById("start-modal")?.classList.add("hidden");
             listenToRoomUpdates();
+
+            // === التعديل هنا: بدء اتصال الصوت فور انضمام الضيف ===
+            initAudio();
+
         } else if (data && data.status === 'playing') {
             showToast("⚠️ هذه الغرفة ممتلئة وتلعب حالياً!");
         } else {
@@ -99,7 +107,6 @@ export function listenToRoomUpdates() {
         if (data.gameState) {
             syncGameState(data.gameState);
             
-            // إظهار نافذة النهاية للجميع إذا انتهت المباراة، أو رسالة إذا انتهت الجولة فقط
             if (data.gameState.isRoundOver) {
                 if (data.isFinalMatch && data.roundAlert) {
                     endGame(data.roundAlert);
@@ -108,7 +115,7 @@ export function listenToRoomUpdates() {
                     state.isGameOver = true;
                     clearInterval(state.turnTimerInterval);
                 }
-                return; // إيقاف التنفيذ لمنع التكرار
+                return; 
             }
             
             if (state.playerRole === 'host') {
@@ -161,7 +168,6 @@ export function startOnlineGame() {
 export function syncGameState(onlineState) {
     document.getElementById("start-modal")?.classList.add("hidden");
     
-    // لا تخفي نافذة النهاية إذا كانت الجولة قد انتهت للتو
     if (!onlineState.isRoundOver) {
         document.getElementById("end-modal")?.classList.add("hidden");
         state.isGameOver = false;
@@ -243,30 +249,30 @@ export function processHostRoundEnd(type, gameState) {
     
     if (isFinal) {
         msg = `🎉 انتهت المباراة! البطل هو ${winnerName}!`;
-        endGame(msg); // للمضيف
+        endGame(msg); 
         
         window.update(window.ref(window.db, 'rooms/' + state.roomId), {
             scores: state.roomScores,
             roundAlert: msg,
-            isFinalMatch: true, // علامة تدل على انتهاء المباراة كلياً
+            isFinalMatch: true, 
             'gameState/isRoundOver': true 
         });
     } else {
-        showToast(msg, 3500); // إظهار رسالة عابرة فقط
+        showToast(msg, 3500); 
         state.isGameOver = true;
         clearInterval(state.turnTimerInterval);
 
         window.update(window.ref(window.db, 'rooms/' + state.roomId), {
             scores: state.roomScores,
             roundAlert: msg,
-            isFinalMatch: false, // الجولة انتهت ولكن المباراة مستمرة
+            isFinalMatch: false, 
             'gameState/isRoundOver': true 
         });
         
         setTimeout(() => {
             window.update(window.ref(window.db, 'rooms/' + state.roomId), { roundAlert: null });
             startOnlineGame();
-        }, 4000); // تأخير ليتسنى للجميع رؤية الورقة الأخيرة
+        }, 4000); 
     }
 }
 
@@ -295,7 +301,6 @@ export function sendMoveToFirebase(isBlocked = false, passTurn = true) {
         else if (state.playerRole === 'guest2') { g2Hand = state.playerHand; hHand = state.comp1Hand; g1Hand = state.comp2Hand; }
     }
 
-    // إرسال false بدلاً من المصفوفة الفارغة لمنع فايربيز من حذفها تلقائياً
     const gameState = {
         hostHand: (hHand && hHand.length > 0) ? hHand : false,
         guest1Hand: (g1Hand && g1Hand.length > 0) ? g1Hand : false,
