@@ -1,483 +1,240 @@
 /* =========================================
-   UI Components CSS (Premium & Compact)
-   ========================================= */
+ * 4. Floating HUD & UI Components (Premium)
+ * ========================================= */
 
-/* --- 4. Floating Top Bar (Over the Table) --- */
+/* --- Top Bar (Minimal Floating HUD) --- */
 .top-bar {
     position: absolute;
-    top: 16px;
-    left: 16px;
-    right: 16px;
+    top: max(16px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     z-index: var(--z-ui);
     pointer-events: none;
 }
+.top-bar > * { pointer-events: auto; }
 
-.top-bar > * {
-    pointer-events: auto;
-}
-
-/* Timer Display (التايمر الرقمي في منتصف الشاشة من أعلى) */
-.timer-display {
-    background: transparent;
-    border: none;
-    padding: 0;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--accent-danger);
-    text-shadow: 0 0 15px rgba(239, 68, 68, 0.6), 0 2px 4px rgba(0,0,0,0.8);
-    text-align: center;
-    letter-spacing: 2px;
-}
-
-/* Profiles - Glassmorphism */
+/* --- Avatars (Circular Premium Style) --- */
 .profile {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-pill);
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: var(--glass-shadow);
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    background: rgba(15, 23, 42, 0.45);
-    padding: 3px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
-    width: 50px;
-    height: 50px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-    flex-shrink: 0; /* يمنع انكماش الأفاتار وتخريب الأبعاد في الشاشات الصغيرة */
+    transition: transform var(--trans-smooth), box-shadow var(--trans-smooth);
+    flex-shrink: 0;
 }
-
-.profile:hover {
-    transform: translateY(-2px) scale(1.05);
-}
-
 .profile img {
-    width: 100%;
-    height: 100%;
+    width: 90%;
+    height: 90%;
     border-radius: 50%;
     object-fit: cover;
-    background: rgba(0,0,0,0.2);
 }
-
-/* التايمر الدائري (الأزرق) حول الأفاتار */
-.timer-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 110%;
-    height: 110%;
-    z-index: 1;
-    pointer-events: none;
-}
-
-/* حاوية معلومات اللاعب */
 .profile-info {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     pointer-events: none;
-    z-index: 10;
 }
 
-/* اسم اللاعب (أعلى الأفاتار) */
+/* Badges */
 .player-label {
     position: absolute;
-    top: -2px; /* تم تعديل الارتفاع قليلاً لضمان عدم التداخل */
+    top: -12px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(2, 6, 23, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.7rem;
     font-weight: 600;
-    color: #fff;
     white-space: nowrap;
     backdrop-filter: blur(4px);
-    border: 2px solid #0f172a; 
-    z-index: 20; 
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
-
-/* النقاط (كأس أسفل الأفاتار) */
 .profile-score {
     position: absolute;
-    top: calc(100% + 13px); /* استخدام مسافة ديناميكية آمنة */
-    bottom: auto;
+    bottom: -8px;
     left: 50%;
-    right: auto;
-    transform: translateX(-50%); /* لضبط المربع في المنتصف تماماً */
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--accent-score), #059669);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 0.7rem;
+    font-weight: 700;
     color: #fff;
-    font-size: 0.75rem;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    border: 2px solid #0f172a; 
-    margin: 0;
-    z-index: 20;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
     white-space: nowrap;
     display: flex;
     align-items: center;
     gap: 3px;
 }
-
-/* عدد الأوراق (على يمين الأفاتار) */
 .profile-count {
     position: absolute;
-    bottom: -2px; 
-    left: 100%; /* يعتمد على النسبة المئوية ليعمل على أي شاشة */
-    transform: translateX(-65%); /* سحب العنصر ليتمركز على الحافة تماماً */
-    right: auto;
-    background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
-    color: #451a03;
-    font-size: 0.75rem;
-    font-weight: 800;
+    top: 50%;
+    right: -10px;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, var(--accent-comp), #d97706);
     padding: 2px 6px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    border: 2px solid #0f172a;
-    z-index: 20;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* --- 5. Floating Scoreboard (Premium Horizontal Pill) --- */
-#scoreboard-container {
-    display: none !important; /* مخفية بالكامل */
-}
-
-.score-header {
-    display: flex;
-    align-items: center;
-    border-bottom: none;
-    border-right: 1px solid rgba(255, 255, 255, 0.15); 
-    padding-right: 12px;
-    padding-bottom: 0;
-    margin-bottom: 0;
-}
-
-.score-header span {
-    display: none; 
-}
-
-.score-header strong {
-    color: var(--accent-comp);
-    font-size: 0.85rem;
-    text-shadow: 0 0 8px var(--accent-comp-glow);
-    letter-spacing: 1px;
-}
-
-.score-box {
-    background: rgba(0, 0, 0, 0.25);
-    padding: 4px 12px;
-    border-radius: 16px; 
+    border-radius: var(--radius-pill);
     font-size: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px; 
-    transition: background 0.2s ease, transform 0.2s ease;
-    white-space: nowrap; 
-}
-
-.score-box:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-1px);
-}
-
-.score-box span {
-    font-weight: 800;
-    font-size: 0.85rem;
-    color: var(--accent-score);
-    text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
-    background: rgba(16, 185, 129, 0.1);
-    padding: 2px 6px;
-    border-radius: 8px;
-}
-
-/* --- 7. Bottom Bar (Glass UI) --- */
-.bottom-bar {
-    flex: 0 0 auto;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: flex-end;
-    gap: 1rem;
-    z-index: var(--z-ui);
-    width: 100%;
-    padding: 10px;
-    background: linear-gradient(to top, rgba(2, 6, 23, 0.9) 0%, transparent 100%);
-    border-radius: 0 0 24px 24px;
-}
-
-/* Boneyard Button */
-.btn-boneyard {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    color: var(--text-light);
-    padding: 0.8rem 1.2rem;
-    border-radius: 16px;
-    cursor: pointer;
     font-weight: 700;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 0.95rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    justify-content: center;
 }
 
-.btn-boneyard:hover { 
-    background: linear-gradient(135deg, rgba(51, 65, 85, 0.9), rgba(30, 41, 59, 1));
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.2);
+/* Timer */
+.avatar-timer {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--accent-danger);
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border: 2px solid var(--bg-main);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+    animation: pulseTimer 1s infinite alternate ease-in-out;
+    z-index: 10;
+}
+@keyframes pulseTimer {
+    from { transform: scale(0.95); box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+    to { transform: scale(1.05); box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
 }
 
-.btn-boneyard:active {
-    transform: translateY(0);
-}
+/* Hide Old Elements */
+.timer-display, #scoreboard-container { display: none !important; }
 
-.btn-boneyard .count { 
-    background: var(--accent-player); 
-    color: #fff; 
-    padding: 0.2rem 0.6rem; 
-    border-radius: 8px; 
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+/* --- Bottom Bar (Glass UI) --- */
+.bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    background: linear-gradient(to top, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.7) 50%, transparent 100%);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    z-index: var(--z-ui);
+    pointer-events: none;
 }
+.bottom-bar > * { pointer-events: auto; }
 
-/* Mic Button */
-.btn-mic {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.bottom-center {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    max-width: 60%;
+}
+.player-hand-wrapper {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 24px 10px 16px 10px;
+    gap: 8px;
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+.player-hand-wrapper::-webkit-scrollbar { display: none; }
+#player-hand { display: flex; gap: 10px; margin: 0 auto; }
+
+/* --- Game Buttons --- */
+.btn-boneyard {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     backdrop-filter: blur(8px);
     color: var(--text-light);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s ease;
+    font-weight: 600;
     display: flex;
     align-items: center;
+    gap: 8px;
+    transition: var(--trans-fast);
+    box-shadow: var(--glass-shadow);
+}
+.btn-boneyard:active { transform: scale(0.95); }
+.btn-boneyard .count {
+    background: var(--accent-player);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.btn-mic {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(8px);
+    color: var(--text-light);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: var(--trans-smooth);
+    box-shadow: var(--glass-shadow);
     gap: 6px;
 }
-.btn-mic:hover {
-    background: rgba(30, 41, 59, 0.8);
-}
-.btn-mic.active {
-    background: rgba(16, 185, 129, 0.2);
+.btn-mic span { display: none; }
+.btn-mic:hover { background: rgba(30, 41, 59, 0.9); }
+.btn-mic:not(.muted) {
+    background: rgba(16, 185, 129, 0.15);
     border-color: var(--accent-score);
     color: var(--accent-score);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
 }
 
-/* --- 11. Room Setup & Lobby UI --- */
-.room-setup {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    text-align: right;
-    max-height: 80vh; 
-    overflow-y: auto; 
-    padding-bottom: 20px; 
-    padding-right: 5px; 
-}
-
-/* Scrollbar Customization for Room Setup */
-.room-setup::-webkit-scrollbar {
-    width: 6px;
-}
-.room-setup::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-}
-.room-setup::-webkit-scrollbar-thumb {
-    background: rgba(14, 165, 233, 0.5); 
-    border-radius: 10px;
-}
-.room-setup::-webkit-scrollbar-thumb:hover {
-    background: rgba(14, 165, 233, 0.8);
-}
-
-.room-setup h3 {
-    font-size: 1.2rem;
-    color: var(--accent-player);
-    margin-bottom: 10px;
-    text-align: center;
-    font-weight: 700;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.form-group label {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    font-weight: 600;
-}
-
-.btn-group {
-    display: flex;
-    gap: 10px;
-}
-
-.opt-btn {
-    flex: 1;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-muted);
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.opt-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-}
-
-.opt-btn.active {
-    background: rgba(14, 165, 233, 0.15);
-    color: var(--accent-player);
-    border-color: var(--accent-player);
-    box-shadow: inset 0 0 10px rgba(14, 165, 233, 0.1);
-}
-
-.full-btn {
-    width: 100%;
-}
-
-.btn-secondary {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2); 
-    padding: 12px 24px;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.3); 
-}
-
-.btn-secondary:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.4);
-}
-
-.btn-offline {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    color: var(--text-muted);
-    padding: 12px;
-    border-radius: 12px;
-    width: 100%;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-offline:hover {
-    border-color: var(--text-light);
-    color: var(--text-light);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.join-box {
-    display: flex;
-    flex-direction: column; 
-    align-items: center; 
-    gap: 12px; 
-    width: 100%;
-}
-
-.join-box input {
-    width: 70%; 
-    max-width: 250px; 
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(15, 23, 42, 0.6); 
-    color: #fff;
-    text-align: center;
-    font-size: 1.1rem;
-    outline: none;
-    letter-spacing: 2px;
-    backdrop-filter: blur(10px); 
-    transition: all 0.3s ease;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.join-box input:focus {
-    border-color: #f59e0b; 
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.3);
-    background: rgba(15, 23, 42, 0.8);
-}
-
-.join-box button {
-    width: 70%; 
-    max-width: 250px;
-}
-
-.code-display {
-    background: rgba(14, 165, 233, 0.05);
-    border: 1px solid rgba(14, 165, 233, 0.3);
-    padding: 16px;
-    border-radius: 16px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 20px;
-}
-
-.code-display span {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.code-display strong {
-    font-size: 2rem;
-    letter-spacing: 4px;
-    color: var(--accent-player);
-    text-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
-}
-
-/* --- 12. Notifications (Toast System) --- */
+/* --- Toast Notifications --- */
 .toast-notification {
     position: absolute;
-    top: 30px;
+    top: max(30px, env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.95);
-    border: 1px solid var(--accent-player);
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--glass-border);
+    border-bottom: 3px solid var(--accent-player);
     color: #fff;
-    padding: 10px 24px;
-    border-radius: 30px;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
     z-index: var(--z-toast);
     font-size: 0.95rem;
     font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(14, 165, 233, 0.2);
-    animation: toastSlideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    backdrop-filter: blur(10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: toastSlideDown var(--trans-bounce);
 }
-
 @keyframes toastSlideDown {
-    from { opacity: 0; transform: translate(-50%, -20px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+    from { opacity: 0; transform: translate(-50%, -20px) scale(0.9); }
+    to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
