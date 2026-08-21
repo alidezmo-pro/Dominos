@@ -1,29 +1,34 @@
-/* --- 3. Main Layout Structure --- */
+/* =========================================
+ * 3. Main Layout Structure & Casino Table
+ * ========================================= */
+
+/* --- The Main Wrapper --- */
 .game-layout {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    width: 100%;
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 8px;
-    gap: 8px;
+    /* استخدام 100dvh يمنع مشاكل السكرول في متصفحات الموبايل (مثل سفاري) */
+    height: 100dvh;
+    width: 100vw;
     position: relative;
-    background: radial-gradient(circle at 50% 50%, #0f172a 0%, var(--bg-main) 100%);
+    background-color: var(--bg-main);
+    /* حماية حواف الشاشة في الهواتف الحديثة (Safe Area) */
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    overflow: hidden;
 }
 
-/* --- 6. Table Area (The Arena) --- */
+/* --- Table Area (The Arena) --- */
 .table-container {
     flex-grow: 1;
     position: relative;
-    width: 100%;
-    /* Premium Casino Table Look */
-    background: radial-gradient(circle at center, var(--table-center) 0%, var(--table-edge) 100%);
+    /* إعطاء مساحة تنفس حول الطاولة */
+    margin: 8px;
+    /* تصميم طاولة الكازينو الفاخرة (Felt Table Look) */
+    background: radial-gradient(circle at 50% 50%, var(--table-center) 0%, var(--table-edge) 85%);
     border: 1px solid var(--table-border);
-    border-radius: 24px;
+    border-radius: var(--radius-lg);
     box-shadow: 
-        inset 0 0 80px rgba(0, 0, 0, 0.8),
-        0 15px 35px rgba(0, 0, 0, 0.5);
+        inset 0 0 80px rgba(0, 0, 0, 0.9), /* ظل داخلي عميق (Vignette) */
+        0 15px 35px rgba(0, 0, 0, 0.6); /* ظل خارجي للطاولة */
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -31,20 +36,25 @@
     z-index: var(--z-table);
 }
 
-/* Table glow effect */
+/* طبقة ملمس القماش (Noise Texture) الواقعية */
 .table-container::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 24px;
-    box-shadow: inset 0 0 20px rgba(14, 165, 233, 0.05);
-    pointer-events: none;
+    inset: 0;
+    /* توليد ضوضاء خفيفة جداً لتبدو كقماش حقيقي */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; /* هام جداً: للسماح بالضغط على القطع الموجودة تحت هذه الطبقة */
+    z-index: 1;
+    border-radius: inherit;
 }
 
+/* --- The Domino Board Chain --- */
 #board-chain {
     position: relative;
     width: 100%;
     height: 100%;
     transform-origin: center center;
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    /* حركة ناعمة جداً عند تصغير الطاولة */
+    transition: transform var(--trans-smooth);
+    z-index: 2; /* يجب أن تكون القطع فوق طبقة القماش */
 }
