@@ -1,104 +1,90 @@
-/* Player Hand */
-.player-hand-wrapper {
-    display: flex;
-    overflow-x: auto;
-    overflow-y: visible;
-    padding: 1.5rem 0.5rem 1rem 0.5rem;
-    gap: 0.5rem;
-    scrollbar-width: none; /* Hide standard scrollbar for cleaner look */
-}
-.player-hand-wrapper::-webkit-scrollbar { display: none; }
+/* =========================================
+ * 5. Domino Pieces (Realistic Premium 3D)
+ * ========================================= */
 
-#player-hand {
-    display: flex;
-    gap: 12px;
-    margin: 0 auto;
-}
-
-/* --- 8. Domino Pieces (Realistic 3D Design) --- */
 .domino-piece {
     width: var(--domino-w);
     height: var(--domino-h);
     background: linear-gradient(145deg, var(--domino-bg-1) 0%, var(--domino-bg-2) 100%);
     border: 1px solid var(--domino-border);
-    border-radius: 8px;
+    border-radius: 6px; /* حواف شبه حادة لواقعية أكبر */
     display: flex;
     flex-direction: column;
     box-shadow: 
-        3px 4px 10px rgba(0, 0, 0, 0.5),
-        inset 1px 1px 2px rgba(255, 255, 255, 1),
-        inset -1px -1px 2px rgba(0, 0, 0, 0.1);
+        2px 4px 8px rgba(0, 0, 0, 0.4), /* ظل خارجي */
+        inset 1px 1px 2px rgba(255, 255, 255, 0.8), /* إضاءة علوية */
+        inset -1px -1px 3px rgba(0, 0, 0, 0.1); /* تظليل سفلي */
     flex-shrink: 0;
     will-change: transform, box-shadow;
+    position: relative;
 }
 
+/* --- Board Pieces (قطع الطاولة) --- */
 #board-chain .domino-piece {
     position: absolute;
-    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform var(--trans-smooth);
     z-index: var(--z-domino);
+    /* ظل أنعم للقطع الملقاة على الطاولة */
+    box-shadow: 3px 5px 10px rgba(0,0,0,0.5), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
 }
 
+/* --- Player Hand Pieces (قطع يد اللاعب) --- */
 #player-hand .domino-piece {
-    cursor: grab;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform var(--trans-bounce), box-shadow var(--trans-fast), opacity var(--trans-smooth);
+    opacity: 0.55; /* تبهيت القطع غير المتاحة للعب */
 }
 
-#player-hand .domino-piece:hover { 
-    transform: translateY(-20px) scale(1.05); 
+/* القطعة القابلة للعب */
+#player-hand .domino-piece.playable {
+    opacity: 1; /* إضاءة كاملة */
+    cursor: pointer;
+    border-color: var(--accent-player);
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2), 2px 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+#player-hand .domino-piece.playable:hover {
+    transform: translateY(-8px);
+}
+
+/* القطعة المحددة */
+#player-hand .domino-piece.selected {
+    transform: translateY(-16px) scale(1.05);
     box-shadow: 
-        0 15px 25px rgba(0, 0, 0, 0.6),
-        inset 1px 1px 2px rgba(255, 255, 255, 1);
+        0 15px 25px rgba(0, 0, 0, 0.5),
+        0 0 0 2px var(--accent-player),
+        0 0 15px var(--accent-player-glow);
     z-index: 10;
 }
 
-#player-hand .domino-piece.playable { 
-    cursor: pointer; 
-    box-shadow: 
-        0 0 15px var(--accent-player-glow),
-        3px 4px 10px rgba(0,0,0,0.5); 
-    border-color: var(--accent-player);
+/* --- Piece Structure (تكوين القطعة) --- */
+.domino-half {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
 }
 
-#player-hand .domino-piece.selected { 
-    transform: translateY(-25px) scale(1.15); 
-    box-shadow: 
-        0 20px 35px rgba(14, 165, 233, 0.4),
-        0 0 20px var(--accent-player),
-        inset 1px 1px 2px rgba(255, 255, 255, 1);
-    border: 2px solid var(--accent-player); 
-    z-index: 20; 
-}
-
-.domino-half { 
-    width: 100%; 
-    flex: 1; 
-    display: flex; 
-    flex-wrap: wrap; 
-    position: relative; 
-    padding: 5px; 
-}
-
-.divider { 
-    width: 80%; 
-    height: 2px; 
-    background-color: var(--domino-divider); 
+.divider {
+    width: 80%;
+    height: 2px;
+    background-color: var(--domino-divider);
     margin: 0 auto;
     border-radius: 2px;
-    box-shadow: inset 0 1px 1px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.8);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.7);
 }
 
-.dot { 
-    width: var(--dot-size); 
-    height: var(--dot-size); 
-    background: radial-gradient(circle at 30% 30%, #334155, #020617);
-    border-radius: 50%; 
-    position: absolute; 
-    box-shadow: 
-        inset 0 1px 3px rgba(0,0,0,0.9),
-        0 1px 0 rgba(255,255,255,0.7);
+.dot {
+    width: var(--dot-size);
+    height: var(--dot-size);
+    background: var(--domino-dot);
+    border-radius: 50%;
+    position: absolute;
+    /* تأثير النقاط المحفورة */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.6);
 }
 
-/* Dot Positions */
+/* --- Dot Positions (توزيع النقاط - تم الحفاظ عليه للمنطق) --- */
 .p-1 .dot-1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
 .p-2 .dot-1 { top: 18%; left: 18%; }
@@ -126,27 +112,13 @@
 .p-6 .dot-5 { top: 50%; right: 18%; transform: translateY(-50%); }
 .p-6 .dot-6 { bottom: 18%; right: 18%; }
 
-/* --- 9. Active Turn Effects (Neon Glow) --- */
+/* --- Active Turn Effects (مؤثرات اللاعب الحالي) --- */
 .active-neon-player {
     border-color: var(--accent-player) !important;
-    box-shadow: 0 0 20px var(--accent-player-glow), inset 0 1px 1px rgba(255,255,255,0.2) !important;
-    animation: pulsePlayer 2s infinite;
-}
-
-@keyframes pulsePlayer {
-    0% { box-shadow: 0 0 15px var(--accent-player-glow); }
-    50% { box-shadow: 0 0 30px rgba(14, 165, 233, 0.8); }
-    100% { box-shadow: 0 0 15px var(--accent-player-glow); }
+    box-shadow: 0 0 0 2px var(--accent-player), 0 0 20px var(--accent-player-glow) !important;
 }
 
 .active-neon-comp {
     border-color: var(--accent-comp) !important;
-    box-shadow: 0 0 20px var(--accent-comp-glow), inset 0 1px 1px rgba(255,255,255,0.2) !important;
-    animation: pulseComp 2s infinite;
-}
-
-@keyframes pulseComp {
-    0% { box-shadow: 0 0 15px var(--accent-comp-glow); }
-    50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.8); }
-    100% { box-shadow: 0 0 15px var(--accent-comp-glow); }
+    box-shadow: 0 0 0 2px var(--accent-comp), 0 0 20px var(--accent-comp-glow) !important;
 }
