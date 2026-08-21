@@ -1,99 +1,244 @@
-/* --- 10. Modals & Dialogs (Premium Setup UI) --- */
-.hidden { 
-    display: none !important; 
-    opacity: 0;
-    pointer-events: none;
+/* =========================================
+ * 6. Premium Game Lobby & Modals
+ * ========================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-modal);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 16px;
 }
 
-.modal-overlay { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100vw; 
-    height: 100dvh; 
-    background: rgba(2, 6, 23, 0.8); 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    z-index: var(--z-modal); 
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-}
-
-.modal-box { 
-    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); 
-    padding: 2.5rem; 
-    border-radius: 24px; 
-    text-align: center; 
-    border: 1px solid rgba(255, 255, 255, 0.1); 
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(14, 165, 233, 0.15); 
-    max-width: 420px; 
-    width: 90%; 
+.modal-box {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 32px 24px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    width: 100%;
+    max-width: 400px;
     position: relative;
     overflow: hidden;
 }
 
-/* Subtle glow behind modal */
+/* Subtle glow behind modal content */
 .modal-box::before {
     content: '';
     position: absolute;
     top: -50%; left: -50%; width: 200%; height: 200%;
-    background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, transparent 60%);
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
 }
-
 .modal-box > * { position: relative; z-index: 1; }
 
-.modal-box h2 { 
-    margin-bottom: 1.5rem; 
-    font-size: 2rem; 
-    font-weight: 800;
-    background: linear-gradient(to right, #fff, #94a3b8);
+.modal-box h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    background: linear-gradient(to right, #fff, var(--text-muted));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
 }
 
-.text-input {
+/* Wizard Steps Transition */
+.step-container {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeScale var(--trans-smooth);
+}
+.step-container.active-step {
+    display: flex;
+}
+@keyframes fadeScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Room Setup specific Layouts */
+.room-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: right;
+    max-height: 80vh; 
+    overflow-y: auto; 
+    padding-bottom: 20px; 
+    padding-right: 5px; 
+}
+.room-setup::-webkit-scrollbar { width: 6px; }
+.room-setup::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 10px; }
+.room-setup::-webkit-scrollbar-thumb { background: rgba(14, 165, 233, 0.5); border-radius: 10px; }
+.room-setup h3 {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 700;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.form-group label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Modal Inputs & Segmented Controls */
+.text-input, .join-box input {
     width: 100%;
-    padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-md);
     color: #fff;
     font-size: 1rem;
-    outline: none;
-    transition: all 0.3s ease;
     text-align: center;
+    transition: var(--trans-fast);
+    outline: none;
+    font-family: inherit;
 }
-.text-input:focus {
+.text-input:focus, .join-box input:focus {
     border-color: var(--accent-player);
-    box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
 }
 
-.btn-primary { 
-    background: linear-gradient(135deg, var(--accent-player) 0%, #0284c7 100%);
-    color: #fff; 
-    border: none; 
-    padding: 1rem 1.5rem; 
-    font-size: 1.1rem; 
-    border-radius: 12px; 
-    cursor: pointer; 
-    font-weight: 700; 
-    margin-top: 1rem; 
-    transition: all 0.3s ease; 
-    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+.join-box {
+    display: flex;
+    flex-direction: column; 
+    align-items: center; 
+    gap: 12px; 
+    width: 100%;
+}
+.join-box input {
+    padding: 14px 16px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+.join-box input:focus {
+    border-color: var(--accent-comp); 
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
 }
 
-.btn-primary:hover { 
-    transform: translateY(-2px); 
-    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.6); 
-    background: linear-gradient(135deg, #38bdf8 0%, var(--accent-player) 100%);
+/* Button Group (Options) */
+.btn-group {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    gap: 4px;
+}
+.opt-btn {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    border-radius: calc(var(--radius-md) - 4px);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--trans-fast);
+    font-family: inherit;
+}
+.opt-btn:hover { color: #fff; }
+.opt-btn.active {
+    background: var(--accent-player);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
-.btn-primary:active {
-    transform: translateY(1px);
+/* Modal Buttons */
+.btn-primary {
+    background: var(--accent-player);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--trans-fast);
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+    width: 100%;
+    font-family: inherit;
+}
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+    background: var(--glass-bg);
+    color: var(--accent-comp);
+    border: 1px solid var(--accent-comp); 
+    padding: 14px 24px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--trans-smooth); 
+    box-shadow: var(--glass-shadow); 
+    width: 100%;
+    font-family: inherit;
+}
+.btn-secondary:active { transform: scale(0.98); }
+
+.btn-offline {
+    background: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    color: var(--text-muted);
+    padding: 14px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--trans-fast);
+    width: 100%;
+    font-family: inherit;
+}
+.btn-offline:hover {
+    border-color: var(--text-light);
+    color: var(--text-light);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.back-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px 0;
+    font-family: inherit;
+}
+.back-btn:hover { color: #fff; }
+
+.full-btn { width: 100%; }
+
+/* Code Display Box */
+.code-display {
+    background: rgba(14, 165, 233, 0.05);
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+}
+.code-display span { font-size: 0.9rem; color: var(--text-muted); }
+.code-display strong {
+    font-size: 2.2rem;
+    letter-spacing: 6px;
+    color: var(--accent-player);
+    text-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
 }
