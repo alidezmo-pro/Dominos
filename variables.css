@@ -1,37 +1,56 @@
-/* --- 1. CSS Variables (Design Tokens) --- */
+/* =========================================
+ * 1. CSS Variables (Premium Design Tokens)
+ * ========================================= */
 :root {
-    /* Premium Colors */
+    /* 🎨 Color Palette: Dark Casino & Neon Accents */
     --bg-main: #020617; 
     --table-center: #1e293b;
-    --table-edge: #0f172a;
-    --table-border: rgba(255, 255, 255, 0.1);
+    --table-edge: #090e17;
+    --table-border: rgba(255, 255, 255, 0.05);
     
+    /* Vibrant Neon Accents */
+    --accent-player: #0ea5e9;
+    --accent-player-glow: rgba(14, 165, 233, 0.4);
+    
+    --accent-comp: #f59e0b;
+    --accent-comp-glow: rgba(245, 158, 11, 0.3);
+    
+    --accent-score: #10b981;
+    --accent-danger: #ef4444;
+    
+    /* Typography Colors */
     --text-light: #f8fafc;
     --text-muted: #94a3b8;
     
-    /* Vibrant Neon Accents */
-    --accent-player: #0ea5e9; 
-    --accent-player-glow: rgba(14, 165, 233, 0.5);
-    
-    --accent-comp: #f59e0b; 
-    --accent-comp-glow: rgba(245, 158, 11, 0.5);
-    
-    --accent-danger: #ef4444;
-    --accent-score: #10b981; 
-    
-    /* Realistic Domino 3D Look */
+    /* 🎲 Realistic Domino Pieces (Ivory & Slate) */
     --domino-bg-1: #ffffff;
-    --domino-bg-2: #e2e8f0;
+    --domino-bg-2: #f1f5f9;
     --domino-dot: #0f172a;
-    --domino-border: #94a3b8;
-    --domino-divider: rgba(15, 23, 42, 0.2);
-
-    /* Sizes */
-    --domino-w: 38px;
-    --domino-h: 76px;
+    --domino-border: #cbd5e1;
+    --domino-divider: rgba(15, 23, 42, 0.15);
+    
+    /* 🪟 Glassmorphism & UI Surfaces */
+    --glass-bg: rgba(15, 23, 42, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    
+    /* 📏 Sizes & Spacing (Mobile-First) */
+    --domino-w: 42px;
+    --domino-h: 84px;
     --dot-size: 8px;
-
-    /* Z-Index Layers */
+    
+    /* Unified Border Radii */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-pill: 50px;
+    
+    /* ⏱️ Transitions */
+    --trans-fast: 0.15s ease;
+    --trans-smooth: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    --trans-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* 🗂️ Z-Index Architecture */
     --z-base: 1;
     --z-table: 10;
     --z-domino: 50;
