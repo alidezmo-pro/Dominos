@@ -4,16 +4,22 @@ import { state } from './state.js';
 let peer = null;
 let localStream = null;
 const connectedPeers = new Set();
+let audioTrack = null;
 
+// يجب استدعاء هذه الدالة من ملف firebase.js فور إنشاء الغرفة أو الانضمام إليها
 export async function initAudio() {
     try {
-        // 1. طلب صلاحية الميكروفون من المتصفح (ستظهر الرسالة الآن)
+        // 1. طلب صلاحية الميكروفون فوراً لتجهيز الاتصال المخفي[span_1](start_span)[span_1](end_span)
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioTrack = localStream.getAudioTracks()[0];
         
-        // 2. إنشاء معرّف فريد للاعب بناءً على الغرفة ودوره
+        // كتم الصوت افتراضياً حتى لا يُسمع اللاعب إلا إذا أراد
+        audioTrack.enabled = false;
+        
+        // 2. إنشاء معرّف فريد للاعب بناءً على الغرفة ودوره[span_2](start_span)[span_2](end_span)
         const myPeerId = `domino-${state.roomId}-${state.playerRole}`;
         
-        // 3. إعدادات خوادم STUN و TURN من Metered
+        // 3. إعدادات خوادم STUN و TURN من Metered[span_3](start_span)[span_3](end_span)
         const peerOptions = {
             config: {
                 iceServers: [
@@ -42,7 +48,7 @@ export async function initAudio() {
             }
         };
         
-        // 4. تهيئة الاتصال عبر الخوادم الجديدة لحل مشكلة الشبكات المختلفة
+        // 4. تهيئة الاتصال عبر الخوادم[span_4](start_span)[span_4](end_span)
         peer = new Peer(myPeerId, peerOptions);
         
         peer.on('open', (id) => {
@@ -61,10 +67,10 @@ export async function initAudio() {
             });
         });
 
-        return true; // نجاح الاتصال
+        return true; 
     } catch (err) {
         console.error("⚠️ لم نتمكن من الوصول للميكروفون:", err);
-        return false; // فشل الاتصال
+        return false; 
     }
 }
 
@@ -97,26 +103,16 @@ function playRemoteStream(stream, peerId) {
     console.log(`🔊 جاري تشغيل صوت: ${peerId}`);
 }
 
-// === التعديل هنا: طلب الصلاحية عند الضغط على الزر ===
+// دالة الزر أصبحت مسؤولة فقط عن تفعيل/تعطيل إرسال الصوت
 export async function toggleMicUI() {
     const micBtn = document.getElementById("mic-btn");
     const micStatus = document.getElementById("mic-status");
     
-    // إذا لم تكن الصلاحية مأخوذة من قبل، اطلبها الآن!
-    if (!localStream) {
-        micStatus.innerText = "جاري الاتصال...";
-        const success = await initAudio(); // ننتظر موافقة المستخدم
-        
-        if (!success) {
-            alert("🎤 يرجى السماح للمتصفح باستخدام الميكروفون من إعدادات الموقع أعلى الشاشة!");
-            micStatus.innerText = "المايك مغلق";
-            return;
-        }
+    if (!localStream || !audioTrack) {
+        alert("يرجى التأكد من إعطاء صلاحية الميكروفون للمتصفح أولاً!");
+        return;
     }
 
-    // التحكم في كتم وفتح الصوت بعد أخذ الصلاحية
-    const audioTrack = localStream.getAudioTracks()[0];
-    
     if (micBtn.classList.contains("muted")) {
         micBtn.classList.remove("muted");
         micStatus.innerText = "المايك مفتوح";
