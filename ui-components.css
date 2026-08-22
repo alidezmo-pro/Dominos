@@ -19,8 +19,8 @@
 /* --- Avatars (Circular Premium Style) --- */
 .profile {
     position: relative;
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
     border-radius: var(--radius-pill);
     background: var(--glass-bg);
     border: 2px solid var(--glass-border);
@@ -38,11 +38,13 @@
     height: 90%;
     border-radius: 50%;
     object-fit: cover;
+    z-index: 2; /* لضمان بقاء الصورة فوق خلفية المؤقت */
 }
 .profile-info {
     position: absolute;
     inset: 0;
     pointer-events: none;
+    z-index: 10;
 }
 
 /* Badges */
@@ -51,79 +53,115 @@
     top: -12px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(2, 6, 23, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 2px 10px;
+    background: rgba(2, 6, 23, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 2px 12px;
     border-radius: var(--radius-pill);
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     white-space: nowrap;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 .profile-score {
     position: absolute;
-    bottom: -8px;
+    bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, var(--accent-score), #059669);
-    padding: 2px 8px;
+    padding: 2px 10px;
     border-radius: var(--radius-pill);
-    font-size: 0.7rem;
-    font-weight: 700;
+    font-size: 0.75rem;
+    font-weight: 800;
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.5);
     white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 .profile-count {
     position: absolute;
     top: 50%;
-    right: -10px;
+    right: -12px;
     transform: translateY(-50%);
     background: linear-gradient(135deg, var(--accent-comp), #d97706);
-    padding: 2px 6px;
+    padding: 3px 8px;
     border-radius: var(--radius-pill);
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Timer */
-.avatar-timer {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: var(--accent-danger);
-    color: #fff;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 800;
-    border: 2px solid var(--bg-main);
-    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
-    animation: pulseTimer 1s infinite alternate ease-in-out;
-    z-index: 10;
-}
-@keyframes pulseTimer {
-    from { transform: scale(0.95); box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
-    to { transform: scale(1.05); box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Hide Old Elements */
-.timer-display, #scoreboard-container { display: none !important; }
+
+/* =========================================
+   التصميم الجديد للحلقة المضيئة (Ring Timer) 
+   ========================================= */
+.timer-ring-wrapper {
+    position: absolute;
+    /* يتسع ليغطي كامل الأفاتار مع الإطار */
+    top: -6px;
+    left: -6px;
+    width: calc(100% + 12px);
+    height: calc(100% + 12px);
+    z-index: 1; /* خلف الصورة مباشرة ليحيط بها */
+    pointer-events: none;
+}
+.ring-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg); /* تبدأ الحلقة من أعلى (الساعة 12) */
+    overflow: visible;
+}
+.ring-bg {
+    fill: transparent;
+    stroke: rgba(255, 255, 255, 0.05); /* مسار باهت كخلفية للحلقة */
+    stroke-width: 4;
+}
+.ring-progress {
+    fill: transparent;
+    stroke-width: 6;
+    stroke-linecap: round;
+    /* محيط الدائرة = 2 * ط * 48 = ~301 */
+    stroke-dasharray: 301; 
+    stroke-dashoffset: 0;
+    /* أنيميشن يمتد لـ 25 ثانية لتناقص المؤقت وتغيير لونه */
+    animation: ringCountdown 25s linear forwards;
+}
+
+@keyframes ringCountdown {
+    0% { 
+        stroke-dashoffset: 0; 
+        stroke: #10b981; /* أخضر في البداية */
+        filter: drop-shadow(0 0 8px rgba(16,185,129,0.8));
+    }
+    50% { 
+        stroke-dashoffset: 150; 
+        stroke: #f59e0b; /* برتقالي في المنتصف */
+        filter: drop-shadow(0 0 8px rgba(245,158,11,0.8));
+    }
+    80% { 
+        stroke-dashoffset: 240; 
+        stroke: #ef4444; /* أحمر حرج في النهاية */
+        filter: drop-shadow(0 0 10px rgba(239,68,68,0.9));
+    }
+    100% { 
+        stroke-dashoffset: 301; 
+        stroke: #ef4444; 
+        filter: drop-shadow(0 0 12px rgba(239,68,68,1));
+    }
+}
+
+/* إخفاء الفقاعة الرقمية القديمة نهائياً */
+.timer-display, #scoreboard-container, .avatar-timer { 
+    display: none !important; 
+}
+
 
 /* --- Bottom Bar (Glass UI) --- */
 .bottom-bar {
@@ -156,8 +194,7 @@
     scrollbar-width: none;
     padding: 24px 10px 16px 10px;
     gap: 8px;
-    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    /* إزالة تأثير الماسك لعدم اقتطاع الأحجار عند الحواف في الموبايل */
 }
 .player-hand-wrapper::-webkit-scrollbar { display: none; }
 #player-hand { display: flex; gap: 10px; margin: 0 auto; }
@@ -168,13 +205,14 @@
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(8px);
     color: var(--text-light);
-    padding: 12px 18px;
+    padding: 14px 20px;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.1rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     transition: var(--trans-fast);
     box-shadow: var(--glass-shadow);
 }
@@ -182,10 +220,10 @@
 .btn-boneyard .count {
     background: var(--accent-player);
     color: #fff;
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: var(--radius-pill);
-    font-size: 0.85rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
 }
 
 .btn-mic {
@@ -193,13 +231,13 @@
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(8px);
     color: var(--text-light);
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     cursor: pointer;
     transition: var(--trans-smooth);
     box-shadow: var(--glass-shadow);
@@ -211,7 +249,7 @@
     background: rgba(16, 185, 129, 0.15);
     border-color: var(--accent-score);
     color: var(--accent-score);
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
 /* --- Toast Notifications --- */
@@ -220,16 +258,16 @@
     top: max(30px, env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(15, 23, 42, 0.9);
     border: 1px solid var(--glass-border);
-    border-bottom: 3px solid var(--accent-player);
+    border-bottom: 4px solid var(--accent-player);
     color: #fff;
-    padding: 12px 24px;
+    padding: 14px 28px;
     border-radius: var(--radius-md);
     z-index: var(--z-toast);
-    font-size: 0.95rem;
-    font-weight: 600;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+    font-size: 1.05rem;
+    font-weight: 700;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     animation: toastSlideDown var(--trans-bounce);
