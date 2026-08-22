@@ -47,33 +47,47 @@ export function calculateSnakeLayout(chain, centerIdx) {
     if (!chain || chain.length === 0) return [];
     let dirs = new Array(chain.length - 1);
     
-    // --- التعديل: جعل عدد الأحجار في السطر ديناميكياً حسب عرض الشاشة ---
     let MAX_ROW = 8; 
     const screenWidth = window.innerWidth;
     if (screenWidth < 400) {
-        MAX_ROW = 2; // الهواتف الضيقة جداً: حجرين ثم يكسر السطر
+        MAX_ROW = 2; // الهواتف الضيقة جداً: حجرين
     } else if (screenWidth < 600) {
-        MAX_ROW = 3; // الموبايلات العادية: 3 أحجار ثم يكسر السطر
+        MAX_ROW = 3; // الموبايلات العادية: 3 أحجار
     } else if (screenWidth < 850) {
-        MAX_ROW = 5; // التابلت الصغير
+        MAX_ROW = 5; // التابلت
     }
     
-    let travel = 'RIGHT'; let len = 0;
+    // --- التعديل الجذري: خوارزمية (Zig-Zag) لمنع تداخل الأوراق ---
+    let travel = 'RIGHT'; let len = 0; let lastHoriz = 'RIGHT';
     
+    // بناء الجانب الأيمن من الطاولة
     for (let i = centerIdx; i < chain.length - 1; i++) {
         dirs[i] = travel; len++;
-        if (travel === 'RIGHT' && len >= MAX_ROW) { travel = 'DOWN'; len = 0; }
-        else if (travel === 'DOWN' && len >= 1) { travel = 'LEFT'; len = 0; }
-        else if (travel === 'LEFT' && len >= MAX_ROW) { travel = 'DOWN'; len = 0; }
+        if (travel === 'RIGHT' && len >= MAX_ROW) { 
+            travel = 'DOWN'; len = 0; lastHoriz = 'RIGHT'; 
+        }
+        else if (travel === 'LEFT' && len >= MAX_ROW) { 
+            travel = 'DOWN'; len = 0; lastHoriz = 'LEFT'; 
+        }
+        else if (travel === 'DOWN' && len >= 1) { 
+            travel = (lastHoriz === 'RIGHT') ? 'LEFT' : 'RIGHT'; len = 0; 
+        }
     }
     
-    travel = 'LEFT'; len = 0;
+    // بناء الجانب الأيسر من الطاولة (بالعكس)
+    travel = 'LEFT'; len = 0; lastHoriz = 'LEFT';
     for (let i = centerIdx - 1; i >= 0; i--) {
         dirs[i] = (travel === 'LEFT') ? 'RIGHT' : (travel === 'RIGHT') ? 'LEFT' : (travel === 'UP') ? 'DOWN' : 'UP';
         len++;
-        if (travel === 'LEFT' && len >= MAX_ROW) { travel = 'UP'; len = 0; }
-        else if (travel === 'UP' && len >= 1) { travel = 'RIGHT'; len = 0; }
-        else if (travel === 'RIGHT' && len >= MAX_ROW) { travel = 'UP'; len = 0; }
+        if (travel === 'LEFT' && len >= MAX_ROW) { 
+            travel = 'UP'; len = 0; lastHoriz = 'LEFT'; 
+        }
+        else if (travel === 'RIGHT' && len >= MAX_ROW) { 
+            travel = 'UP'; len = 0; lastHoriz = 'RIGHT'; 
+        }
+        else if (travel === 'UP' && len >= 1) { 
+            travel = (lastHoriz === 'LEFT') ? 'RIGHT' : 'LEFT'; len = 0; 
+        }
     }
 
     let layout = [];
@@ -163,7 +177,6 @@ export function renderGame() {
             let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; 
             let maxAvailableHeight = tableElem ? tableElem.clientHeight - 80 : 200;
             
-            // --- التعديل: تقليل الحد الأدنى للـ Scale ليسمح بتصغير الأحجار في الموبايل ---
             let scale = Math.max(Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1), 0.35);
 
             let first = layout[0], last = layout[layout.length - 1];
@@ -204,9 +217,10 @@ export function createDotsHTML(value) {
     return `<div class="domino-half p-${value}">${dotsHTML}</div>`;
 }
 
-// --- التعديل: تحويل المؤقت ليكون دائرياً حول الأفاتار ---
 export function renderAvatarTimer() {
-    // إزالة أي مؤقتات قديمة
+    // --- التعديل: منع التايمر من التصفير عند السحب من السوق ---
+    if (state.skipTimerReset) return; 
+
     document.querySelectorAll('.timer-ring-wrapper').forEach(el => el.remove());
     document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
     
@@ -221,7 +235,6 @@ export function renderAvatarTimer() {
         let ringWrapper = document.createElement("div");
         ringWrapper.className = "timer-ring-wrapper";
         
-        // رسم SVG للحلقة، وإبقاء الديف الرقمي مخفياً ليتعامل معه logic.js بلا مشاكل
         ringWrapper.innerHTML = `
             <svg class="ring-svg" viewBox="0 0 100 100">
                 <circle class="ring-bg" cx="50" cy="50" r="48"></circle>
