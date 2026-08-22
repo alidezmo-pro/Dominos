@@ -15,6 +15,9 @@ import { selectGameMode, drawFromBoneyard, selectBoardEnd } from './logic.js';
 // 5. استيراد دالة المايك الحقيقية من ملف الصوت
 import { toggleMicUI } from './audio.js';
 
+// 6. استيراد دالة الرسم (لإعادة رسم الطاولة عند تدوير الشاشة)
+import { renderGame } from './render.js';
+
 
 // ==========================================
 // ربط المتغيرات والدوال بكائن window لتعمل في HTML
@@ -42,8 +45,18 @@ window.selectBoardEnd = selectBoardEnd;
 window.toggleMic = toggleMicUI;
 
 // ==========================================
-// تشغيل الواجهة عند تحميل الصفحة
+// مستمعي الأحداث (Event Listeners)
 // ==========================================
+
+// تشغيل الواجهة عند تحميل الصفحة
 window.onload = function() { 
     showStartModal(); 
 };
+
+// حل مشكلة تدوير الشاشة: إعادة رسم الطاولة تلقائياً عند قلب الموبايل
+window.addEventListener('resize', () => {
+    // نتأكد أن اللعبة قد بدأت بالفعل لتجنب أي أخطاء
+    if (state && (state.boardChain.length > 0 || state.playerHand.length > 0)) {
+        renderGame();
+    }
+});
