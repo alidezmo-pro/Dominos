@@ -113,12 +113,12 @@
 .p-6 .dot-6 { bottom: 18%; right: 18%; }
 
 /* --- Active Turn Effects (مؤثرات اللاعب الحالي) --- */
+/* تم تفريغ هذه الكلاسات لإلغاء الإطار القديم بناءً على طلبك */
+/* تركنا أسماء الكلاسات كما هي لكي لا يتعطل الجافاسكريبت */
 .active-neon-player {
-    border-color: var(--accent-player) !important;
-    box-shadow: 0 0 0 2px var(--accent-player), 0 0 20px var(--accent-player-glow) !important;
+    /* تم الإلغاء */
 }
 
 .active-neon-comp {
-    border-color: var(--accent-comp) !important;
-    box-shadow: 0 0 0 2px var(--accent-comp), 0 0 20px var(--accent-comp-glow) !important;
+    /* تم الإلغاء */
 }
