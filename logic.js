@@ -1,12 +1,9 @@
-// logic.js - إدارة منطق اللعبة وتعيين زمن تفكير الكمبيوتر
+// logic.js - إدارة منطق اللعبة والذكاء الاصطناعي
 import { state } from './state.js';
 import { renderGame, renderAvatarTimer } from './render.js';
 import { showToast, updateTurnStatus, endGame, updateScoreUI } from './ui.js';
 import { sendMoveToFirebase } from './firebase.js';
 import { playTileSound, playDrawSound } from './sfx.js';
-
-// ثابِت يحدد زمن تفكير الكمبيوتر بالمللي ثانية (4000ms = 4 ثوانٍ)
-const COMPUTER_THINK_DELAY = 5000; 
 
 export function selectGameMode(mode) {
     state.isOnline = false; 
@@ -28,7 +25,7 @@ export function createDominoSet(mode) {
     return shuffle(set);
 }
 
-// خوارزمية الخلط الاحترافية (Fisher-Yates المزدوجة لضمان عشوائية تامة)
+// خوارزمية الخلط الاحترافية
 export function shuffle(array) {
     for (let cycle = 0; cycle < 2; cycle++) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -70,9 +67,9 @@ export function startGame(mode) {
     renderGame();
     startTimer();
 
-    // إعطاء الكمبيوتر مهلة 4 ثوانٍ للتفكير عند بدء الجولة إذا كان هو من يبدأ
+    // تشغيل دور الكمبيوتر فوراً إذا كان هو البادئ
     if (state.currentTurn !== 'player' && !state.isOnline) {
-        setTimeout(playComputerTurn, COMPUTER_THINK_DELAY);
+        setTimeout(playComputerTurn, 100);
     }
 }
 
@@ -95,7 +92,6 @@ export function startTimer() {
         let timerElem = document.querySelector(".avatar-timer");
         if (timerElem) {
             timerElem.innerText = state.timeLeft;
-            if (state.timeLeft <= 5) timerElem.style.color = (state.timeLeft % 2 === 0) ? "#ffffff" : "#ef4444";
         }
         if (state.timeLeft <= 0) {
             clearInterval(state.turnTimerInterval);
@@ -125,17 +121,11 @@ export function handleTimeOut() {
     }
 }
 
-// دالة مساعدة: فحص وجود حركات صالحة في اليد
 export function hasPlayableTile(hand, leftEnd, rightEnd) {
     if (!hand || hand.length === 0) return false;
-
-    // إذا كانت الطاولة فارغة، تُعتبر جميع القطع صالحة للعب للبدء بها
     const isBoardEmpty = leftEnd === null || leftEnd === -1 || rightEnd === null || rightEnd === -1;
-    if (isBoardEmpty) {
-        return true;
-    }
+    if (isBoardEmpty) return true;
 
-    // مطابقة أطراف الأحجار مع أطراف الطاولة الحالية
     return hand.some(tile => 
         tile.top === leftEnd || tile.bottom === leftEnd ||
         tile.top === rightEnd || tile.bottom === rightEnd
@@ -158,24 +148,17 @@ export function checkAutoPass() {
     }
 }
 
-// فحص أطراف القطع القابلة للعب مع تحويل الأرقام لضمان الدقة البرمجية
 export function getPlayableEnds(tile) {
     if (!state.boardChain || state.boardChain.length === 0) return ['left', 'right'];
     
     let ends = [];
-    
     const tileTop = Number(tile.top);
     const tileBottom = Number(tile.bottom);
     const leftEnd = Number(state.leftEndValue);
     const rightEnd = Number(state.rightEndValue);
 
-    if (tileTop === leftEnd || tileBottom === leftEnd) {
-        ends.push('left');
-    }
-    
-    if (tileTop === rightEnd || tileBottom === rightEnd) {
-        ends.push('right');
-    }
+    if (tileTop === leftEnd || tileBottom === leftEnd) ends.push('left');
+    if (tileTop === rightEnd || tileBottom === rightEnd) ends.push('right');
     
     return ends;
 }
@@ -213,11 +196,8 @@ export function playPlayerTile(index, end) {
     state.selectedTileIndex = null;
 
     if (state.playerHand.length === 0) { 
-        if (state.isOnline) {
-            sendMoveToFirebase(); 
-        } else {
-            processOfflineRoundEnd('player'); 
-        }
+        if (state.isOnline) sendMoveToFirebase(); 
+        else processOfflineRoundEnd('player'); 
         return; 
     }
     
@@ -257,13 +237,15 @@ export function nextTurn() {
     startTimer();
     checkAutoPass();
 
-    // تأجير لعب الكمبيوتر لمدة 4 ثوانٍ
+    // تشغيل دور الكمبيوتر فوراً ليحدد خياراته
     if (state.currentTurn !== 'player' && !state.isGameOver && !state.isOnline) {
-        setTimeout(playComputerTurn, COMPUTER_THINK_DELAY);
+        setTimeout(playComputerTurn, 100);
     }
 }
 
-// ذكاء اصطناعي للكمبيوتر يفكّر لمدة 4 ثوانٍ قبل التخلص من الأحجار المزدوجة والأعلى نقاطاً
+// ==========================================
+// التعديل: ذكاء الكمبيوتر السريع (بدون تأخير مزعج)
+// ==========================================
 export function playComputerTurn() {
     if (state.isGameOver || state.isOnline) return; 
     let hand = (state.currentTurn === 'comp1') ? state.comp1Hand : state.comp2Hand;
@@ -277,7 +259,7 @@ export function playComputerTurn() {
     });
 
     if (playableIndices.length > 0) {
-        // فرز خيارات اللعب: الأحجار المزدوجة أولاً، ثم المجموع الأعلى للنقاط
+        // فرز الخيارات: التخلص من الدبل أولاً ثم الأرقام الكبيرة
         playableIndices.sort((a, b) => {
             const aIsDouble = a.tile.top === a.tile.bottom;
             const bIsDouble = b.tile.top === b.tile.bottom;
@@ -290,50 +272,50 @@ export function playComputerTurn() {
         let tile = hand.splice(chosen.index, 1)[0];
         let endToPlay = chosen.ends.length > 0 ? chosen.ends[0] : 'right';
 
-        addTileToBoard(tile, endToPlay);
-        playTileSound();
+        // محاكاة تفكير الكمبيوتر لمدة ثانية ونصف فقط "لإنزال الورقة"
+        setTimeout(() => {
+            if (state.isGameOver) return; // أمان إضافي
+            addTileToBoard(tile, endToPlay);
+            playTileSound();
 
-        if (hand.length === 0) { 
-            processOfflineRoundEnd(state.currentTurn); 
-            return; 
-        }
-        nextTurn();
+            if (hand.length === 0) { 
+                processOfflineRoundEnd(state.currentTurn); 
+                return; 
+            }
+            nextTurn();
+        }, 1500); 
+
     } else {
+        // إذا لم يكن معه ورق، يسحب فوراً وفي نفس اللحظة بدون أي انتظار!
         if (state.boneyard.length > 0) {
             hand.push(state.boneyard.pop());
             playDrawSound();
             renderGame();
-            // إعطاء مهلة بين كل حركة سحب وأخرى
-            setTimeout(playComputerTurn, COMPUTER_THINK_DELAY);
+            
+            // يعيد فحص الورق فوراً
+            setTimeout(playComputerTurn, 150);
         } else {
-            nextTurn();
+            showToast(`تجاوز ${state.currentTurn === 'comp1' ? 'الخصم 1' : 'الخصم 2'} دوره ⏩`);
+            setTimeout(nextTurn, 1000);
         }
     }
 }
 
-// معالجة السحب من السوق وفق القواعد الرسمية
 export function drawFromBoneyard() {
     if (state.currentTurn !== 'player' || state.isGameOver) return;
 
-    // 1. التحقق مما إذا كانت الطاولة فارغة
-    const isBoardEmpty = state.leftEndValue === null || 
-                         state.leftEndValue === -1 || 
-                         !state.boardChain || 
-                         state.boardChain.length === 0;
+    const isBoardEmpty = state.leftEndValue === null || state.leftEndValue === -1 || !state.boardChain || state.boardChain.length === 0;
 
-    // 2. منع السحب إذا كانت الطاولة فارغة
     if (isBoardEmpty) {
         showToast("⚠️ لا يمكنك السحب والطاولة فارغة! يجب عليك إنزال قطعة لبدء اللعبة.");
         return;
     }
 
-    // 3. منع السحب إذا كان لدى اللاعب قطع صالحة للعب
     if (hasPlayableTile(state.playerHand, state.leftEndValue, state.rightEndValue)) {
         showToast("⚠️ لديك قطع صالحة للعب! لا يمكنك السحب من السوق.");
         return;
     }
 
-    // 4. التحقق من توفر كروت بالسوق
     if (!state.boneyard || state.boneyard.length === 0) {
         showToast("⚠️ السوق فارغ!");
         if (state.isOnline) sendMoveToFirebase(false, true); 
@@ -341,11 +323,14 @@ export function drawFromBoneyard() {
         return;
     }
 
-    // 5. اقتطاع قطعة وإضافتها ليد اللاعب
     const drawnTile = state.boneyard.pop();
     state.playerHand.push(drawnTile);
     playDrawSound();
+    
+    // إشارة لكي لا يتم إعادة تشغيل التايمر عند سحب الورق
+    state.skipTimerReset = true; 
     renderGame();
+    state.skipTimerReset = false;
 
     if (state.isOnline) sendMoveToFirebase(false, false); 
     checkAutoPass();
@@ -378,7 +363,6 @@ export function processOfflineRoundEnd(type) {
     let points = 0;
     let msg = "";
 
-    // تحديد الفائز وحساب النقاط
     if (type === 'player') {
         winner = 'host'; 
         points = c1Score + c2Score;
