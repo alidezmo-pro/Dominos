@@ -14,7 +14,6 @@
              الشريط العلوي (Top HUD) 
              ========================================= -->
         <header class="top-bar">
-            
             <!-- الخصم 1 -->
             <div id="comp1-avatar" class="profile">
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=comp1" alt="الخصم 1">
@@ -39,7 +38,6 @@
                     <span id="comp2-count" class="profile-count">🂠 0</span>
                 </div>
             </div>
-
         </header>
 
         <!-- لوحة النتائج (مخفية بالكامل عبر CSS ومتروكة هنا حتى لا يتعطل JS) -->
@@ -60,7 +58,6 @@
              الشريط السفلي ويد اللاعب (Bottom HUD) 
              ========================================= -->
         <footer class="bottom-bar">
-            
             <!-- الأفاتار الخاص بك -->
             <div id="player-avatar" class="profile">
                 <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Sparky" alt="أنت">
@@ -81,7 +78,6 @@
             <button class="btn-boneyard" onclick="drawFromBoneyard()">
                 🀙 <span id="boneyard-count" class="count">0</span>
             </button>
-
         </footer>
     </main>
 
@@ -89,91 +85,140 @@
     <audio id="remote-audio" autoplay></audio>
 
     <!-- =========================================
-         نافذة إعدادات اللعبة (Premium Lobby Modal) 
+         شاشة البداية المبتكرة (Fullscreen Lobby) 
          ========================================= -->
-    <div id="start-modal" class="modal-overlay">
-        <div class="modal-box">
-            <h2>🎲 الدومينو</h2>
+    <div id="start-modal" class="fullscreen-lobby">
+        
+        <!-- مؤثرات الإضاءة الخلفية (Glow Orbs) -->
+        <div class="lobby-bg-elements">
+            <div class="glow-orb orb-1"></div>
+            <div class="glow-orb orb-2"></div>
+        </div>
+
+        <div class="lobby-content">
+            <!-- شعار اللعبة الجديد -->
+            <div class="game-brand">
+                <h1>الدومينو <span>PRO</span></h1>
+            </div>
             
             <div class="room-setup">
                 
-                <!-- الخطوة 1: إدخال الاسم -->
+                <!-- الخطوة 1: إدخال الاسم (تصميم مركز ونظيف) -->
                 <div id="step-1" class="step-container active-step">
-                    <div class="form-group">
-                        <input type="text" id="player-name-input" class="text-input" placeholder="أدخل اسمك للبدء">
+                    <div class="welcome-text">
+                        <h3>أهلاً بك!</h3>
+                        <p>أدخل اسمك لتبدأ التحدي</p>
                     </div>
-                    <button class="btn-primary" onclick="goToStep(2)">متابعة ⬅️</button>
+                    <div class="form-group">
+                        <input type="text" id="player-name-input" class="modern-input" placeholder="اكتب اسمك هنا...">
+                    </div>
+                    <button class="action-btn primary-btn" onclick="goToStep(2)">متابعة ➔</button>
                 </div>
 
-                <!-- الخطوة 2: اختيار وضع اللعب -->
+                <!-- الخطوة 2: اختيار وضع اللعب (نظام البطاقات التفاعلية) -->
                 <div id="step-2" class="step-container">
-                    <button class="back-btn" onclick="goToStep(1)">➡️ رجوع</button>
-                    <button class="btn-primary full-btn" onclick="goToStep('online')">🌐 لعب أونلاين</button>
-                    <button class="btn-offline full-btn" style="margin-top: 10px;" onclick="goToStep('offline')">🤖 لعب أوفلاين</button>
+                    <button class="nav-back" onclick="goToStep(1)">⟵ رجوع</button>
+                    <div class="welcome-text">
+                        <h3>كيف تود اللعب؟</h3>
+                    </div>
+                    
+                    <div class="mode-cards-container">
+                        <!-- بطاقة الأونلاين -->
+                        <div class="mode-card online-card" onclick="goToStep('online')">
+                            <div class="card-icon">🌐</div>
+                            <div class="card-info">
+                                <h4>لعب أونلاين</h4>
+                                <p>تحدى أصدقاءك عبر الإنترنت</p>
+                            </div>
+                        </div>
+                        
+                        <!-- بطاقة الأوفلاين -->
+                        <div class="mode-card offline-card" onclick="goToStep('offline')">
+                            <div class="card-icon">🤖</div>
+                            <div class="card-info">
+                                <h4>لعب أوفلاين</h4>
+                                <p>تدرب ضد الذكاء الاصطناعي</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- الخطوة 3 (أوفلاين): إعدادات الكمبيوتر -->
+                <!-- الخطوة 3 (أوفلاين): إعدادات اللعب ضد الكمبيوتر -->
                 <div id="step-offline" class="step-container">
-                    <button class="back-btn" onclick="goToStep(2)">➡️ رجوع</button>
+                    <button class="nav-back" onclick="goToStep(2)">⟵ رجوع</button>
                     
-                    <div class="form-group">
-                        <label>عدد اللاعبين:</label>
-                        <div class="btn-group">
-                            <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">أنت ضد 1</button>
-                            <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">أنت ضد 2</button>
+                    <div class="settings-panel">
+                        <div class="form-group">
+                            <label>👥 عدد اللاعبين</label>
+                            <div class="btn-group">
+                                <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">أنت ضد 1</button>
+                                <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">أنت ضد 2</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>🏆 نقاط الفوز</label>
+                            <div class="btn-group">
+                                <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
+                                <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
+                                <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>نقاط الفوز:</label>
-                        <div class="btn-group">
-                            <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
-                            <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
-                            <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
-                        </div>
-                    </div>
-
-                    <button class="btn-primary full-btn" onclick="startOfflineGame()">🚀 بدء اللعب</button>
+                    <button class="action-btn play-btn" onclick="startOfflineGame()">🚀 بدء اللعب</button>
                 </div>
 
-                <!-- الخطوة 3 (أونلاين): إنشاء أو انضمام -->
+                <!-- الخطوة 3 (أونلاين): قائمة غرف الأونلاين -->
                 <div id="step-online" class="step-container">
-                    <button class="back-btn" onclick="goToStep(2)">➡️ رجوع</button>
-                    <button class="btn-primary full-btn" onclick="goToStep('online-create')">➕ إنشاء غرفة جديدة</button>
+                    <button class="nav-back" onclick="goToStep(2)">⟵ رجوع</button>
                     
-                    <div style="color: var(--text-muted); font-size: 0.9rem; margin: 8px 0;">أو</div>
+                    <div class="mode-cards-container">
+                        <!-- بطاقة إنشاء الغرفة -->
+                        <div class="mode-card create-card" onclick="goToStep('online-create')">
+                            <div class="card-icon">➕</div>
+                            <div class="card-info">
+                                <h4>إنشاء غرفة</h4>
+                                <p>اصنع غرفة وادعُ أصدقاءك</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="divider-text"><span>أو الانضمام لغرفة</span></div>
                     
                     <div class="join-box">
-                        <input type="text" id="room-code" placeholder="أدخل كود الغرفة">
-                        <button class="btn-secondary full-btn" onclick="joinRoom()">🔗 انضمام</button>
+                        <input type="text" id="room-code" class="modern-input" placeholder="أدخل كود الغرفة هنا">
+                        <button class="action-btn join-btn" onclick="joinRoom()">🔗 انضمام سريع</button>
                     </div>
                 </div>
 
-                <!-- الخطوة 4 (أونلاين): إعدادات الغرفة -->
+                <!-- الخطوة 4 (أونلاين): إعدادات إنشاء غرفة الأونلاين -->
                 <div id="step-online-create" class="step-container">
-                    <button class="back-btn" onclick="goToStep('online')">➡️ رجوع</button>
+                    <button class="nav-back" onclick="goToStep('online')">⟵ رجوع</button>
                     
-                    <div class="form-group">
-                        <label>عدد اللاعبين:</label>
-                        <div class="btn-group">
-                            <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">2 لاعبين</button>
-                            <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">3 لاعبين</button>
+                    <div class="settings-panel">
+                        <div class="form-group">
+                            <label>👥 عدد اللاعبين</label>
+                            <div class="btn-group">
+                                <button type="button" class="opt-btn active" onclick="setSelectPlayers(2, this)">2 لاعبين</button>
+                                <button type="button" class="opt-btn" onclick="setSelectPlayers(3, this)">3 لاعبين</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>🏆 نقاط الفوز</label>
+                            <div class="btn-group">
+                                <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
+                                <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
+                                <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>نقاط الفوز:</label>
-                        <div class="btn-group">
-                            <button type="button" class="opt-btn" onclick="setSelectScore(50, this)">50</button>
-                            <button type="button" class="opt-btn active" onclick="setSelectScore(100, this)">100</button>
-                            <button type="button" class="opt-btn" onclick="setSelectScore(150, this)">150</button>
-                        </div>
-                    </div>
-
-                    <button class="btn-primary full-btn" onclick="createRoom()">🚀 إنشاء الغرفة</button>
+                    <button class="action-btn play-btn" onclick="createRoom()">إنشاء الغرفة</button>
                     
                     <div id="created-code-box" class="code-display hidden">
-                        <span>كود الغرفة:</span>
+                        <span>شارك هذا الكود مع أصدقائك:</span>
                         <strong id="display-room-id">----</strong>
                     </div>
                 </div>
@@ -186,7 +231,7 @@
     <div id="end-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <h2 id="end-title">انتهت اللعبة!</h2>
-            <button class="btn-primary full-btn" onclick="returnToMainMenu()">🏠 العودة للقائمة الرئيسية</button>
+            <button class="action-btn primary-btn" style="width: 100%;" onclick="returnToMainMenu()">🏠 العودة للقائمة الرئيسية</button>
         </div>
     </div>
 
