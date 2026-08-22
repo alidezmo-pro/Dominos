@@ -46,7 +46,18 @@ export function getPieceSquares(in_dir, out_dir, isDouble) {
 export function calculateSnakeLayout(chain, centerIdx) {
     if (!chain || chain.length === 0) return [];
     let dirs = new Array(chain.length - 1);
-    const MAX_ROW = 9; 
+    
+    // --- التعديل: جعل عدد الأحجار في السطر ديناميكياً حسب عرض الشاشة ---
+    let MAX_ROW = 8; 
+    const screenWidth = window.innerWidth;
+    if (screenWidth < 400) {
+        MAX_ROW = 2; // الهواتف الضيقة جداً: حجرين ثم يكسر السطر
+    } else if (screenWidth < 600) {
+        MAX_ROW = 3; // الموبايلات العادية: 3 أحجار ثم يكسر السطر
+    } else if (screenWidth < 850) {
+        MAX_ROW = 5; // التابلت الصغير
+    }
+    
     let travel = 'RIGHT'; let len = 0;
     
     for (let i = centerIdx; i < chain.length - 1; i++) {
@@ -151,7 +162,9 @@ export function renderGame() {
             let tableElem = document.querySelector('.table-container');
             let maxAvailableWidth = tableElem ? tableElem.clientWidth - 80 : 500; 
             let maxAvailableHeight = tableElem ? tableElem.clientHeight - 80 : 200;
-            let scale = Math.max(Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1), 0.65);
+            
+            // --- التعديل: تقليل الحد الأدنى للـ Scale ليسمح بتصغير الأحجار في الموبايل ---
+            let scale = Math.max(Math.min((maxAvailableWidth / totalW), (maxAvailableHeight / totalH), 1), 0.35);
 
             let first = layout[0], last = layout[layout.length - 1];
 
@@ -160,12 +173,12 @@ export function renderGame() {
                 if (playableEnds.includes('left')) {
                     let sx = (first.start_x + offsetX) * scale, sy = (first.start_y + offsetY) * scale;
                     if (first.in_dir === 'RIGHT') sx -= (40 * scale); else if (first.in_dir === 'LEFT') sx += (40 * scale); else if (first.in_dir === 'DOWN') sy -= (40 * scale); else if (first.in_dir === 'UP') sy += (40 * scale);
-                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:100; cursor:pointer; background:var(--accent-player); color:#000; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:12px;">◀ هنا</div>`;
+                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('left')" style="position:absolute; left:calc(50% + ${sx}px); top:calc(50% + ${sy}px); transform:translate(-50%,-50%) scale(${scale}); z-index:100; cursor:pointer; background:var(--accent-player); color:#000; padding:6px 12px; border-radius:8px; font-weight:bold; font-size:14px; box-shadow: 0 4px 10px rgba(14,165,233,0.5);">◀ هنا</div>`;
                 }
                 if (playableEnds.includes('right')) {
                     let ex = (last.end_x + offsetX) * scale, ey = (last.end_y + offsetY) * scale;
                     if (last.out_dir === 'RIGHT') ex += (40 * scale); else if (last.out_dir === 'LEFT') ex -= (40 * scale); else if (last.out_dir === 'DOWN') ey += (40 * scale); else if (last.out_dir === 'UP') ey -= (40 * scale);
-                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${ex}px); top:calc(50% + ${ey}px); transform:translate(-50%,-50%) scale(${scale}); z-index:100; cursor:pointer; background:var(--accent-player); color:#000; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:12px;">هنا ▶</div>`;
+                    chainArea.innerHTML += `<div class="end-selector" onclick="selectBoardEnd('right')" style="position:absolute; left:calc(50% + ${ex}px); top:calc(50% + ${ey}px); transform:translate(-50%,-50%) scale(${scale}); z-index:100; cursor:pointer; background:var(--accent-player); color:#000; padding:6px 12px; border-radius:8px; font-weight:bold; font-size:14px; box-shadow: 0 4px 10px rgba(14,165,233,0.5);">هنا ▶</div>`;
                 }
             }
 
@@ -191,8 +204,12 @@ export function createDotsHTML(value) {
     return `<div class="domino-half p-${value}">${dotsHTML}</div>`;
 }
 
+// --- التعديل: تحويل المؤقت ليكون دائرياً حول الأفاتار ---
 export function renderAvatarTimer() {
+    // إزالة أي مؤقتات قديمة
+    document.querySelectorAll('.timer-ring-wrapper').forEach(el => el.remove());
     document.querySelectorAll('.avatar-timer').forEach(el => el.remove());
+    
     if (state.isGameOver) return;
 
     let activeAvatarContainer = null;
@@ -201,9 +218,17 @@ export function renderAvatarTimer() {
     else if (state.currentTurn === 'comp2') activeAvatarContainer = document.getElementById("comp2-avatar");
 
     if (activeAvatarContainer) {
-        let timerElem = document.createElement("div");
-        timerElem.className = "avatar-timer";
-        timerElem.innerText = state.timeLeft;
-        activeAvatarContainer.appendChild(timerElem);
+        let ringWrapper = document.createElement("div");
+        ringWrapper.className = "timer-ring-wrapper";
+        
+        // رسم SVG للحلقة، وإبقاء الديف الرقمي مخفياً ليتعامل معه logic.js بلا مشاكل
+        ringWrapper.innerHTML = `
+            <svg class="ring-svg" viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="48"></circle>
+                <circle class="ring-progress" cx="50" cy="50" r="48"></circle>
+            </svg>
+            <div class="avatar-timer" style="display: none;">${state.timeLeft}</div>
+        `;
+        activeAvatarContainer.appendChild(ringWrapper);
     }
 }
