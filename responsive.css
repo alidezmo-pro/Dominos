@@ -5,19 +5,16 @@
 /* --- Mobile Portrait & Small Screens (up to 768px) --- */
 @media (max-width: 768px) {
     :root { 
-        /* تصغير حجم الأحجار لتتسع الشاشة لـ 7 أحجار براحة تامة */
         --domino-w: 28px; 
         --domino-h: 56px; 
         --dot-size: 5px; 
     }
     
-    /* تقليص حجم الأفاتار قليلاً ليناسب الموبايل */
     .profile { 
         width: 48px; 
         height: 48px; 
     }
     
-    /* تعديل أماكن الشارات (Badges) */
     .player-label { 
         font-size: 0.65rem; 
         top: -10px; 
@@ -35,36 +32,53 @@
         padding: 2px 6px;
     }
     
-    /* ضبط شريط اللاعبين السفلي لتوفير مساحة أكبر للأحجار */
+    /* --- التعديل الجذري: تحويل الشريط السفلي لشبكة لرفع الورق للأعلى --- */
     .bottom-bar {
-        padding: 10px 8px env(safe-area-inset-bottom, 10px) 8px;
-        gap: 8px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        /* في نظام الـ RTL: العمود الأول يمين، والعمود الثاني يسار */
+        grid-template-areas: 
+            "hand hand"
+            "boneyard avatar";
+        padding: 10px 16px env(safe-area-inset-bottom, 10px) 16px;
+        gap: 12px;
+        align-items: center;
     }
 
-    /* التعديل الأهم: إعطاء يد اللاعب مساحة 75% بدلاً من 55% لمنع السكرول */
+    /* إعطاء الورق العرض الكامل (100%) ليكون فوق الأفاتار والسوق */
     .bottom-center { 
-        max-width: 75%; 
-        flex-grow: 1;
+        grid-area: hand;
+        max-width: 100%; 
+        width: 100%;
     }
 
     .player-hand-wrapper {
-        padding: 16px 2px 8px 2px;
-        /* إلغاء الـ mask في الموبايل لأنه قد يسبب بهتان لأطراف الأحجار */
+        padding: 8px 2px 4px 2px;
         mask-image: none;
         -webkit-mask-image: none;
     }
 
     #player-hand {
-        gap: 5px; /* تقليل المسافة بين الأحجار */
+        gap: 6px;
         justify-content: center;
     }
-    
-    /* الأزرار (الحفاظ على مساحة لمس كافية Touch Target) */
-    .btn-boneyard { 
-        padding: 10px 12px; 
-        font-size: 0.85rem; 
+
+    /* جلب الأفاتار لليسار (شمال) وإلغاء هوامشه السابقة */
+    #player-avatar {
+        grid-area: avatar;
+        justify-self: end; /* اليسار في الـ RTL */
+        margin-bottom: 0 !important; 
     }
 
+    /* جلب السوق لليمين (تحت الورق) */
+    .btn-boneyard { 
+        grid-area: boneyard;
+        justify-self: start; /* اليمين في الـ RTL */
+        margin-bottom: 0 !important;
+        padding: 10px 16px; 
+        font-size: 0.9rem; 
+    }
+    
     .btn-mic {
         width: 42px;
         height: 42px;
@@ -80,12 +94,8 @@
         --dot-size: 4px;
     }
 
-    .bottom-center {
-        max-width: 80%;
-    }
-
     #player-hand {
-        gap: 3px;
+        gap: 4px;
     }
 
     .profile {
@@ -129,10 +139,16 @@
         --dot-size: 4px; 
     }
 
-    /* تقليل المساحات بشدة لإعطاء الأولوية للطاولة */
+    /* استرجاع الشكل الأفقي (بجانب بعض) في اللاندسكيب */
     .bottom-bar {
+        display: flex; /* العودة للـ Flexbox بدلاً من Grid */
+        flex-direction: row;
         padding: 8px max(16px, env(safe-area-inset-right)) 4px max(16px, env(safe-area-inset-left));
     }
+
+    /* استعادة الهوامش في الوضع الأفقي فقط */
+    #player-avatar { margin-bottom: 10px !important; }
+    .btn-boneyard { margin-bottom: 10px !important; }
     
     .profile { 
         width: 40px; 
@@ -147,7 +163,6 @@
         padding: 10px 10px 5px 10px;
     }
 
-    /* جعل النوافذ قابلة للتمرير الداخلي في الوضع الأفقي */
     .modal-box {
         max-height: 95vh;
         overflow-y: auto;
