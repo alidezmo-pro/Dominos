@@ -15,7 +15,8 @@ const ASSETS_TO_CACHE = [
     './firebase.js',
     './audio.js',
     './sfx.js',
-    './manifest.json'
+    './manifest.json',
+    './icon.svg' 
 ];
 
 // تثبيت ملفات اللعبة في الكاش
@@ -50,4 +51,3 @@ self.addEventListener('activate', (event) => {
         })
     );
 });
-      
